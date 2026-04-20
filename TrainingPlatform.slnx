@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="TrainingPlatform.API/TrainingPlatform.API.csproj" />
+  <Project Path="TrainingPlatform.MVC/TrainingPlatform.MVC.csproj" />
+  <Project Path="TrainingPlatform.Reports/TrainingPlatform.Reports.csproj" />
+</Solution>
