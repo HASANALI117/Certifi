@@ -64,4 +64,22 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Seed DB on startup
+using (var scope = app.Services.CreateAsyncScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await DbSeeder.SeedAsync(context, userManager, roleManager);
+    }
+    catch (System.Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occured while seeding the database.");
+    }
+}
+
 app.Run();
