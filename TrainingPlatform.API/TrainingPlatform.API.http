@@ -1,6 +1,2 @@
 @TrainingPlatform.API_HostAddress = http://localhost:5171
 
-GET {{TrainingPlatform.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
