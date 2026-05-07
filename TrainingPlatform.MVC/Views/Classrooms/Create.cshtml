@@ -1,0 +1,29 @@
+@model TrainingPlatform.MVC.Models.ViewModels.ClassroomViewModel
+@{ ViewData["Title"] = "New Classroom"; }
+
+<h2>New Classroom</h2>
+<div class="row">
+    <div class="col-md-5">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Capacity" class="form-label"></label>
+                <input asp-for="Capacity" class="form-control" type="number" min="1" />
+                <span asp-validation-for="Capacity" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Equipment" class="form-label"></label>
+                <input asp-for="Equipment" class="form-control" placeholder="e.g. Projector, Lab Computers" />
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
