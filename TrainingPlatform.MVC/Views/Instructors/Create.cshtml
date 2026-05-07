@@ -1,0 +1,33 @@
+@model TrainingPlatform.MVC.Models.ViewModels.InstructorFormViewModel
+@{ ViewData["Title"] = "Add Instructor"; }
+
+<h2>Add Instructor Profile</h2>
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="UserId" class="form-label"></label>
+                <select asp-for="UserId" asp-items="Model.AvailableUsers" class="form-select">
+                    <option value="">-- Select User --</option>
+                </select>
+                <span asp-validation-for="UserId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ExpertiseAreas" class="form-label"></label>
+                <input asp-for="ExpertiseAreas" class="form-control" placeholder="e.g. Networking, Security, Cloud" />
+                <span asp-validation-for="ExpertiseAreas" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Bio" class="form-label"></label>
+                <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

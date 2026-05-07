@@ -1,0 +1,32 @@
+@model TrainingPlatform.MVC.Models.ViewModels.InstructorDetailsViewModel
+@{ ViewData["Title"] = Model.FullName; }
+
+<h2>@Model.FullName</h2>
+<p class="text-muted">@Model.Email</p>
+
+<dl class="row">
+    <dt class="col-sm-3">Expertise Areas</dt>
+    <dd class="col-sm-9">@Model.ExpertiseAreas</dd>
+    <dt class="col-sm-3">Bio</dt>
+    <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Bio) ? "—" : Model.Bio)</dd>
+</dl>
+
+<h5 class="mt-4">Upcoming Sessions</h5>
+@if (Model.UpcomingSessions.Any())
+{
+    <ul class="list-group">
+        @foreach (var s in Model.UpcomingSessions)
+        {
+            <li class="list-group-item">@s</li>
+        }
+    </ul>
+}
+else
+{
+    <p class="text-muted">No upcoming sessions.</p>
+}
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Back</a>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary ms-2">Edit</a>
+</div>
