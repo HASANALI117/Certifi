@@ -1,0 +1,114 @@
+@model TrainingPlatform.MVC.Models.ViewModels.CertificationLookupViewModel
+@{ ViewData["Title"] = "Verify Certificate"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h4 class="mb-0">Public Certification Verification</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Enter a Trainee ID and Certificate Reference Number to verify a certification.
+                    No login required.
+                </p>
+
+                <form asp-action="Lookup" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="TraineeId" class="form-label fw-semibold"></label>
+                        <input asp-for="TraineeId" class="form-control" placeholder="e.g. user-guid-here" />
+                        <span asp-validation-for="TraineeId" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="CertRef" class="form-label fw-semibold"></label>
+                        <input asp-for="CertRef" class="form-control" placeholder="e.g. CERT-2025-00142" />
+                        <span asp-validation-for="CertRef" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Verify Certificate</button>
+                </form>
+            </div>
+        </div>
+
+        @if (Model.Searched)
+        {
+            <div class="mt-4">
+                @if (Model.ErrorMessage != null)
+                {
+                    <div class="alert alert-warning">
+                        <strong>Not Found:</strong> @Model.ErrorMessage
+                    </div>
+                }
+                else if (Model.Result != null)
+                {
+                    var r = Model.Result;
+                    var isValid = r.Status == "Certified";
+                    <div class="card border-@(isValid ? "success" : "warning")">
+                        <div class="card-header bg-@(isValid ? "success" : "warning") @(isValid ? "text-white" : "")">
+                            <h5 class="mb-0">
+                                @if (isValid)
+                                {
+                                    <span>&#10003; Certification Verified</span>
+                                }
+                                else
+                                {
+                                    <span>&#8505; Certification Status: @r.Status</span>
+                                }
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Trainee</dt>
+                                <dd class="col-sm-8">@r.TraineeName</dd>
+
+                                <dt class="col-sm-4">Certification</dt>
+                                <dd class="col-sm-8">@r.CertificationTrack</dd>
+
+                                <dt class="col-sm-4">Reference</dt>
+                                <dd class="col-sm-8"><code>@r.CertRefNumber</code></dd>
+
+                                <dt class="col-sm-4">Status</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-@(isValid ? "success" : "secondary")">@r.Status</span>
+                                </dd>
+
+                                @if (r.IssuedDate.HasValue)
+                                {
+                                    <dt class="col-sm-4">Issued</dt>
+                                    <dd class="col-sm-8">@r.IssuedDate.Value.ToString("dd MMMM yyyy")</dd>
+                                }
+                            </dl>
+
+                            @if (r.CompletedCourses.Any())
+                            {
+                                <hr />
+                                <h6>Completed Courses</h6>
+                                <table class="table table-sm">
+                                    <thead><tr><th>Course</th><th>Completed</th><th>Result</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var c in r.CompletedCourses)
+                                        {
+                                            <tr>
+                                                <td>@c.Title</td>
+                                                <td>@c.CompletedDate.ToString("dd MMM yyyy")</td>
+                                                <td>
+                                                    <span class="badge bg-@(c.Result == "Pass" ? "success" : "danger")">@c.Result</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
