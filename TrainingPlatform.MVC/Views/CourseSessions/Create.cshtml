@@ -1,0 +1,59 @@
+@model TrainingPlatform.MVC.Models.ViewModels.CourseSessionFormViewModel
+@{ ViewData["Title"] = "Schedule Session"; }
+
+<h2>Schedule a Course Session</h2>
+<p class="text-muted">The system will prevent double-booking of instructors and classrooms.</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="CourseId" class="form-label"></label>
+                <select asp-for="CourseId" asp-items="Model.Courses" class="form-select">
+                    <option value="">-- Select Course --</option>
+                </select>
+                <span asp-validation-for="CourseId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="InstructorId" class="form-label"></label>
+                <select asp-for="InstructorId" asp-items="Model.Instructors" class="form-select">
+                    <option value="">-- Select Instructor --</option>
+                </select>
+                <span asp-validation-for="InstructorId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ClassroomId" class="form-label"></label>
+                <select asp-for="ClassroomId" asp-items="Model.Classrooms" class="form-select">
+                    <option value="">-- Select Classroom --</option>
+                </select>
+                <span asp-validation-for="ClassroomId" class="text-danger"></span>
+            </div>
+            <div class="row">
+                <div class="col mb-3">
+                    <label asp-for="SessionDate" class="form-label"></label>
+                    <input asp-for="SessionDate" class="form-control" type="date"
+                           value="@Model.SessionDate.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="SessionDate" class="text-danger"></span>
+                </div>
+                <div class="col mb-3">
+                    <label asp-for="StartTime" class="form-label"></label>
+                    <input asp-for="StartTime" class="form-control" type="time"
+                           value="@Model.StartTime.ToString("HH\\:mm")" />
+                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="AvailableSpots" class="form-label"></label>
+                <input asp-for="AvailableSpots" class="form-control" type="number" min="1" />
+                <span asp-validation-for="AvailableSpots" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Schedule</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

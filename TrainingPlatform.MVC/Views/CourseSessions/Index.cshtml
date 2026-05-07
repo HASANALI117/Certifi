@@ -1,0 +1,48 @@
+@model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.CourseSessionListItemViewModel>
+@{ ViewData["Title"] = "Course Schedule"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Course Schedule</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Schedule Session</a>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>Course</th>
+            <th>Instructor</th>
+            <th>Classroom</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Spots</th>
+            <th>Enrolled</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            var spotsLeft = s.AvailableSpots - s.EnrollmentCount;
+            <tr>
+                <td>@s.CourseTitle</td>
+                <td>@s.InstructorName</td>
+                <td>@s.ClassroomName</td>
+                <td>@s.SessionDate.ToString("dd MMM yyyy")</td>
+                <td>@s.StartTime.ToString("hh\\:mm tt")</td>
+                <td>
+                    <span class="badge @(spotsLeft <= 0 ? "bg-danger" : spotsLeft <= 5 ? "bg-warning text-dark" : "bg-success")">
+                        @spotsLeft left
+                    </span>
+                </td>
+                <td>@s.EnrollmentCount / @s.AvailableSpots</td>
+                <td class="text-end">
+                    <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-sm btn-outline-primary">Details</a>
+                    <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline"
+                          onsubmit="return confirm('Delete this session?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
