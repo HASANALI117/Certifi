@@ -1,0 +1,33 @@
+@model TrainingPlatform.MVC.Models.ViewModels.CourseDetailsViewModel
+@{ ViewData["Title"] = Model.Title; }
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Courses</a></li>
+        <li class="breadcrumb-item active">@Model.Title</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <h2>@Model.Title</h2>
+        <p class="text-muted">@Model.CategoryName &bull; @Model.DurationHours hours</p>
+        <p>@Model.Description</p>
+
+        <ul class="list-group list-group-flush mb-4">
+            <li class="list-group-item"><strong>Capacity:</strong> @Model.Capacity students</li>
+            <li class="list-group-item"><strong>Fee:</strong> @Model.Fee.ToString("C")</li>
+            @if (Model.PrerequisiteTitle != null)
+            {
+                <li class="list-group-item text-warning"><strong>Prerequisite:</strong> @Model.PrerequisiteTitle</li>
+            }
+            <li class="list-group-item"><strong>Scheduled sessions:</strong> @Model.SessionCount</li>
+        </ul>
+
+        <a asp-action="Index" class="btn btn-secondary">Back to Catalog</a>
+        @if (User.IsInRole("Training Coordinator"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary ms-2">Edit</a>
+        }
+    </div>
+</div>
