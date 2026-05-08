@@ -7,7 +7,7 @@ using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-[Authorize(Roles = "Training Coordinator")]
+[Authorize(Roles = "TrainingCoordinator")]
 public class ClassroomsController : Controller
 {
     private readonly AppDbContext _db;

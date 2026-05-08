@@ -73,14 +73,14 @@ public class CoursesController : Controller
         });
     }
 
-    [Authorize(Roles = "Training Coordinator")]
+    [Authorize(Roles = "TrainingCoordinator")]
     [HttpGet]
     public async Task<IActionResult> Create()
     {
         return View(await BuildFormViewModelAsync(null));
     }
 
-    [Authorize(Roles = "Training Coordinator")]
+    [Authorize(Roles = "TrainingCoordinator")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CourseFormViewModel model)
     {
@@ -103,7 +103,7 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    [Authorize(Roles = "Training Coordinator")]
+    [Authorize(Roles = "TrainingCoordinator")]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -125,7 +125,7 @@ public class CoursesController : Controller
         return View(await BuildFormViewModelAsync(model));
     }
 
-    [Authorize(Roles = "Training Coordinator")]
+    [Authorize(Roles = "TrainingCoordinator")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(CourseFormViewModel model)
     {
@@ -148,7 +148,7 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    [Authorize(Roles = "Training Coordinator")]
+    [Authorize(Roles = "TrainingCoordinator")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {

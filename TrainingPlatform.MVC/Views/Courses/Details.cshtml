@@ -18,7 +18,7 @@
         <a asp-action="Index" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Back to Catalog
         </a>
-        @if (User.IsInRole("Training Coordinator"))
+        @if (User.IsInRole("TrainingCoordinator"))
         {
             <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> Edit

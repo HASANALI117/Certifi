@@ -7,7 +7,7 @@
         <h1 class="tp-page-title">Course Catalog</h1>
         <p class="tp-page-subtitle">Discover courses by category, prerequisite, or fee. Filter to find what fits your learning path.</p>
     </div>
-    @if (User.IsInRole("Training Coordinator"))
+    @if (User.IsInRole("TrainingCoordinator"))
     {
         <div class="tp-page-actions">
             <a asp-action="Create" class="btn btn-primary">
