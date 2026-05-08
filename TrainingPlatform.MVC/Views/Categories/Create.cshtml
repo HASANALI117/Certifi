@@ -1,19 +1,32 @@
 @model TrainingPlatform.MVC.Models.ViewModels.CategoryViewModel
 @{ ViewData["Title"] = "New Category"; }
 
-<h2>New Category</h2>
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-plus-circle"></i> Manage</span>
+        <h1 class="tp-page-title">New Category</h1>
+        <p class="tp-page-subtitle">Add a new grouping for courses.</p>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create" method="post">
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-            <div class="mb-3">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-        </form>
+    <div class="col-md-6 col-lg-5">
+        <div class="tp-form-card">
+            <form asp-action="Create" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g. Cloud Computing" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="tp-form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

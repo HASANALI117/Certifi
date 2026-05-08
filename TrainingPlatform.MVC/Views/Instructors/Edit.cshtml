@@ -1,27 +1,40 @@
 @model TrainingPlatform.MVC.Models.ViewModels.InstructorFormViewModel
 @{ ViewData["Title"] = "Edit Instructor"; }
 
-<h2>Edit Instructor Profile</h2>
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-pencil"></i> Manage</span>
+        <h1 class="tp-page-title">Edit Instructor</h1>
+        <p class="tp-page-subtitle">Update expertise areas and bio.</p>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-6">
-        <form asp-action="Edit" method="post">
-            <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="UserId" />
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <div class="col-xl-8">
+        <div class="tp-form-card">
+            <form asp-action="Edit" method="post" novalidate>
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="UserId" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
 
-            <div class="mb-3">
-                <label asp-for="ExpertiseAreas" class="form-label"></label>
-                <input asp-for="ExpertiseAreas" class="form-control" />
-                <span asp-validation-for="ExpertiseAreas" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Bio" class="form-label"></label>
-                <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
-            </div>
+                <div class="mb-3">
+                    <label asp-for="ExpertiseAreas" class="form-label"></label>
+                    <input asp-for="ExpertiseAreas" class="form-control" />
+                    <span asp-validation-for="ExpertiseAreas" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Bio" class="form-label"></label>
+                    <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
+                </div>
 
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-        </form>
+                <div class="tp-form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

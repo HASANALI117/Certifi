@@ -1,8 +1,95 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<section class="tp-hero">
+    <div class="tp-hero-content">
+        <span class="tp-hero-eyebrow">
+            <i class="bi bi-stars"></i> Built for modern training teams
+        </span>
+        <h1>Run your training programs with clarity and confidence.</h1>
+        <p class="lead">
+            Manage your course catalog, schedule sessions, track instructors and classrooms,
+            and issue verifiable certifications — all in one polished workspace.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="Courses" asp-action="Index" class="btn btn-primary btn-lg">
+                <i class="bi bi-collection"></i> Browse Courses
+            </a>
+            <a asp-controller="Certification" asp-action="Lookup" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-patch-check"></i> Verify a Certificate
+            </a>
+        </div>
+    </div>
+</section>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="tp-stat tp-reveal">
+            <div class="tp-stat-icon"><i class="bi bi-collection"></i></div>
+            <h3>Course Catalog</h3>
+            <p>Browse a curated catalog of courses with prerequisites, fees, and capacity.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="tp-stat tp-reveal" style="--tp-reveal-delay: 80ms;">
+            <div class="tp-stat-icon violet"><i class="bi bi-calendar-event"></i></div>
+            <h3>Smart Scheduling</h3>
+            <p>Schedule sessions with automatic conflict checks for instructors and rooms.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="tp-stat tp-reveal" style="--tp-reveal-delay: 160ms;">
+            <div class="tp-stat-icon green"><i class="bi bi-person-badge"></i></div>
+            <h3>Instructor Profiles</h3>
+            <p>Capture expertise areas, bios, and upcoming session loads at a glance.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="tp-stat tp-reveal" style="--tp-reveal-delay: 240ms;">
+            <div class="tp-stat-icon amber"><i class="bi bi-patch-check"></i></div>
+            <h3>Verifiable Certificates</h3>
+            <p>Public certificate lookup so trainees and employers can trust the result.</p>
+        </div>
+    </div>
+</div>
+
+<div class="tp-bento mb-3 tp-reveal">
+    <div class="tp-bento-cell tp-bento-feature">
+        <span class="tp-page-eyebrow"><i class="bi bi-rocket-takeoff"></i> Get started</span>
+        <h3>Three ways to use Training Platform</h3>
+        <p class="tp-text-muted mb-3">
+            Whether you're an instructor coordinating logistics, a trainee browsing the catalog,
+            or an employer verifying credentials — pick a path below.
+        </p>
+        <div class="d-flex flex-wrap gap-2 mt-auto">
+            <a asp-controller="Courses" asp-action="Index" class="btn btn-primary">
+                <i class="bi bi-collection"></i> Browse the catalog
+            </a>
+            @if (User.IsInRole("Training Coordinator"))
+            {
+                <a asp-controller="CourseSessions" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar-event"></i> Manage sessions
+                </a>
+            }
+            else if (User.Identity?.IsAuthenticated != true)
+            {
+                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary">
+                    <i class="bi bi-person-plus"></i> Create an account
+                </a>
+            }
+        </div>
+    </div>
+
+    <a asp-controller="Certification" asp-action="Lookup" class="tp-bento-cell" style="text-decoration: none; color: inherit;">
+        <div class="tp-stat-icon green"><i class="bi bi-patch-check"></i></div>
+        <h3>Verify a certificate</h3>
+        <p>Public lookup — no account needed. Confirm trainee credentials in seconds.</p>
+    </a>
+
+    <a asp-controller="Courses" asp-action="Index" class="tp-bento-cell" style="text-decoration: none; color: inherit;">
+        <div class="tp-stat-icon violet"><i class="bi bi-mortarboard"></i></div>
+        <h3>Find your next course</h3>
+        <p>Filter the catalog by category, prerequisites, and capacity to plan your path.</p>
+    </a>
 </div>

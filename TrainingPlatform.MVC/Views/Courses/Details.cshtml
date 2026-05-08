@@ -4,30 +4,66 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-action="Index">Courses</a></li>
-        <li class="breadcrumb-item active">@Model.Title</li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
     </ol>
 </nav>
 
-<div class="row">
-    <div class="col-md-8">
-        <h2>@Model.Title</h2>
-        <p class="text-muted">@Model.CategoryName &bull; @Model.DurationHours hours</p>
-        <p>@Model.Description</p>
-
-        <ul class="list-group list-group-flush mb-4">
-            <li class="list-group-item"><strong>Capacity:</strong> @Model.Capacity students</li>
-            <li class="list-group-item"><strong>Fee:</strong> @Model.Fee.ToString("C")</li>
-            @if (Model.PrerequisiteTitle != null)
-            {
-                <li class="list-group-item text-warning"><strong>Prerequisite:</strong> @Model.PrerequisiteTitle</li>
-            }
-            <li class="list-group-item"><strong>Scheduled sessions:</strong> @Model.SessionCount</li>
-        </ul>
-
-        <a asp-action="Index" class="btn btn-secondary">Back to Catalog</a>
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-tag-fill"></i> @Model.CategoryName</span>
+        <h1 class="tp-page-title">@Model.Title</h1>
+        <p class="tp-page-subtitle">@Model.DurationHours hours &middot; @Model.SessionCount scheduled session@(Model.SessionCount == 1 ? "" : "s")</p>
+    </div>
+    <div class="tp-page-actions">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Catalog
+        </a>
         @if (User.IsInRole("Training Coordinator"))
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary ms-2">Edit</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
         }
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="tp-surface tp-surface-pad">
+            <h2 style="font-size: 1.1rem; margin-bottom: .85rem;">About this course</h2>
+            <p class="tp-text-soft mb-0" style="line-height: 1.7;">
+                @(string.IsNullOrWhiteSpace(Model.Description) ? "No description provided." : Model.Description)
+            </p>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="tp-surface tp-surface-pad">
+            <h2 style="font-size: 1.05rem; margin-bottom: 1rem;">Course details</h2>
+            <dl class="tp-detail-list">
+                <div class="tp-row">
+                    <dt><i class="bi bi-people me-1"></i> Capacity</dt>
+                    <dd>@Model.Capacity students</dd>
+                </div>
+                <div class="tp-row">
+                    <dt><i class="bi bi-cash-coin me-1"></i> Fee</dt>
+                    <dd>@Model.Fee.ToString("C")</dd>
+                </div>
+                <div class="tp-row">
+                    <dt><i class="bi bi-clock me-1"></i> Duration</dt>
+                    <dd>@Model.DurationHours hours</dd>
+                </div>
+                @if (Model.PrerequisiteTitle != null)
+                {
+                    <div class="tp-row">
+                        <dt><i class="bi bi-info-circle me-1"></i> Prerequisite</dt>
+                        <dd><span class="badge bg-warning">@Model.PrerequisiteTitle</span></dd>
+                    </div>
+                }
+                <div class="tp-row">
+                    <dt><i class="bi bi-calendar-event me-1"></i> Sessions</dt>
+                    <dd>@Model.SessionCount</dd>
+                </div>
+            </dl>
+        </div>
     </div>
 </div>

@@ -1,58 +1,101 @@
 @model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.CourseListItemViewModel>
 @{ ViewData["Title"] = "Course Catalog"; }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Course Catalog</h2>
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-collection"></i> Catalog</span>
+        <h1 class="tp-page-title">Course Catalog</h1>
+        <p class="tp-page-subtitle">Discover courses by category, prerequisite, or fee. Filter to find what fits your learning path.</p>
+    </div>
     @if (User.IsInRole("Training Coordinator"))
     {
-        <a asp-action="Create" class="btn btn-primary">+ New Course</a>
-    }
-</div>
-
-<form method="get" class="row g-2 mb-4">
-    <div class="col-md-5">
-        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search courses..." />
-    </div>
-    <div class="col-md-4">
-        <select name="categoryId" class="form-select">
-            <option value="">All Categories</option>
-            @foreach (var cat in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Categories)
-            {
-                <option value="@cat.Value" selected="@(cat.Value == ViewBag.SelectedCategoryId?.ToString())">@cat.Text</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-secondary w-100">Filter</button>
-    </div>
-</form>
-
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    @foreach (var course in Model)
-    {
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">@course.Title</h5>
-                    <p class="text-muted small mb-1">@course.CategoryName &bull; @course.DurationHours hrs &bull; Capacity: @course.Capacity</p>
-                    @if (course.PrerequisiteTitle != null)
-                    {
-                        <p class="text-warning small mb-1">Prerequisite: @course.PrerequisiteTitle</p>
-                    }
-                    <p class="fw-bold">@course.Fee.ToString("C")</p>
-                </div>
-                <div class="card-footer d-flex gap-2">
-                    <a asp-action="Details" asp-route-id="@course.Id" class="btn btn-sm btn-outline-primary flex-grow-1">Details</a>
-                    @if (User.IsInRole("Training Coordinator"))
-                    {
-                        <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                        <form asp-action="Delete" asp-route-id="@course.Id" method="post"
-                              onsubmit="return confirm('Delete this course?');">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                        </form>
-                    }
-                </div>
-            </div>
+        <div class="tp-page-actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> New Course
+            </a>
         </div>
     }
 </div>
+
+<div class="tp-surface tp-surface-pad mb-4" style="padding: 1.25rem 1.5rem;">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label" for="searchInput">Search</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input id="searchInput" type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search course titles..." />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="categorySelect">Category</label>
+            <select id="categorySelect" name="categoryId" class="form-select">
+                <option value="">All Categories</option>
+                @foreach (var cat in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Categories)
+                {
+                    <option value="@cat.Value" selected="@(cat.Value == ViewBag.SelectedCategoryId?.ToString())">@cat.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="tp-empty">
+        <i class="bi bi-collection"></i>
+        <h4>No courses found</h4>
+        <p>Try adjusting your filters or check back later for new courses.</p>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        @foreach (var course in Model)
+        {
+            <div class="col">
+                <div class="tp-course-card">
+                    <div class="tp-course-banner">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <div class="card-body">
+                        <span class="tp-tag"><i class="bi bi-tag-fill"></i> @course.CategoryName</span>
+                        <h3>@course.Title</h3>
+                        <div class="tp-course-meta">
+                            <span><i class="bi bi-clock"></i> @course.DurationHours hrs</span>
+                            <span><i class="bi bi-people"></i> Cap. @course.Capacity</span>
+                        </div>
+                        @if (course.PrerequisiteTitle != null)
+                        {
+                            <div class="tp-prereq">
+                                <i class="bi bi-info-circle-fill"></i> Prerequisite: @course.PrerequisiteTitle
+                            </div>
+                        }
+                        <div class="tp-fee">@course.Fee.ToString("C")</div>
+                    </div>
+                    <div class="card-footer">
+                        <a asp-action="Details" asp-route-id="@course.Id" class="btn btn-sm btn-outline-primary flex-grow-1">
+                            <i class="bi bi-eye"></i> Details
+                        </a>
+                        @if (User.IsInRole("Training Coordinator"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@course.Id" method="post"
+                                  onsubmit="return confirm('Delete this course?');" class="m-0">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

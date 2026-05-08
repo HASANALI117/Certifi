@@ -1,35 +1,37 @@
 @model TrainingPlatform.MVC.Models.ViewModels.CertificationLookupViewModel
 @{ ViewData["Title"] = "Verify Certificate"; }
 
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-patch-check"></i> Public verification</span>
+        <h1 class="tp-page-title">Verify a Certificate</h1>
+        <p class="tp-page-subtitle">No login required. Enter a Trainee ID and a Certificate Reference Number to check status.</p>
+    </div>
+</div>
+
 <div class="row justify-content-center">
-    <div class="col-md-7">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-                <h4 class="mb-0">Public Certification Verification</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">
-                    Enter a Trainee ID and Certificate Reference Number to verify a certification.
-                    No login required.
-                </p>
+    <div class="col-lg-8">
+        <div class="tp-form-card">
+            <form asp-action="Lookup" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
 
-                <form asp-action="Lookup" method="post">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="TraineeId" class="form-label fw-semibold"></label>
+                    <input asp-for="TraineeId" class="form-control" placeholder="e.g. user-guid-here" />
+                    <span asp-validation-for="TraineeId" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="CertRef" class="form-label fw-semibold"></label>
+                    <input asp-for="CertRef" class="form-control tp-mono" placeholder="e.g. CERT-2025-00142" />
+                    <span asp-validation-for="CertRef" class="text-danger"></span>
+                </div>
 
-                    <div class="mb-3">
-                        <label asp-for="TraineeId" class="form-label fw-semibold"></label>
-                        <input asp-for="TraineeId" class="form-control" placeholder="e.g. user-guid-here" />
-                        <span asp-validation-for="TraineeId" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="CertRef" class="form-label fw-semibold"></label>
-                        <input asp-for="CertRef" class="form-control" placeholder="e.g. CERT-2025-00142" />
-                        <span asp-validation-for="CertRef" class="text-danger"></span>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Verify Certificate</button>
-                </form>
-            </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-shield-check"></i> Verify Certificate
+                </button>
+            </form>
         </div>
 
         @if (Model.Searched)
@@ -38,68 +40,87 @@
                 @if (Model.ErrorMessage != null)
                 {
                     <div class="alert alert-warning">
-                        <strong>Not Found:</strong> @Model.ErrorMessage
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div class="flex-grow-1"><strong>Not found:</strong> @Model.ErrorMessage</div>
                     </div>
                 }
                 else if (Model.Result != null)
                 {
                     var r = Model.Result;
                     var isValid = r.Status == "Certified";
-                    <div class="card border-@(isValid ? "success" : "warning")">
-                        <div class="card-header bg-@(isValid ? "success" : "warning") @(isValid ? "text-white" : "")">
-                            <h5 class="mb-0">
-                                @if (isValid)
-                                {
-                                    <span>&#10003; Certification Verified</span>
-                                }
-                                else
-                                {
-                                    <span>&#8505; Certification Status: @r.Status</span>
-                                }
-                            </h5>
+                    <div class="tp-surface" style="overflow: hidden;">
+                        <div style="padding: 1.25rem 1.5rem; background: @(isValid ? "linear-gradient(135deg, #16a34a, #15803d)" : "linear-gradient(135deg, #f59e0b, #d97706)"); color: #fff;">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi @(isValid ? "bi-patch-check-fill" : "bi-info-circle-fill")" style="font-size: 1.4rem;"></i>
+                                <h2 style="margin: 0; font-size: 1.15rem; color: #fff;">
+                                    @(isValid ? "Certification Verified" : "Status: " + r.Status)
+                                </h2>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <dl class="row mb-0">
-                                <dt class="col-sm-4">Trainee</dt>
-                                <dd class="col-sm-8">@r.TraineeName</dd>
-
-                                <dt class="col-sm-4">Certification</dt>
-                                <dd class="col-sm-8">@r.CertificationTrack</dd>
-
-                                <dt class="col-sm-4">Reference</dt>
-                                <dd class="col-sm-8"><code>@r.CertRefNumber</code></dd>
-
-                                <dt class="col-sm-4">Status</dt>
-                                <dd class="col-sm-8">
-                                    <span class="badge bg-@(isValid ? "success" : "secondary")">@r.Status</span>
-                                </dd>
-
+                        <div class="tp-surface-pad">
+                            <dl class="tp-detail-list">
+                                <div class="tp-row">
+                                    <dt><i class="bi bi-person me-1"></i> Trainee</dt>
+                                    <dd>@r.TraineeName</dd>
+                                </div>
+                                <div class="tp-row">
+                                    <dt><i class="bi bi-mortarboard me-1"></i> Certification</dt>
+                                    <dd>@r.CertificationTrack</dd>
+                                </div>
+                                <div class="tp-row">
+                                    <dt><i class="bi bi-hash me-1"></i> Reference</dt>
+                                    <dd><code>@r.CertRefNumber</code></dd>
+                                </div>
+                                <div class="tp-row">
+                                    <dt><i class="bi bi-shield me-1"></i> Status</dt>
+                                    <dd>
+                                        <span class="badge @(isValid ? "bg-success" : "bg-secondary")">
+                                            <i class="bi @(isValid ? "bi-check-circle-fill" : "bi-dash-circle-fill")"></i>
+                                            @r.Status
+                                        </span>
+                                    </dd>
+                                </div>
                                 @if (r.IssuedDate.HasValue)
                                 {
-                                    <dt class="col-sm-4">Issued</dt>
-                                    <dd class="col-sm-8">@r.IssuedDate.Value.ToString("dd MMMM yyyy")</dd>
+                                    <div class="tp-row">
+                                        <dt><i class="bi bi-calendar-check me-1"></i> Issued</dt>
+                                        <dd>@r.IssuedDate.Value.ToString("dd MMMM yyyy")</dd>
+                                    </div>
                                 }
                             </dl>
 
                             @if (r.CompletedCourses.Any())
                             {
-                                <hr />
-                                <h6>Completed Courses</h6>
-                                <table class="table table-sm">
-                                    <thead><tr><th>Course</th><th>Completed</th><th>Result</th></tr></thead>
-                                    <tbody>
-                                        @foreach (var c in r.CompletedCourses)
-                                        {
+                                <hr class="tp-divider" />
+                                <h3 style="font-size: 1rem; margin-bottom: .85rem;">
+                                    <i class="bi bi-list-check me-1"></i> Completed courses
+                                </h3>
+                                <div class="tp-table-card">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead>
                                             <tr>
-                                                <td>@c.Title</td>
-                                                <td>@c.CompletedDate.ToString("dd MMM yyyy")</td>
-                                                <td>
-                                                    <span class="badge bg-@(c.Result == "Pass" ? "success" : "danger")">@c.Result</span>
-                                                </td>
+                                                <th>Course</th>
+                                                <th style="width: 160px;">Completed</th>
+                                                <th style="width: 110px;">Result</th>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var c in r.CompletedCourses)
+                                            {
+                                                <tr>
+                                                    <td><span class="fw-semibold">@c.Title</span></td>
+                                                    <td class="tp-text-soft">@c.CompletedDate.ToString("dd MMM yyyy")</td>
+                                                    <td>
+                                                        <span class="badge @(c.Result == "Pass" ? "bg-success" : "bg-danger")">
+                                                            <i class="bi @(c.Result == "Pass" ? "bi-check-circle-fill" : "bi-x-circle-fill")"></i>
+                                                            @c.Result
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
                             }
                         </div>
                     </div>
