@@ -2,71 +2,169 @@
     ViewData["Title"] = "Home";
 }
 
-<section class="tp-hero">
-    <div class="tp-hero-content">
-        <span class="tp-hero-eyebrow">
-            <i class="bi bi-stars"></i> Built for modern training teams
-        </span>
-        <h1>Run your training programs with clarity and confidence.</h1>
-        <p class="lead">
-            Manage your course catalog, schedule sessions, track instructors and classrooms,
-            and issue verifiable certifications — all in one polished workspace.
-        </p>
-        <div class="d-flex flex-wrap gap-2">
+<section class="tp-spy-hero">
+    <div class="tp-spy-hero-grid">
+        <div class="tp-spy-hero-left">
+            <span class="tp-spy-eyebrow">
+                <i class="bi bi-stars"></i> Training Platform
+            </span>
+            <h1 class="tp-spy-display">
+                <span class="tp-spy-display-row">Train.</span>
+                <span class="tp-spy-display-row">Schedule.</span>
+                <span class="tp-spy-display-row tp-spy-accent">Certify.</span>
+            </h1>
+            <p class="tp-spy-lead">
+                Modern training operations &mdash; catalog, scheduling, instructors,
+                and verifiable certificates, all in one polished workspace.
+            </p>
+            <div class="tp-spy-cta">
+                <a asp-controller="Courses" asp-action="Index" class="btn btn-primary btn-lg">
+                    <i class="bi bi-collection"></i> Browse Courses
+                </a>
+                <a asp-controller="Certification" asp-action="Lookup" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-patch-check"></i> Verify a Certificate
+                </a>
+            </div>
+        </div>
+        <div class="tp-spy-hero-right">
+            <div class="tp-cert-stage">
+                <div class="tp-cert-card">
+                    <div class="tp-cert-header">
+                        <span class="tp-cert-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                        <span class="tp-cert-org">Training Platform</span>
+                    </div>
+                    <div class="tp-cert-body">
+                        <span class="tp-cert-label">Certificate of Completion</span>
+                        <h3 class="tp-cert-name">Khalifa Alhashel</h3>
+                        <p class="tp-cert-track">Advanced Network Defense</p>
+                        <div class="tp-cert-meta">
+                            <div>
+                                <span>Reference</span>
+                                <strong>CERT-2026-00142</strong>
+                            </div>
+                            <div>
+                                <span>Issued</span>
+                                <strong>08 May 2026</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tp-cert-footer">
+                        <div class="tp-cert-seal"><i class="bi bi-patch-check-fill"></i></div>
+                        <div class="tp-cert-sig">
+                            <span class="tp-cert-sig-line"></span>
+                            <span class="tp-cert-sig-name">A. Hassan</span>
+                            <span class="tp-cert-sig-role">Authorized signatory</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tp-spy-scroll-cue">
+        <span>Scroll</span>
+        <i class="bi bi-arrow-down"></i>
+    </div>
+</section>
+
+<section class="tp-spy-feature" data-tp-color="indigo">
+    <div class="tp-spy-feature-inner">
+        <div class="tp-spy-feature-text-col">
+            <div class="tp-spy-feature-num">01</div>
+            <span class="tp-spy-feature-eyebrow">Catalog</span>
+            <h2 class="tp-spy-feature-title">
+                <span class="tp-spy-display-row">Course</span>
+                <span class="tp-spy-display-row tp-spy-accent">Catalog.</span>
+            </h2>
+            <p class="tp-spy-feature-text">
+                Browse a curated catalog of courses with prerequisites, fees, and capacity.
+                Filter by category, plan a learning path, and enroll with confidence.
+            </p>
             <a asp-controller="Courses" asp-action="Index" class="btn btn-primary btn-lg">
-                <i class="bi bi-collection"></i> Browse Courses
+                <i class="bi bi-collection"></i> Browse the catalog
             </a>
-            <a asp-controller="Certification" asp-action="Lookup" class="btn btn-outline-light btn-lg">
-                <i class="bi bi-patch-check"></i> Verify a Certificate
-            </a>
+        </div>
+        <div class="tp-spy-feature-visual">
+            <i class="bi bi-collection tp-spy-feature-icon"></i>
         </div>
     </div>
 </section>
 
-<div class="row g-4 mb-4">
-    <div class="col-md-6 col-lg-3">
-        <div class="tp-stat tp-reveal">
-            <div class="tp-stat-icon"><i class="bi bi-collection"></i></div>
-            <h3>Course Catalog</h3>
-            <p>Browse a curated catalog of courses with prerequisites, fees, and capacity.</p>
+<section class="tp-spy-feature" data-tp-color="violet">
+    <div class="tp-spy-feature-inner">
+        <div class="tp-spy-feature-text-col">
+            <div class="tp-spy-feature-num">02</div>
+            <span class="tp-spy-feature-eyebrow">Scheduling</span>
+            <h2 class="tp-spy-feature-title">
+                <span class="tp-spy-display-row">Smart</span>
+                <span class="tp-spy-display-row tp-spy-accent">Scheduling.</span>
+            </h2>
+            <p class="tp-spy-feature-text">
+                Schedule sessions with automatic conflict checks for instructors and rooms &mdash;
+                no double-booked classrooms, no overworked instructors.
+            </p>
+        </div>
+        <div class="tp-spy-feature-visual">
+            <i class="bi bi-calendar-event tp-spy-feature-icon"></i>
         </div>
     </div>
-    <div class="col-md-6 col-lg-3">
-        <div class="tp-stat tp-reveal" style="--tp-reveal-delay: 80ms;">
-            <div class="tp-stat-icon violet"><i class="bi bi-calendar-event"></i></div>
-            <h3>Smart Scheduling</h3>
-            <p>Schedule sessions with automatic conflict checks for instructors and rooms.</p>
-        </div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-        <div class="tp-stat tp-reveal" style="--tp-reveal-delay: 160ms;">
-            <div class="tp-stat-icon green"><i class="bi bi-person-badge"></i></div>
-            <h3>Instructor Profiles</h3>
-            <p>Capture expertise areas, bios, and upcoming session loads at a glance.</p>
-        </div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-        <div class="tp-stat tp-reveal" style="--tp-reveal-delay: 240ms;">
-            <div class="tp-stat-icon amber"><i class="bi bi-patch-check"></i></div>
-            <h3>Verifiable Certificates</h3>
-            <p>Public certificate lookup so trainees and employers can trust the result.</p>
-        </div>
-    </div>
-</div>
+</section>
 
-<div class="tp-bento mb-3 tp-reveal">
+<section class="tp-spy-feature" data-tp-color="green">
+    <div class="tp-spy-feature-inner">
+        <div class="tp-spy-feature-text-col">
+            <div class="tp-spy-feature-num">03</div>
+            <span class="tp-spy-feature-eyebrow">Instructors</span>
+            <h2 class="tp-spy-feature-title">
+                <span class="tp-spy-display-row">Instructor</span>
+                <span class="tp-spy-display-row tp-spy-accent">Profiles.</span>
+            </h2>
+            <p class="tp-spy-feature-text">
+                Capture expertise areas, bios, and upcoming session loads at a glance.
+                Every instructor, every track, every credential.
+            </p>
+        </div>
+        <div class="tp-spy-feature-visual">
+            <i class="bi bi-person-badge tp-spy-feature-icon"></i>
+        </div>
+    </div>
+</section>
+
+<section class="tp-spy-feature" data-tp-color="amber">
+    <div class="tp-spy-feature-inner">
+        <div class="tp-spy-feature-text-col">
+            <div class="tp-spy-feature-num">04</div>
+            <span class="tp-spy-feature-eyebrow">Verification</span>
+            <h2 class="tp-spy-feature-title">
+                <span class="tp-spy-display-row">Verifiable</span>
+                <span class="tp-spy-display-row tp-spy-accent">Certificates.</span>
+            </h2>
+            <p class="tp-spy-feature-text">
+                Public certificate lookup so trainees and employers can trust the result.
+                No login required &mdash; verify in seconds.
+            </p>
+            <a asp-controller="Certification" asp-action="Lookup" class="btn btn-primary btn-lg">
+                <i class="bi bi-patch-check"></i> Verify a certificate
+            </a>
+        </div>
+        <div class="tp-spy-feature-visual">
+            <i class="bi bi-patch-check tp-spy-feature-icon"></i>
+        </div>
+    </div>
+</section>
+
+<div class="tp-bento mb-3 mt-5">
     <div class="tp-bento-cell tp-bento-feature">
         <span class="tp-page-eyebrow"><i class="bi bi-rocket-takeoff"></i> Get started</span>
         <h3>Three ways to use Training Platform</h3>
         <p class="tp-text-muted mb-3">
             Whether you're an instructor coordinating logistics, a trainee browsing the catalog,
-            or an employer verifying credentials — pick a path below.
+            or an employer verifying credentials &mdash; pick a path below.
         </p>
         <div class="d-flex flex-wrap gap-2 mt-auto">
             <a asp-controller="Courses" asp-action="Index" class="btn btn-primary">
                 <i class="bi bi-collection"></i> Browse the catalog
             </a>
-            @if (User.IsInRole("Training Coordinator"))
+            @if (User.IsInRole("TrainingCoordinator"))
             {
                 <a asp-controller="CourseSessions" asp-action="Index" class="btn btn-outline-primary">
                     <i class="bi bi-calendar-event"></i> Manage sessions
@@ -84,7 +182,7 @@
     <a asp-controller="Certification" asp-action="Lookup" class="tp-bento-cell" style="text-decoration: none; color: inherit;">
         <div class="tp-stat-icon green"><i class="bi bi-patch-check"></i></div>
         <h3>Verify a certificate</h3>
-        <p>Public lookup — no account needed. Confirm trainee credentials in seconds.</p>
+        <p>Public lookup &mdash; no account needed. Confirm trainee credentials in seconds.</p>
     </a>
 
     <a asp-controller="Courses" asp-action="Index" class="tp-bento-cell" style="text-decoration: none; color: inherit;">
@@ -93,3 +191,191 @@
         <p>Filter the catalog by category, prerequisites, and capacity to plan your path.</p>
     </a>
 </div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script>
+        (function () {
+            if (typeof gsap === 'undefined') return;
+            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduce) return;
+
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Char-split — masked spans for char-by-char reveal
+            function charSplit(el) {
+                if (!el || el.dataset.tpSplit) return;
+                var text = el.textContent;
+                el.innerHTML = text.split('').map(function (c) {
+                    if (c === ' ') return '<span class="tp-space"></span>';
+                    return '<span class="tp-char-mask"><span class="tp-char">' + c + '</span></span>';
+                }).join('');
+                el.dataset.tpSplit = '1';
+            }
+
+            // Split every display row in hero + feature titles — EXCEPT accent rows.
+            // Accent rows use -webkit-background-clip: text for their gradient fill, which
+            // doesn't propagate through child stacking contexts created by inline-block
+            // chars with transforms. We animate accent rows as whole words instead.
+            document.querySelectorAll(
+                '.tp-spy-display .tp-spy-display-row:not(.tp-spy-accent), ' +
+                '.tp-spy-feature-title .tp-spy-display-row:not(.tp-spy-accent)'
+            ).forEach(charSplit);
+
+            var mm = gsap.matchMedia();
+
+            // ============ Desktop >= 992px: pinned + scrubbed timelines ============
+            mm.add('(min-width: 992px)', function () {
+
+                // --- Hero: pin and scrub through char reveal + cert card transform ---
+                gsap.set('.tp-spy-eyebrow', { autoAlpha: 0, y: 16 });
+                gsap.set('.tp-spy-display .tp-char', { yPercent: 115, autoAlpha: 0, rotate: 6 });
+                gsap.set('.tp-spy-display .tp-spy-accent', { autoAlpha: 0, y: 40, scale: 0.96 });
+                gsap.set('.tp-spy-lead', { autoAlpha: 0, y: 24 });
+                gsap.set('.tp-spy-cta .btn', { autoAlpha: 0, y: 18 });
+                gsap.set('.tp-cert-card', { autoAlpha: 0, y: 80, rotate: -16, scale: 0.85 });
+
+                var heroTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: '.tp-spy-hero',
+                        start: 'top top',
+                        end: '+=90%',
+                        pin: true,
+                        scrub: 0.6,
+                        anticipatePin: 1
+                    }
+                });
+                heroTl
+                    .to('.tp-spy-eyebrow', { autoAlpha: 1, y: 0, duration: .4 }, 0)
+                    .to('.tp-spy-display .tp-char', {
+                        yPercent: 0, autoAlpha: 1, rotate: 0,
+                        duration: 1, stagger: 0.04, ease: 'power3.out'
+                    }, 0.05)
+                    .to('.tp-spy-display .tp-spy-accent', {
+                        autoAlpha: 1, y: 0, scale: 1,
+                        duration: 0.8, ease: 'power3.out'
+                    }, 0.5)
+                    .to('.tp-cert-card', {
+                        autoAlpha: 1, y: -10, rotate: -4, scale: 1,
+                        duration: 1.2, ease: 'power2.out'
+                    }, 0)
+                    .to('.tp-spy-lead', { autoAlpha: 1, y: 0, duration: .5 }, 0.55)
+                    .to('.tp-spy-cta .btn', { autoAlpha: 1, y: 0, duration: .4, stagger: .12 }, 0.7)
+                    .to('.tp-cert-card', {
+                        y: -50, rotate: 2, scale: 1.04,
+                        duration: 0.8, ease: 'none'
+                    }, 0.7);
+
+                // --- Each feature panel: pin and scrub through staged reveal ---
+                gsap.utils.toArray('.tp-spy-feature').forEach(function (panel) {
+                    var num     = panel.querySelector('.tp-spy-feature-num');
+                    var eyebrow = panel.querySelector('.tp-spy-feature-eyebrow');
+                    var chars   = panel.querySelectorAll('.tp-spy-feature-title .tp-char');
+                    var accent  = panel.querySelector('.tp-spy-feature-title .tp-spy-accent');
+                    var text    = panel.querySelector('.tp-spy-feature-text');
+                    var btns    = panel.querySelectorAll('.tp-spy-feature-text-col .btn');
+                    var visual  = panel.querySelector('.tp-spy-feature-visual');
+                    var icon    = panel.querySelector('.tp-spy-feature-icon');
+
+                    gsap.set(num,     { autoAlpha: 0, x: -120, scale: 0.7 });
+                    gsap.set(eyebrow, { autoAlpha: 0, x: -40 });
+                    gsap.set(chars,   { yPercent: 115, autoAlpha: 0 });
+                    gsap.set(accent,  { autoAlpha: 0, y: 40, scale: 0.96 });
+                    gsap.set(text,    { autoAlpha: 0, y: 30 });
+                    gsap.set(btns,    { autoAlpha: 0, y: 20 });
+                    gsap.set(visual,  { autoAlpha: 0, x: 120, scale: 0.85, rotate: 8 });
+                    gsap.set(icon,    { scale: 0.55, rotate: -25 });
+
+                    var tl = gsap.timeline({
+                        scrollTrigger: {
+                            trigger: panel,
+                            start: 'top top',
+                            end: '+=75%',
+                            pin: true,
+                            scrub: 0.6,
+                            anticipatePin: 1
+                        }
+                    });
+                    tl
+                        .to(num,     { autoAlpha: 1, x: 0, scale: 1, duration: .8, ease: 'power3.out' }, 0)
+                        .to(eyebrow, { autoAlpha: 1, x: 0, duration: .5 }, 0.1)
+                        .to(visual,  { autoAlpha: 1, x: 0, scale: 1, rotate: 0, duration: 1.0, ease: 'power3.out' }, 0.05)
+                        .to(icon,    { scale: 1, rotate: 0, duration: 1.0, ease: 'back.out(1.5)' }, 0.2)
+                        .to(chars,   { yPercent: 0, autoAlpha: 1, duration: .9, stagger: 0.04, ease: 'power3.out' }, 0.15)
+                        .to(accent,  { autoAlpha: 1, y: 0, scale: 1, duration: .7, ease: 'power3.out' }, 0.5)
+                        .to(text,    { autoAlpha: 1, y: 0, duration: .5 }, 0.55)
+                        .to(btns,    { autoAlpha: 1, y: 0, duration: .4, stagger: .1 }, 0.7);
+                });
+            });
+
+            // ============ Mobile <= 991px: simple fade-up reveals, no pinning ============
+            mm.add('(max-width: 991px)', function () {
+                gsap.set('.tp-spy-eyebrow, .tp-spy-lead, .tp-cert-card', { autoAlpha: 0, y: 30 });
+                gsap.set('.tp-spy-display .tp-char', { yPercent: 100, autoAlpha: 0 });
+                gsap.set('.tp-spy-display .tp-spy-accent', { autoAlpha: 0, y: 30 });
+                gsap.set('.tp-spy-cta .btn', { autoAlpha: 0, y: 18 });
+
+                var heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+                heroTl
+                    .to('.tp-spy-eyebrow', { autoAlpha: 1, y: 0, duration: .5 })
+                    .to('.tp-spy-display .tp-char', { yPercent: 0, autoAlpha: 1, duration: .7, stagger: .025 }, '-=.2')
+                    .to('.tp-spy-display .tp-spy-accent', { autoAlpha: 1, y: 0, duration: .6 }, '-=.3')
+                    .to('.tp-cert-card', { autoAlpha: 1, y: 0, duration: .8 }, '-=.5')
+                    .to('.tp-spy-lead', { autoAlpha: 1, y: 0, duration: .5 }, '-=.4')
+                    .to('.tp-spy-cta .btn', { autoAlpha: 1, y: 0, duration: .4, stagger: .1 }, '-=.3');
+
+                gsap.utils.toArray('.tp-spy-feature').forEach(function (panel) {
+                    var children = panel.querySelectorAll(
+                        '.tp-spy-feature-num, .tp-spy-feature-eyebrow, .tp-spy-feature-title,' +
+                        ' .tp-spy-feature-text, .tp-spy-feature-visual, .tp-spy-feature-text-col .btn'
+                    );
+                    gsap.set(children, { autoAlpha: 0, y: 40 });
+                    gsap.to(children, {
+                        autoAlpha: 1, y: 0,
+                        duration: .7, stagger: .08, ease: 'power3.out',
+                        scrollTrigger: { trigger: panel, start: 'top 80%', once: true }
+                    });
+                });
+            });
+
+            // 3D tilt on cert card pointer-follow
+            var stage = document.querySelector('.tp-cert-stage');
+            var card  = document.querySelector('.tp-cert-card');
+            if (stage && card) {
+                stage.addEventListener('pointermove', function (e) {
+                    var r = stage.getBoundingClientRect();
+                    var x = (e.clientX - r.left) / r.width  - 0.5;
+                    var y = (e.clientY - r.top)  / r.height - 0.5;
+                    gsap.to(card, {
+                        rotateY: x * 14,
+                        rotateX: -y * 14,
+                        duration: 0.4,
+                        ease: 'power2.out',
+                        overwrite: 'auto'
+                    });
+                });
+                stage.addEventListener('pointerleave', function () {
+                    gsap.to(card, {
+                        rotateY: 0, rotateX: 0,
+                        duration: 0.7, ease: 'elastic.out(1, 0.5)',
+                        overwrite: 'auto'
+                    });
+                });
+            }
+
+            // Bento — simple stagger on enter
+            gsap.utils.toArray('.tp-bento .tp-bento-cell').forEach(function (el, i) {
+                gsap.fromTo(el,
+                    { autoAlpha: 0, y: 50, scale: 0.95 },
+                    {
+                        autoAlpha: 1, y: 0, scale: 1,
+                        duration: 0.75, ease: 'power3.out',
+                        delay: i * 0.1,
+                        scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+                    }
+                );
+            });
+        })();
+    </script>
+}
