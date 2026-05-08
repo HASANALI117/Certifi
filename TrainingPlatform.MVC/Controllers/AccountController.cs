@@ -32,7 +32,8 @@ public class AccountController : Controller
 
         var user = new AppUser
         {
-            FirstName = model.FullName,
+            FirstName = model.FirstName,
+            LastName = model.LastName,
             UserName = model.Email,
             Email = model.Email
         };

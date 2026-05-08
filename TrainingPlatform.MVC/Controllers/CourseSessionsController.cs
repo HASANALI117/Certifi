@@ -33,7 +33,7 @@ public class CourseSessionsController : Controller
             ClassroomName = s.Classroom.Name,
             SessionDate = DateOnly.FromDateTime(s.StartDateTime),
             StartTime = TimeOnly.FromDateTime(s.StartDateTime),
-            AvailableSpots = s.Capacity - s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
+            AvailableSpots = s.Capacity,
             EnrollmentCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
         }).ToList();
 
@@ -61,7 +61,7 @@ public class CourseSessionsController : Controller
             ClassroomEquipment = string.Join(", ", session.Classroom.Equipment.Select(e => e.EquipmentName)),
             SessionDate = DateOnly.FromDateTime(session.StartDateTime),
             StartTime = TimeOnly.FromDateTime(session.StartDateTime),
-            AvailableSpots = session.Capacity - session.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
+            AvailableSpots = session.Capacity,
             EnrollmentCount = session.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
         });
     }
