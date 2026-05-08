@@ -3,16 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
 public class CoursesController : Controller
 {
-    private readonly TrainingPlatformDbContext _db;
+    private readonly AppDbContext _db;
 
-    public CoursesController(TrainingPlatformDbContext db) => _db = db;
+    public CoursesController(AppDbContext db) => _db = db;
 
     public async Task<IActionResult> Index(string? search, int? categoryId)
     {
@@ -35,12 +35,12 @@ public class CoursesController : Controller
                 CategoryName = c.Category.Name,
                 DurationHours = c.DurationHours,
                 Capacity = c.Capacity,
-                Fee = c.Fee,
+                Fee = c.EnrollmentFee,
                 PrerequisiteTitle = c.PrerequisiteCourse != null ? c.PrerequisiteCourse.Title : null
             })
             .ToListAsync();
 
-        ViewBag.Categories = await _db.Categories
+        ViewBag.Categories = await _db.CourseCategories
             .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
             .ToListAsync();
         ViewBag.SelectedCategoryId = categoryId;
@@ -67,7 +67,7 @@ public class CoursesController : Controller
             CategoryName = course.Category.Name,
             DurationHours = course.DurationHours,
             Capacity = course.Capacity,
-            Fee = course.Fee,
+            Fee = course.EnrollmentFee,
             PrerequisiteTitle = course.PrerequisiteCourse?.Title,
             SessionCount = course.Sessions.Count
         });
@@ -93,7 +93,7 @@ public class CoursesController : Controller
             Description = model.Description,
             DurationHours = model.DurationHours,
             Capacity = model.Capacity,
-            Fee = model.Fee,
+            EnrollmentFee = model.Fee,
             CategoryId = model.CategoryId,
             PrerequisiteCourseId = model.PrerequisiteCourseId
         });
@@ -117,7 +117,7 @@ public class CoursesController : Controller
             Description = course.Description,
             DurationHours = course.DurationHours,
             Capacity = course.Capacity,
-            Fee = course.Fee,
+            Fee = course.EnrollmentFee,
             CategoryId = course.CategoryId,
             PrerequisiteCourseId = course.PrerequisiteCourseId
         };
@@ -139,7 +139,7 @@ public class CoursesController : Controller
         course.Description = model.Description;
         course.DurationHours = model.DurationHours;
         course.Capacity = model.Capacity;
-        course.Fee = model.Fee;
+        course.EnrollmentFee = model.Fee;
         course.CategoryId = model.CategoryId;
         course.PrerequisiteCourseId = model.PrerequisiteCourseId;
 
@@ -165,7 +165,7 @@ public class CoursesController : Controller
     {
         var model = existing ?? new CourseFormViewModel();
 
-        model.Categories = await _db.Categories
+        model.Categories = await _db.CourseCategories
             .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
             .ToListAsync();
 

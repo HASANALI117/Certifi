@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
@@ -10,13 +10,13 @@ namespace TrainingPlatform.MVC.Controllers;
 [Authorize(Roles = "Training Coordinator")]
 public class CategoriesController : Controller
 {
-    private readonly TrainingPlatformDbContext _db;
+    private readonly AppDbContext _db;
 
-    public CategoriesController(TrainingPlatformDbContext db) => _db = db;
+    public CategoriesController(AppDbContext db) => _db = db;
 
     public async Task<IActionResult> Index()
     {
-        var categories = await _db.Categories
+        var categories = await _db.CourseCategories
             .Include(c => c.Courses)
             .Select(c => new CategoryViewModel
             {
@@ -38,7 +38,7 @@ public class CategoriesController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        _db.Categories.Add(new Category { Name = model.Name });
+        _db.CourseCategories.Add(new CourseCategory { Name = model.Name });
         await _db.SaveChangesAsync();
         TempData["Success"] = $"Category '{model.Name}' created.";
         return RedirectToAction(nameof(Index));
@@ -47,7 +47,7 @@ public class CategoriesController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var category = await _db.Categories.FindAsync(id);
+        var category = await _db.CourseCategories.FindAsync(id);
         if (category == null) return NotFound();
         return View(new CategoryViewModel { Id = category.Id, Name = category.Name });
     }
@@ -58,7 +58,7 @@ public class CategoriesController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var category = await _db.Categories.FindAsync(model.Id);
+        var category = await _db.CourseCategories.FindAsync(model.Id);
         if (category == null) return NotFound();
 
         category.Name = model.Name;
@@ -70,7 +70,9 @@ public class CategoriesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var category = await _db.Categories.Include(c => c.Courses).FirstOrDefaultAsync(c => c.Id == id);
+        var category = await _db.CourseCategories
+            .Include(c => c.Courses)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (category == null) return NotFound();
 
         if (category.Courses.Any())
@@ -79,7 +81,7 @@ public class CategoriesController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        _db.Categories.Remove(category);
+        _db.CourseCategories.Remove(category);
         await _db.SaveChangesAsync();
         TempData["Success"] = "Category deleted.";
         return RedirectToAction(nameof(Index));

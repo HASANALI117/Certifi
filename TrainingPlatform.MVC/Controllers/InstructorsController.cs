@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
@@ -12,10 +12,10 @@ namespace TrainingPlatform.MVC.Controllers;
 [Authorize(Roles = "Training Coordinator")]
 public class InstructorsController : Controller
 {
-    private readonly TrainingPlatformDbContext _db;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly AppDbContext _db;
+    private readonly UserManager<AppUser> _userManager;
 
-    public InstructorsController(TrainingPlatformDbContext db, UserManager<ApplicationUser> userManager)
+    public InstructorsController(AppDbContext db, UserManager<AppUser> userManager)
     {
         _db = db;
         _userManager = userManager;
@@ -25,14 +25,14 @@ public class InstructorsController : Controller
     {
         var instructors = await _db.Instructors
             .Include(i => i.User)
-            .Include(i => i.Sessions)
+            .Include(i => i.CourseSessions)
             .Select(i => new InstructorListItemViewModel
             {
                 Id = i.Id,
-                FullName = i.User.FullName,
+                FullName = i.User.FirstName + " " + i.User.LastName,
                 Email = i.User.Email ?? string.Empty,
                 ExpertiseAreas = i.ExpertiseAreas,
-                SessionCount = i.Sessions.Count
+                SessionCount = i.CourseSessions.Count
             })
             .ToListAsync();
 
@@ -43,7 +43,7 @@ public class InstructorsController : Controller
     {
         var instructor = await _db.Instructors
             .Include(i => i.User)
-            .Include(i => i.Sessions)
+            .Include(i => i.CourseSessions)
                 .ThenInclude(s => s.Course)
             .FirstOrDefaultAsync(i => i.Id == id);
 
@@ -52,13 +52,13 @@ public class InstructorsController : Controller
         return View(new InstructorDetailsViewModel
         {
             Id = instructor.Id,
-            FullName = instructor.User.FullName,
+            FullName = instructor.User.FirstName + " " + instructor.User.LastName,
             Email = instructor.User.Email ?? string.Empty,
             ExpertiseAreas = instructor.ExpertiseAreas,
             Bio = instructor.Bio,
-            UpcomingSessions = instructor.Sessions
-                .Where(s => s.SessionDate >= DateOnly.FromDateTime(DateTime.Today))
-                .Select(s => $"{s.Course.Title} — {s.SessionDate:d MMM yyyy} {s.StartTime:hh\\:mm}")
+            UpcomingSessions = instructor.CourseSessions
+                .Where(s => s.StartDateTime >= DateTime.Today)
+                .Select(s => $"{s.Course.Title} — {s.StartDateTime:d MMM yyyy HH:mm}")
                 .ToList()
         });
     }
@@ -135,7 +135,7 @@ public class InstructorsController : Controller
 
         model.AvailableUsers = instructorRoleUsers
             .Where(u => !instructorUsers.Contains(u.Id) || u.Id == existing?.UserId)
-            .Select(u => new SelectListItem { Value = u.Id, Text = $"{u.FullName} ({u.Email})" });
+            .Select(u => new SelectListItem { Value = u.Id, Text = $"{u.FirstName} {u.LastName} ({u.Email})" });
 
         return model;
     }

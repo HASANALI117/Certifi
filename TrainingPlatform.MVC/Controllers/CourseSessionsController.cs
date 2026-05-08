@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
@@ -11,9 +11,9 @@ namespace TrainingPlatform.MVC.Controllers;
 [Authorize(Roles = "Training Coordinator")]
 public class CourseSessionsController : Controller
 {
-    private readonly TrainingPlatformDbContext _db;
+    private readonly AppDbContext _db;
 
-    public CourseSessionsController(TrainingPlatformDbContext db) => _db = db;
+    public CourseSessionsController(AppDbContext db) => _db = db;
 
     public async Task<IActionResult> Index()
     {
@@ -22,21 +22,22 @@ public class CourseSessionsController : Controller
             .Include(s => s.Instructor).ThenInclude(i => i.User)
             .Include(s => s.Classroom)
             .Include(s => s.Enrollments)
-            .OrderBy(s => s.SessionDate).ThenBy(s => s.StartTime)
-            .Select(s => new CourseSessionListItemViewModel
-            {
-                Id = s.Id,
-                CourseTitle = s.Course.Title,
-                InstructorName = s.Instructor.User.FullName,
-                ClassroomName = s.Classroom.Name,
-                SessionDate = s.SessionDate,
-                StartTime = s.StartTime,
-                AvailableSpots = s.AvailableSpots,
-                EnrollmentCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
-            })
+            .OrderBy(s => s.StartDateTime)
             .ToListAsync();
 
-        return View(sessions);
+        var viewModels = sessions.Select(s => new CourseSessionListItemViewModel
+        {
+            Id = s.Id,
+            CourseTitle = s.Course.Title,
+            InstructorName = $"{s.Instructor.User.FirstName} {s.Instructor.User.LastName}",
+            ClassroomName = s.Classroom.Name,
+            SessionDate = DateOnly.FromDateTime(s.StartDateTime),
+            StartTime = TimeOnly.FromDateTime(s.StartDateTime),
+            AvailableSpots = s.Capacity - s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
+            EnrollmentCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
+        }).ToList();
+
+        return View(viewModels);
     }
 
     public async Task<IActionResult> Details(int id)
@@ -44,7 +45,7 @@ public class CourseSessionsController : Controller
         var session = await _db.CourseSessions
             .Include(s => s.Course)
             .Include(s => s.Instructor).ThenInclude(i => i.User)
-            .Include(s => s.Classroom)
+            .Include(s => s.Classroom).ThenInclude(c => c.Equipment)
             .Include(s => s.Enrollments)
             .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -55,12 +56,12 @@ public class CourseSessionsController : Controller
             Id = session.Id,
             CourseTitle = session.Course.Title,
             CourseDescription = session.Course.Description,
-            InstructorName = session.Instructor.User.FullName,
+            InstructorName = $"{session.Instructor.User.FirstName} {session.Instructor.User.LastName}",
             ClassroomName = session.Classroom.Name,
-            ClassroomEquipment = session.Classroom.Equipment,
-            SessionDate = session.SessionDate,
-            StartTime = session.StartTime,
-            AvailableSpots = session.AvailableSpots,
+            ClassroomEquipment = string.Join(", ", session.Classroom.Equipment.Select(e => e.EquipmentName)),
+            SessionDate = DateOnly.FromDateTime(session.StartDateTime),
+            StartTime = TimeOnly.FromDateTime(session.StartDateTime),
+            AvailableSpots = session.Capacity - session.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
             EnrollmentCount = session.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
         });
     }
@@ -77,11 +78,11 @@ public class CourseSessionsController : Controller
         if (!ModelState.IsValid)
             return View(await BuildFormAsync(model));
 
-        // Validate instructor not double-booked on this date and time
+        var startDateTime = model.SessionDate.ToDateTime(model.StartTime);
+
         var instructorConflict = await _db.CourseSessions.AnyAsync(s =>
             s.InstructorId == model.InstructorId &&
-            s.SessionDate == model.SessionDate &&
-            s.StartTime == model.StartTime);
+            s.StartDateTime == startDateTime);
 
         if (instructorConflict)
         {
@@ -90,11 +91,9 @@ public class CourseSessionsController : Controller
             return View(await BuildFormAsync(model));
         }
 
-        // Validate classroom not double-booked
         var roomConflict = await _db.CourseSessions.AnyAsync(s =>
             s.ClassroomId == model.ClassroomId &&
-            s.SessionDate == model.SessionDate &&
-            s.StartTime == model.StartTime);
+            s.StartDateTime == startDateTime);
 
         if (roomConflict)
         {
@@ -103,7 +102,6 @@ public class CourseSessionsController : Controller
             return View(await BuildFormAsync(model));
         }
 
-        // Validate available spots do not exceed classroom capacity
         var classroom = await _db.Classrooms.FindAsync(model.ClassroomId);
         if (classroom != null && model.AvailableSpots > classroom.Capacity)
         {
@@ -112,14 +110,19 @@ public class CourseSessionsController : Controller
             return View(await BuildFormAsync(model));
         }
 
+        var course = await _db.Courses.FindAsync(model.CourseId);
+        var endDateTime = course != null
+            ? startDateTime.AddHours(course.DurationHours)
+            : startDateTime.AddHours(1);
+
         _db.CourseSessions.Add(new CourseSession
         {
             CourseId = model.CourseId,
             InstructorId = model.InstructorId,
             ClassroomId = model.ClassroomId,
-            SessionDate = model.SessionDate,
-            StartTime = model.StartTime,
-            AvailableSpots = model.AvailableSpots
+            StartDateTime = startDateTime,
+            EndDateTime = endDateTime,
+            Capacity = model.AvailableSpots
         });
 
         await _db.SaveChangesAsync();
@@ -154,8 +157,7 @@ public class CourseSessionsController : Controller
             .ToListAsync();
 
         model.Instructors = await _db.Instructors
-            .Include(i => i.User)
-            .Select(i => new SelectListItem { Value = i.Id.ToString(), Text = i.User.FullName })
+            .Select(i => new SelectListItem { Value = i.Id.ToString(), Text = i.User.FirstName + " " + i.User.LastName })
             .ToListAsync();
 
         model.Classrooms = await _db.Classrooms
