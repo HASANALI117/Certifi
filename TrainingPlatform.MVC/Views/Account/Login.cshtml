@@ -1,0 +1,43 @@
+@model TrainingPlatform.MVC.Models.ViewModels.LoginViewModel
+@{ ViewData["Title"] = "Login"; }
+
+<div class="tp-auth-shell">
+    <div class="tp-auth-card">
+        <div class="tp-auth-mark"><i class="bi bi-mortarboard-fill"></i></div>
+        <h1 class="tp-auth-title">Welcome back</h1>
+        <p class="tp-auth-sub">Sign in to your Training Platform account.</p>
+
+        <form asp-action="Login" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="mb-4 form-check">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-box-arrow-in-right"></i> Sign in
+            </button>
+        </form>
+
+        <p class="tp-auth-footer">
+            Don't have an account? <a asp-action="Register">Create one</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

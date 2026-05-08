@@ -1,0 +1,74 @@
+@model TrainingPlatform.MVC.Models.ViewModels.CourseSessionFormViewModel
+@{ ViewData["Title"] = "Schedule Session"; }
+
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-plus-circle"></i> Manage</span>
+        <h1 class="tp-page-title">Schedule a Course Session</h1>
+        <p class="tp-page-subtitle">The system will prevent double-booking of instructors and classrooms.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="tp-form-card">
+            <form asp-action="Create" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CourseId" class="form-label"></label>
+                    <select asp-for="CourseId" asp-items="Model.Courses" class="form-select">
+                        <option value="">-- Select Course --</option>
+                    </select>
+                    <span asp-validation-for="CourseId" class="text-danger"></span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="InstructorId" class="form-label"></label>
+                        <select asp-for="InstructorId" asp-items="Model.Instructors" class="form-select">
+                            <option value="">-- Select Instructor --</option>
+                        </select>
+                        <span asp-validation-for="InstructorId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ClassroomId" class="form-label"></label>
+                        <select asp-for="ClassroomId" asp-items="Model.Classrooms" class="form-select">
+                            <option value="">-- Select Classroom --</option>
+                        </select>
+                        <span asp-validation-for="ClassroomId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <label asp-for="SessionDate" class="form-label"></label>
+                        <input asp-for="SessionDate" class="form-control" type="date"
+                               value="@Model.SessionDate.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="SessionDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="StartTime" class="form-label"></label>
+                        <input asp-for="StartTime" class="form-control" type="time"
+                               value="@Model.StartTime.ToString("HH\\:mm")" />
+                        <span asp-validation-for="StartTime" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="AvailableSpots" class="form-label"></label>
+                        <input asp-for="AvailableSpots" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="AvailableSpots" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="tp-form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-calendar-plus"></i> Schedule
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

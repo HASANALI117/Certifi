@@ -1,0 +1,77 @@
+@model TrainingPlatform.MVC.Models.ViewModels.CourseFormViewModel
+@{ ViewData["Title"] = "New Course"; }
+
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-plus-circle"></i> Catalog</span>
+        <h1 class="tp-page-title">New Course</h1>
+        <p class="tp-page-subtitle">Add a new course to the training catalog.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="tp-form-card">
+            <form asp-action="Create" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" placeholder="e.g. Cloud Foundations" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="What will trainees learn?"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="DurationHours" class="form-label"></label>
+                        <input asp-for="DurationHours" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="DurationHours" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Capacity" class="form-label"></label>
+                        <input asp-for="Capacity" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="Capacity" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Fee" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Fee" class="form-control" type="number" step="0.01" min="0" />
+                        </div>
+                        <span asp-validation-for="Fee" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+                            <option value="">-- Select Category --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PrerequisiteCourseId" class="form-label"></label>
+                        <select asp-for="PrerequisiteCourseId" asp-items="Model.Courses" class="form-select">
+                            <option value="">-- None --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tp-form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2-circle"></i> Create Course
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

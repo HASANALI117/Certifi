@@ -1,0 +1,45 @@
+@model TrainingPlatform.MVC.Models.ViewModels.ClassroomViewModel
+@{ ViewData["Title"] = "Edit Classroom"; }
+
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-pencil"></i> Manage</span>
+        <h1 class="tp-page-title">Edit Classroom</h1>
+        <p class="tp-page-subtitle">Update classroom details.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="tp-form-card">
+            <form asp-action="Edit" method="post" novalidate>
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-7">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="Capacity" class="form-label"></label>
+                        <input asp-for="Capacity" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="Capacity" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label asp-for="Equipment" class="form-label"></label>
+                    <input asp-for="Equipment" class="form-control" />
+                </div>
+                <div class="tp-form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

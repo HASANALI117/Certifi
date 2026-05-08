@@ -1,0 +1,68 @@
+@model TrainingPlatform.MVC.Models.ViewModels.InstructorDetailsViewModel
+@{
+    ViewData["Title"] = Model.FullName;
+    var initial = !string.IsNullOrWhiteSpace(Model.FullName) ? Model.FullName.Substring(0, 1).ToUpperInvariant() : "?";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Instructors</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.FullName</li>
+    </ol>
+</nav>
+
+<div class="tp-page-header">
+    <div class="d-flex align-items-center gap-3">
+        <span class="tp-avatar" style="width: 56px; height: 56px; font-size: 1.4rem; border-radius: 14px;">@initial</span>
+        <div>
+            <span class="tp-page-eyebrow"><i class="bi bi-person-badge"></i> Instructor</span>
+            <h1 class="tp-page-title">@Model.FullName</h1>
+            <p class="tp-page-subtitle">@Model.Email</p>
+        </div>
+    </div>
+    <div class="tp-page-actions">
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="tp-surface tp-surface-pad">
+            <h2 style="font-size: 1.05rem; margin-bottom: 1rem;">Profile</h2>
+            <dl class="tp-detail-list">
+                <div class="tp-row">
+                    <dt><i class="bi bi-stars me-1"></i> Expertise areas</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.ExpertiseAreas) ? "—" : Model.ExpertiseAreas)</dd>
+                </div>
+                <div class="tp-row">
+                    <dt><i class="bi bi-card-text me-1"></i> Bio</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Bio) ? "—" : Model.Bio)</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="tp-surface tp-surface-pad">
+            <h2 style="font-size: 1.05rem; margin-bottom: 1rem;">
+                <i class="bi bi-calendar-event me-1"></i> Upcoming sessions
+            </h2>
+            @if (Model.UpcomingSessions.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var s in Model.UpcomingSessions)
+                    {
+                        <li class="list-group-item d-flex align-items-center gap-2">
+                            <span class="tp-icon-circle" style="width: 26px; height: 26px;"><i class="bi bi-calendar-check"></i></span>
+                            <span>@s</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="tp-text-muted mb-0">No upcoming sessions.</p>
+            }
+        </div>
+    </div>
+</div>

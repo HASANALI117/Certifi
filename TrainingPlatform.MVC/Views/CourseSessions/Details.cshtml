@@ -1,0 +1,84 @@
+@model TrainingPlatform.MVC.Models.ViewModels.CourseSessionDetailsViewModel
+@{
+    ViewData["Title"] = "Session Details";
+    var spotsLeft = Model.AvailableSpots - Model.EnrollmentCount;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Schedule</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Session Details</li>
+    </ol>
+</nav>
+
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-calendar-event"></i> Session</span>
+        <h1 class="tp-page-title">@Model.CourseTitle</h1>
+        <p class="tp-page-subtitle">@(string.IsNullOrWhiteSpace(Model.CourseDescription) ? "—" : Model.CourseDescription)</p>
+    </div>
+    <div class="tp-page-actions">
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Schedule</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="tp-surface tp-surface-pad">
+            <h2 style="font-size: 1.05rem; margin-bottom: 1rem;">Session details</h2>
+            <dl class="tp-detail-list">
+                <div class="tp-row">
+                    <dt><i class="bi bi-person me-1"></i> Instructor</dt>
+                    <dd>@Model.InstructorName</dd>
+                </div>
+                <div class="tp-row">
+                    <dt><i class="bi bi-door-open me-1"></i> Classroom</dt>
+                    <dd>@Model.ClassroomName</dd>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.ClassroomEquipment))
+                {
+                    <div class="tp-row">
+                        <dt><i class="bi bi-tools me-1"></i> Equipment</dt>
+                        <dd>@Model.ClassroomEquipment</dd>
+                    </div>
+                }
+                <div class="tp-row">
+                    <dt><i class="bi bi-calendar3 me-1"></i> Date</dt>
+                    <dd>@Model.SessionDate.ToString("dddd, dd MMMM yyyy")</dd>
+                </div>
+                <div class="tp-row">
+                    <dt><i class="bi bi-clock me-1"></i> Start time</dt>
+                    <dd>@Model.StartTime.ToString("hh\\:mm tt")</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="tp-surface tp-surface-pad">
+            <h2 style="font-size: 1.05rem; margin-bottom: 1rem;"><i class="bi bi-people me-1"></i> Enrolment</h2>
+            <div class="d-flex align-items-baseline gap-2 mb-2">
+                <span style="font-size: 2rem; font-weight: 700; font-family: 'Plus Jakarta Sans';">@Model.EnrollmentCount</span>
+                <span class="tp-text-muted">/ @Model.AvailableSpots</span>
+            </div>
+            @{
+                var pct = Model.AvailableSpots > 0 ? (int)(Model.EnrollmentCount * 100.0 / Model.AvailableSpots) : 0;
+                var fillClass = spotsLeft <= 0 ? "var(--tp-danger)" : spotsLeft <= 5 ? "var(--tp-warning)" : "var(--tp-success)";
+            }
+            <div style="height: 8px; background: var(--tp-bg); border-radius: 999px; overflow: hidden; margin-bottom: .85rem;">
+                <div style="width: @pct%; height: 100%; background: @fillClass; transition: width 250ms ease;"></div>
+            </div>
+            @if (spotsLeft <= 0)
+            {
+                <span class="badge bg-danger"><i class="bi bi-x-circle-fill"></i> Fully booked</span>
+            }
+            else if (spotsLeft <= 5)
+            {
+                <span class="badge bg-warning"><i class="bi bi-exclamation-circle-fill"></i> @spotsLeft spots remaining</span>
+            }
+            else
+            {
+                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> @spotsLeft spots remaining</span>
+            }
+        </div>
+    </div>
+</div>
