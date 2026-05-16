@@ -48,7 +48,7 @@ public class AccountController : Controller
 
         await _userManager.AddToRoleAsync(user, model.Role);
         await _signInManager.SignInAsync(user, isPersistent: false);
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Dashboard");
     }
 
     [HttpGet]
@@ -68,7 +68,11 @@ public class AccountController : Controller
             model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
-            return LocalRedirect(returnUrl ?? "/");
+        {
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
+            return RedirectToAction("Index", "Dashboard");
+        }
 
         ModelState.AddModelError(string.Empty, "Invalid email or password.");
         return View(model);

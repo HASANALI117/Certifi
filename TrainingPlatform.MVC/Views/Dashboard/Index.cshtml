@@ -1,0 +1,240 @@
+@model TrainingPlatform.MVC.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var isAjax = string.Equals(
+        Context.Request.Headers["X-Requested-With"],
+        "XMLHttpRequest",
+        StringComparison.OrdinalIgnoreCase);
+    Layout = isAjax ? null : "_DashboardLayout";
+
+    var today = DateTime.Today;
+    var firstOfMonth = new DateTime(today.Year, today.Month, 1);
+    var daysInMonth = DateTime.DaysInMonth(today.Year, today.Month);
+    var leadingBlanks = ((int)firstOfMonth.DayOfWeek + 6) % 7; // start week on Monday
+    var sessionDayKeys = Model.UpcomingSessions
+        .Where(s => s.StartDateTime.Year == today.Year && s.StartDateTime.Month == today.Month)
+        .Select(s => s.StartDateTime.Day)
+        .ToHashSet();
+
+    string AccentClass(string seed)
+    {
+        var palette = new[] { "blue", "violet", "pink", "amber", "teal", "rose" };
+        var hash = 0;
+        foreach (var ch in seed) hash = (hash * 31 + ch) & 0x7fffffff;
+        return $"dash-accent-{palette[hash % palette.Length]}";
+    }
+
+    string MonthShort(int m) => System.Globalization.CultureInfo.InvariantCulture
+        .DateTimeFormat.GetAbbreviatedMonthName(m).ToUpperInvariant();
+}
+
+<div class="dash-content">
+    <div class="dash-content-main">
+        <header class="dash-topbar">
+            <div>
+                <h1 class="dash-page-title">Hello, @(string.IsNullOrWhiteSpace(Model.FirstName) ? "there" : Model.FirstName) 👋</h1>
+                <p class="dash-page-sub">Your @Model.Role.ToLowerInvariant() workspace — courses, schedule, and progress at a glance.</p>
+            </div>
+            <form method="get" asp-action="Index" class="dash-search">
+                <i class="bi bi-search"></i>
+                <input type="text" name="search" value="@Model.Search" placeholder="Search courses…" autocomplete="off" />
+                @if (Model.SelectedCategoryId.HasValue)
+                {
+                    <input type="hidden" name="categoryId" value="@Model.SelectedCategoryId" />
+                }
+            </form>
+            <div class="dash-user-chip">
+                <span class="dash-avatar">@((string.IsNullOrWhiteSpace(Model.FirstName) ? "U" : Model.FirstName.Substring(0, 1)).ToUpperInvariant())</span>
+                <div>
+                    <div class="dash-user-name">@Model.FirstName @Model.LastName</div>
+                    <div class="dash-user-role">@Model.Role</div>
+                </div>
+            </div>
+        </header>
+
+        <section class="dash-stats">
+            <div class="dash-stat">
+                <span class="dash-stat-icon dash-stat-icon-blue"><i class="bi bi-collection"></i></span>
+                <div>
+                    <div class="dash-stat-value">@Model.Stats.CourseCount</div>
+                    <div class="dash-stat-label">Courses</div>
+                </div>
+            </div>
+            <div class="dash-stat">
+                <span class="dash-stat-icon dash-stat-icon-violet"><i class="bi bi-calendar-event"></i></span>
+                <div>
+                    <div class="dash-stat-value">@Model.Stats.UpcomingSessionCount</div>
+                    <div class="dash-stat-label">Upcoming sessions</div>
+                </div>
+            </div>
+            <div class="dash-stat">
+                <span class="dash-stat-icon dash-stat-icon-pink"><i class="bi bi-people"></i></span>
+                <div>
+                    <div class="dash-stat-value">@Model.Stats.ActiveEnrollmentCount</div>
+                    <div class="dash-stat-label">@(Model.Role == "Instructor" ? "Total learners" : "Active enrollments")</div>
+                </div>
+            </div>
+            <div class="dash-stat">
+                <span class="dash-stat-icon dash-stat-icon-amber"><i class="bi bi-patch-check"></i></span>
+                <div>
+                    <div class="dash-stat-value">@Model.Stats.CertificationCount</div>
+                    <div class="dash-stat-label">Certifications</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="dash-section">
+            <div class="dash-section-head">
+                <h2 class="dash-section-title">Courses</h2>
+                <a class="dash-link" asp-controller="Courses" asp-action="Index">See all <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+            <div class="dash-tabs">
+                <a class="dash-tab @(Model.SelectedCategoryId == null ? "active" : "")"
+                   asp-action="Index"
+                   asp-route-search="@Model.Search">All</a>
+                @foreach (var cat in Model.Categories)
+                {
+                    var active = Model.SelectedCategoryId == cat.Id ? "active" : "";
+                    <a class="dash-tab @active"
+                       asp-action="Index"
+                       asp-route-categoryId="@cat.Id"
+                       asp-route-search="@Model.Search">@cat.Name</a>
+                }
+            </div>
+
+            @if (!Model.Courses.Any())
+            {
+                <div class="dash-empty">
+                    <i class="bi bi-inbox"></i>
+                    <h4>No courses yet</h4>
+                    <p>Try a different filter or check back soon.</p>
+                </div>
+            }
+            else
+            {
+                <div class="dash-course-grid">
+                    @foreach (var course in Model.Courses)
+                    {
+                        <article class="dash-course-card @AccentClass(course.AccentSeed)">
+                            <div class="dash-course-hero">
+                                <div class="dash-course-glyph"><i class="bi bi-mortarboard-fill"></i></div>
+                                <span class="dash-course-price">@course.Fee.ToString("C0")</span>
+                            </div>
+                            <div class="dash-course-body">
+                                <span class="dash-course-cat">@course.CategoryName</span>
+                                <h3 class="dash-course-title">@course.Title</h3>
+                                <p class="dash-course-desc">@(string.IsNullOrWhiteSpace(course.Description) ? "No description provided." : course.Description)</p>
+                                <div class="dash-course-meta">
+                                    @if (course.NextSessionStart.HasValue)
+                                    {
+                                        <span><i class="bi bi-calendar3"></i> @course.NextSessionStart.Value.ToString("dd MMM")</span>
+                                    }
+                                    <span><i class="bi bi-clock"></i> @course.DurationHours h</span>
+                                    <span><i class="bi bi-people"></i> @course.Capacity</span>
+                                </div>
+                                <div class="dash-course-footer">
+                                    <div class="dash-course-tags">
+                                        <span class="dash-chip">@course.CategoryName</span>
+                                    </div>
+                                    <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id"
+                                       class="dash-course-cta" aria-label="Open @course.Title">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    <aside class="dash-rail">
+        <section class="dash-card dash-calendar">
+            <div class="dash-card-head">
+                <div>
+                    <div class="dash-calendar-month">@today.ToString("MMMM yyyy")</div>
+                </div>
+                <div class="dash-calendar-nav">
+                    <button type="button" aria-label="Previous month" disabled><i class="bi bi-chevron-left"></i></button>
+                    <button type="button" aria-label="Next month" disabled><i class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="dash-calendar-grid">
+                @foreach (var d in new[] { "MON","TUE","WED","THU","FRI","SAT","SUN" })
+                {
+                    <div class="dash-cal-dow">@d</div>
+                }
+                @for (var i = 0; i < leadingBlanks; i++)
+                {
+                    <div class="dash-cal-blank"></div>
+                }
+                @for (var day = 1; day <= daysInMonth; day++)
+                {
+                    var classes = "dash-cal-day";
+                    if (day == today.Day) classes += " is-today";
+                    if (sessionDayKeys.Contains(day)) classes += " has-event";
+                    <div class="@classes">@day</div>
+                }
+            </div>
+        </section>
+
+        <section class="dash-card dash-sessions">
+            <div class="dash-card-head">
+                <h3 class="dash-card-title">Upcoming sessions</h3>
+                <a class="dash-link-sm" asp-controller="CourseSessions" asp-action="Index">See all</a>
+            </div>
+            @if (!Model.UpcomingSessions.Any())
+            {
+                <p class="dash-card-empty">Nothing scheduled. You're all caught up.</p>
+            }
+            else
+            {
+                <ul class="dash-session-list">
+                    @foreach (var s in Model.UpcomingSessions)
+                    {
+                        <li>
+                            <div class="dash-session-date">
+                                <span class="dash-session-day">@s.StartDateTime.Day</span>
+                                <span class="dash-session-mon">@MonthShort(s.StartDateTime.Month)</span>
+                            </div>
+                            <div class="dash-session-info">
+                                <div class="dash-session-title">@s.CourseTitle</div>
+                                <div class="dash-session-meta">
+                                    @s.StartDateTime.ToString("HH:mm") · @s.InstructorName
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="dash-card dash-progress">
+            <div class="dash-card-head">
+                <h3 class="dash-card-title">Learning progress</h3>
+            </div>
+            @if (!Model.LearningProgress.Any())
+            {
+                <p class="dash-card-empty">No progress to show yet.</p>
+            }
+            else
+            {
+                foreach (var p in Model.LearningProgress)
+                {
+                    <div class="dash-progress-row">
+                        <div class="dash-progress-meta">
+                            <span class="dash-progress-label">@p.Label</span>
+                            <span class="dash-progress-pct">@p.Percent%</span>
+                        </div>
+                        <div class="dash-progress-bar">
+                            <div class="dash-progress-fill dash-fill-@p.Accent" style="width: @(p.Percent)%"></div>
+                        </div>
+                        <span class="dash-progress-sub">@p.Sublabel</span>
+                    </div>
+                }
+            }
+        </section>
+    </aside>
+</div>

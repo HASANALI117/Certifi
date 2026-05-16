@@ -87,8 +87,12 @@ a:hover {
   color: #fff;
 }
 
-/* === Page wrapper === */
-.cd-container {
+/* === Page wrapper ===
+   Use :not(.container) so this full-bleed reset only applies when
+   .cd-container is standalone (SPYLT/Carrd-style pages). When combined
+   with Bootstrap's .container, let Bootstrap handle max-width + auto
+   margins so content stays horizontally centered. */
+.cd-container:not(.container) {
   width: 100%;
   margin: 0;
   padding: 0;

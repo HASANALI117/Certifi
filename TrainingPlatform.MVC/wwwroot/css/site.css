@@ -1224,42 +1224,6 @@ code {
 [data-theme="dark"] .tp-theme-icon { transform: rotate(-12deg); }
 
 /* ==========================================================================
-   Aurora background (auth pages) — drifting blobs behind the card
-   ========================================================================== */
-@keyframes tp-aurora-drift {
-    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-    33%      { transform: translate3d(3%, -3%, 0) rotate(6deg); }
-    66%      { transform: translate3d(-2%, 4%, 0) rotate(-4deg); }
-}
-
-.tp-auth-shell {
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-}
-
-.tp-auth-shell::before {
-    content: '';
-    position: absolute;
-    inset: -15%;
-    z-index: -1;
-    background:
-        radial-gradient(35% 45% at 22% 28%, rgba(124, 58, 237, .35), transparent 65%),
-        radial-gradient(40% 50% at 78% 72%, rgba(79, 70, 229, .35),  transparent 65%),
-        radial-gradient(35% 45% at 50% 100%, rgba(236, 72, 153, .25), transparent 65%);
-    filter: blur(60px);
-    animation: tp-aurora-drift 22s ease-in-out infinite;
-    pointer-events: none;
-}
-
-[data-theme="dark"] .tp-auth-shell::before {
-    background:
-        radial-gradient(35% 45% at 22% 28%, rgba(124, 58, 237, .55), transparent 65%),
-        radial-gradient(40% 50% at 78% 72%, rgba(79, 70, 229, .55),  transparent 65%),
-        radial-gradient(35% 45% at 50% 100%, rgba(236, 72, 153, .35), transparent 65%);
-}
-
-/* ==========================================================================
    Scroll reveal — staggered fade-up
    ========================================================================== */
 .tp-reveal {
@@ -1378,8 +1342,7 @@ code {
     .tp-hero h1,
     .tp-hero h1 .tp-word-inner,
     .tp-hero .btn-primary::before,
-    .tp-course-banner,
-    .tp-auth-shell::before { animation: none !important; }
+    .tp-course-banner { animation: none !important; }
     .tp-reveal { opacity: 1; transform: none; transition: none; }
 }
 

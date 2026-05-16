@@ -1,3 +1,7 @@
-﻿@{
-    Layout = "_Layout";
+@{
+    var isAjax = string.Equals(
+        Context.Request.Headers["X-Requested-With"],
+        "XMLHttpRequest",
+        StringComparison.OrdinalIgnoreCase);
+    Layout = isAjax ? null : "_Layout";
 }

@@ -1,0 +1,252 @@
+@{
+    var userName = User.Identity?.Name ?? string.Empty;
+    var initial = !string.IsNullOrWhiteSpace(userName) ? userName.Substring(0, 1).ToUpperInvariant() : "U";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string NavActive(string ctrl) => string.Equals(ctrl, currentController, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var isCoordinator = User.IsInRole("TrainingCoordinator");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Certifi</title>
+
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('tp-theme');
+                var theme = stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            } catch (e) { }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dash-body">
+    <div class="dash-shell">
+        <aside class="dash-sidebar">
+            <a class="dash-brand" data-dash-nav-skip="true" asp-controller="Dashboard" asp-action="Index">
+                <span class="dash-brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                <span class="dash-brand-text">Certifi</span>
+            </a>
+
+            <nav class="dash-nav" data-dash-nav>
+                <a class="dash-nav-item @NavActive("Dashboard")" asp-controller="Dashboard" asp-action="Index">
+                    <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+                </a>
+                <a class="dash-nav-item @NavActive("Courses")" asp-controller="Courses" asp-action="Index">
+                    <i class="bi bi-collection"></i><span>Courses</span>
+                </a>
+                <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
+                    <i class="bi bi-calendar-event"></i><span>Sessions</span>
+                </a>
+                <a class="dash-nav-item @NavActive("Certification")" asp-controller="Certification" asp-action="Lookup">
+                    <i class="bi bi-patch-check"></i><span>Certifications</span>
+                </a>
+                @if (isCoordinator)
+                {
+                    <div class="dash-nav-section">Manage</div>
+                    <a class="dash-nav-item @NavActive("Categories")" asp-controller="Categories" asp-action="Index">
+                        <i class="bi bi-tags"></i><span>Categories</span>
+                    </a>
+                    <a class="dash-nav-item @NavActive("Classrooms")" asp-controller="Classrooms" asp-action="Index">
+                        <i class="bi bi-building"></i><span>Classrooms</span>
+                    </a>
+                    <a class="dash-nav-item @NavActive("Instructors")" asp-controller="Instructors" asp-action="Index">
+                        <i class="bi bi-person-video3"></i><span>Instructors</span>
+                    </a>
+                }
+            </nav>
+
+            <div class="dash-sidebar-footer">
+                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                    <button type="submit" class="dash-logout-btn">
+                        <i class="bi bi-box-arrow-left"></i><span>Log out</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="dash-main-wrap">
+            <div class="dash-alerts">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+            </div>
+            <main id="dash-content-area" class="dash-content-area">
+                @RenderBody()
+            </main>
+            <div id="dash-loading" class="dash-loading" aria-hidden="true">
+                <div class="dash-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            var shell = document.querySelector('.dash-shell');
+            var nav = document.querySelector('[data-dash-nav]');
+            var target = document.getElementById('dash-content-area');
+            var loading = document.getElementById('dash-loading');
+            if (!shell || !target) return;
+
+            var origin = window.location.origin;
+
+            function setActiveByUrl(url) {
+                if (!nav) return;
+                var path = (url.split('?')[0] || '').replace(/\/+$/, '').toLowerCase() || '/';
+                nav.querySelectorAll('.dash-nav-item').forEach(function (a) {
+                    var href = (a.getAttribute('href') || '').replace(/\/+$/, '').toLowerCase();
+                    if (!href) return;
+                    var match = path === href || path.indexOf(href + '/') === 0;
+                    a.classList.toggle('active', match);
+                });
+            }
+
+            function extractTitle(html) {
+                var m = html.match(/<title>([^<]*)<\/title>/i);
+                return m ? m[1].trim() : null;
+            }
+
+            function rebindScripts(container) {
+                container.querySelectorAll('script').forEach(function (oldScript) {
+                    var s = document.createElement('script');
+                    for (var i = 0; i < oldScript.attributes.length; i++) {
+                        var a = oldScript.attributes[i];
+                        s.setAttribute(a.name, a.value);
+                    }
+                    s.textContent = oldScript.textContent;
+                    oldScript.parentNode.replaceChild(s, oldScript);
+                });
+            }
+
+            function isSafeUrl(url) {
+                try {
+                    var u = new URL(url, window.location.href);
+                    if (u.origin !== origin) return false;
+                    // Don't AJAX-swap auth flows — those need full navigation
+                    if (/^\/Account\//i.test(u.pathname)) return false;
+                    return true;
+                } catch (e) { return false; }
+            }
+
+            async function doFetch(url, options, updateHistory) {
+                if (loading) loading.classList.add('is-active');
+                try {
+                    var resp = await fetch(url, Object.assign({
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                        credentials: 'same-origin',
+                        redirect: 'follow'
+                    }, options || {}));
+
+                    var finalUrl = resp.url || url;
+                    // Session expired → server redirected to login
+                    if (!resp.ok || /\/Account\/Login/i.test(finalUrl)) {
+                        window.location.href = url;
+                        return;
+                    }
+                    var html = await resp.text();
+                    target.innerHTML = html;
+                    rebindScripts(target);
+                    var title = extractTitle(html);
+                    if (title) document.title = title + ' - Certifi';
+
+                    var pushed = new URL(finalUrl, window.location.href);
+                    var relUrl = pushed.pathname + pushed.search + pushed.hash;
+                    if (updateHistory === 'push') {
+                        history.pushState({ dashUrl: relUrl }, '', relUrl);
+                    } else if (updateHistory === 'replace') {
+                        history.replaceState({ dashUrl: relUrl }, '', relUrl);
+                    }
+                    setActiveByUrl(relUrl);
+                    target.scrollTop = 0;
+                    window.scrollTo(0, 0);
+                } catch (e) {
+                    window.location.href = url;
+                } finally {
+                    if (loading) loading.classList.remove('is-active');
+                }
+            }
+
+            function loadInto(url, updateHistory) {
+                return doFetch(url, { method: 'GET' }, updateHistory || 'push');
+            }
+
+            function submitForm(form) {
+                var method = (form.method || 'GET').toUpperCase();
+                var action = form.getAttribute('action') || window.location.pathname;
+                if (method === 'GET') {
+                    var params = new URLSearchParams(new FormData(form)).toString();
+                    var glue = action.indexOf('?') === -1 ? '?' : '&';
+                    return loadInto(params ? action + glue + params : action, 'push');
+                }
+                return doFetch(action, { method: method, body: new FormData(form) }, 'push');
+            }
+
+            // Intercept all in-dashboard link clicks (sidebar + content area)
+            shell.addEventListener('click', function (e) {
+                if (e.defaultPrevented || e.button !== 0) return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                var link = e.target.closest('a');
+                if (!link || !shell.contains(link)) return;
+                if (link.dataset.dashNavSkip === 'true') return;
+                if (link.target && link.target !== '' && link.target !== '_self') return;
+                if (link.hasAttribute('download')) return;
+                var href = link.getAttribute('href');
+                if (!href || href.charAt(0) === '#') return;
+                if (/^(mailto:|tel:|javascript:)/i.test(href)) return;
+                if (!isSafeUrl(href)) return;
+                e.preventDefault();
+                loadInto(link.href);
+            });
+
+            // Intercept form submits inside the content area
+            shell.addEventListener('submit', function (e) {
+                if (e.defaultPrevented) return;
+                var form = e.target;
+                if (!form || form.tagName !== 'FORM') return;
+                // Only intercept forms inside the content area (skip sidebar logout)
+                if (!target.contains(form)) return;
+                if (form.dataset.dashNavSkip === 'true') return;
+                var action = form.getAttribute('action') || window.location.pathname;
+                if (!isSafeUrl(action)) return;
+                e.preventDefault();
+                submitForm(form);
+            });
+
+            window.addEventListener('popstate', function (e) {
+                var url = (e.state && e.state.dashUrl) || window.location.pathname + window.location.search;
+                // Browser already updated the URL — don't push or replace again
+                loadInto(url, 'none');
+            });
+
+            // Replace current state so back works after first navigation
+            history.replaceState({ dashUrl: window.location.pathname + window.location.search }, '', window.location.href);
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
