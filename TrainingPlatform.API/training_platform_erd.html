@@ -1,181 +1,791 @@
-
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training Platform ERD</title>
 <style>
-#erd { width: 100%; overflow-x: auto; }
-#erd svg { min-width: 900px; }
-</style>
-<div id="erd"></div>
-<script type="module">
-import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
-const dark = matchMedia('(prefers-color-scheme: dark)').matches;
-await document.fonts.ready;
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'base',
-  fontFamily: '"Anthropic Sans", sans-serif',
-  themeVariables: {
-    darkMode: dark,
-    fontSize: '13px',
-    fontFamily: '"Anthropic Sans", sans-serif',
-    lineColor: dark ? '#9c9a92' : '#73726c',
-    textColor: dark ? '#c2c0b6' : '#3d3d3a',
-  },
-});
+  * { box-sizing: border-box; }
 
-const diagram = `erDiagram
-    AspNetUsers {
-        string Id PK
-        string Email
-        string FirstName
-        string LastName
-        string Role
-    }
-    Trainees {
-        int Id PK
-        string UserId FK
-        string TraineePublicId
-        string Phone
-        date DateOfBirth
-    }
-    Instructors {
-        int Id PK
-        string UserId FK
-        string Bio
-    }
-    InstructorAvailability {
-        int Id PK
-        int InstructorId FK
-        int DayOfWeek
-        time StartTime
-        time EndTime
-    }
-    CourseCategories {
-        int Id PK
-        string Name
-        string Description
-    }
-    Courses {
-        int Id PK
-        int CategoryId FK
-        int PrerequisiteCourseId FK
-        string Title
-        int DurationHours
-        int Capacity
-        decimal EnrollmentFee
-    }
-    Classrooms {
-        int Id PK
-        string Name
-        int Capacity
-    }
-    ClassroomEquipment {
-        int Id PK
-        int ClassroomId FK
-        string EquipmentName
-    }
-    CourseSessions {
-        int Id PK
-        int CourseId FK
-        int InstructorId FK
-        int ClassroomId FK
-        datetime StartDateTime
-        datetime EndDateTime
-        int Capacity
-        string Status
-    }
-    Enrollments {
-        int Id PK
-        int TraineeId FK
-        int CourseSessionId FK
-        string Status
-        datetime EnrolledAt
-    }
-    Assessments {
-        int Id PK
-        int EnrollmentId FK
-        string Result
-        string Notes
-        datetime RecordedAt
-        int RecordedById FK
-    }
-    CertificationTracks {
-        int Id PK
-        string Name
-        string Description
-        string CertRefPrefix
-    }
-    CertificationTrackCourses {
-        int CertificationTrackId FK
-        int CourseId FK
-        bool IsRequired
-    }
-    TraineeCertifications {
-        int Id PK
-        int TraineeId FK
-        int CertificationTrackId FK
-        string Status
-        string CertRefNumber
-        datetime IssuedAt
-    }
-    Payments {
-        int Id PK
-        int EnrollmentId FK
-        decimal AmountPaid
-        datetime PaidAt
-        decimal OutstandingBalance
-    }
-    Notifications {
-        int Id PK
-        string UserId FK
-        string Message
-        bool IsRead
-        datetime CreatedAt
-        string Type
-    }
-
-    AspNetUsers ||--o| Trainees : "has profile"
-    AspNetUsers ||--o| Instructors : "has profile"
-    AspNetUsers ||--o{ Notifications : "receives"
-    Instructors ||--o{ InstructorAvailability : "has"
-    CourseCategories ||--o{ Courses : "categorizes"
-    Courses ||--o| Courses : "prerequisite for"
-    Classrooms ||--o{ ClassroomEquipment : "has"
-    Courses ||--o{ CourseSessions : "scheduled as"
-    Instructors ||--o{ CourseSessions : "teaches"
-    Classrooms ||--o{ CourseSessions : "hosts"
-    Trainees ||--o{ Enrollments : "enrolls in"
-    CourseSessions ||--o{ Enrollments : "has"
-    Enrollments ||--o| Assessments : "results in"
-    Enrollments ||--o{ Payments : "paid via"
-    CertificationTracks ||--o{ CertificationTrackCourses : "includes"
-    Courses ||--o{ CertificationTrackCourses : "part of"
-    Trainees ||--o{ TraineeCertifications : "earns"
-    CertificationTracks ||--o{ TraineeCertifications : "awarded via"
-`;
-
-const { svg } = await mermaid.render('erd-svg', diagram);
-document.getElementById('erd').innerHTML = svg;
-
-document.querySelectorAll('#erd svg .node').forEach(node => {
-  const firstPath = node.querySelector('path[d]');
-  if (!firstPath) return;
-  const d = firstPath.getAttribute('d');
-  const nums = d.match(/-?[\d.]+/g)?.map(Number);
-  if (!nums || nums.length < 8) return;
-  const xs = [nums[0], nums[2], nums[4], nums[6]];
-  const ys = [nums[1], nums[3], nums[5], nums[7]];
-  const x = Math.min(...xs), y = Math.min(...ys);
-  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
-  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  rect.setAttribute('x', x); rect.setAttribute('y', y);
-  rect.setAttribute('width', w); rect.setAttribute('height', h);
-  rect.setAttribute('rx', '8');
-  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
-    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: #0f1117;
+    color: #e8e2d4;
+    font-family: "Anthropic Sans", "Inter", "Segoe UI", Arial, sans-serif;
   }
-  firstPath.replaceWith(rect);
+
+  body {
+    overflow: hidden;
+  }
+
+  #erd-wrapper {
+    height: 100vh;
+    padding: 24px;
+    background: #0f1117;
+  }
+
+  #topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    height: 28px;
+    margin: 0 0 14px;
+  }
+
+  #erd-title {
+    margin: 0;
+    color: #89a1ff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  #edit-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid #4a557f;
+    border-radius: 7px;
+    background: #1d2435;
+    color: #dfe5ff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  #edit-mode-toggle::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #7d879f;
+  }
+
+  #edit-mode-toggle.active {
+    border-color: #91a0e8;
+    background: #293252;
+    color: #ffffff;
+  }
+
+  #edit-mode-toggle.active::before {
+    background: #8ee6a1;
+  }
+
+  #erd {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 60px);
+    overflow: auto;
+    background:
+      linear-gradient(rgba(130, 151, 220, 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(130, 151, 220, 0.055) 1px, transparent 1px),
+      #141821;
+    background-size: 28px 28px;
+    border: 1px solid #252d3f;
+    border-radius: 10px;
+  }
+
+  #canvas {
+    position: relative;
+    min-width: 2300px;
+    min-height: 1500px;
+  }
+
+  #relationships {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  #legend {
+    position: sticky;
+    top: 16px;
+    left: calc(100% - 300px);
+    z-index: 10;
+    width: 280px;
+    margin: 16px 16px 0 auto;
+    padding: 14px 16px 16px;
+    border: 1px solid #3a4469;
+    border-radius: 8px;
+    background: rgba(18, 23, 35, 0.94);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(8px);
+  }
+
+  #legend h2 {
+    margin: 0 0 10px;
+    color: #fff2dc;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .legend-row {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    align-items: center;
+    gap: 12px;
+    min-height: 30px;
+    color: #e8e2d4;
+    font-size: 13px;
+  }
+
+  .legend-row svg {
+    width: 72px;
+    height: 26px;
+    overflow: visible;
+  }
+
+  .connector {
+    fill: none;
+    stroke: #8393d8;
+    stroke-width: 1.6;
+    opacity: 0.82;
+  }
+
+  .connector-label {
+    fill: #f2f5ff;
+    font-size: 14px;
+    font-weight: 650;
+    paint-order: stroke;
+    pointer-events: none;
+    stroke: #10141f;
+    stroke-linejoin: round;
+    stroke-width: 5px;
+  }
+
+  .cardinality {
+    fill: none;
+    stroke: #dfe5ff;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cardinality-circle {
+    fill: #141821;
+    stroke: #dfe5ff;
+    stroke-width: 1.8;
+  }
+
+  .entity {
+    position: absolute;
+    z-index: 2;
+    min-width: 250px;
+    border: 1px solid #5a6699;
+    background: #171c2b;
+    color: #e8e2d4;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+  }
+
+  .entity-actions {
+    display: none;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 7px;
+    border-top: 1px solid #5a6699;
+    background: #161b29;
+  }
+
+  body.edit-mode .entity-actions {
+    display: flex;
+  }
+
+  .entity button {
+    height: 26px;
+    border: 1px solid #536095;
+    border-radius: 6px;
+    background: #242c43;
+    color: #eef2ff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    outline: none;
+  }
+
+  body.edit-mode [contenteditable="true"] {
+    cursor: text;
+    user-select: text;
+  }
+
+  body.edit-mode .entity-title:focus,
+  body.edit-mode .cell:focus {
+    background: #2d3652;
+    box-shadow: inset 0 0 0 2px #91a0e8;
+  }
+
+  .entity button:hover {
+    background: #303a58;
+  }
+
+  .entity.dragging {
+    cursor: grabbing;
+    z-index: 5;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.38), 0 0 0 1px #91a0e8;
+  }
+
+  .entity-title {
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border-bottom: 1px solid #5a6699;
+    background: #20263a;
+    color: #fff2dc;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 76px minmax(140px, 1fr) 50px 34px;
+    min-height: 40px;
+    border-bottom: 1px solid #5a6699;
+  }
+
+  .row:last-child {
+    border-bottom: 0;
+  }
+
+  .cell {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 8px 14px;
+    border-right: 1px solid #5a6699;
+    color: #e2dacb;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .cell:last-child {
+    justify-content: center;
+    border-right: 0;
+  }
+
+  .delete-row {
+    width: 100%;
+    height: 100%;
+    min-height: 40px;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #171c2b !important;
+    color: #adb9f2 !important;
+    font-size: 16px !important;
+  }
+
+  .delete-row:hover {
+    background: #342034 !important;
+    color: #ffd3dd !important;
+  }
+
+  .key {
+    justify-content: center;
+    color: #cdd8ff;
+    font-weight: 700;
+  }
+
+  .row:nth-child(odd) .cell {
+    background: #171c2b;
+  }
+
+  .row:nth-child(even) .cell {
+    background: #20263a;
+  }
+
+  .type {
+    color: #bfc8e8;
+  }
+
+  .field {
+    color: #f0e7d6;
+  }
+</style>
+</head>
+<body>
+<main id="erd-wrapper">
+  <header id="topbar">
+    <h1 id="erd-title">Entity Relationship Diagram - Training Platform</h1>
+    <button id="edit-mode-toggle" type="button" aria-pressed="false">Edit Mode</button>
+  </header>
+  <section id="erd" aria-label="Training platform entity relationship diagram">
+    <aside id="legend" aria-label="Relationship marker legend">
+      <h2>Relationship Markers</h2>
+      <div class="legend-row">
+        <svg viewBox="0 0 72 26" aria-hidden="true">
+          <line class="connector" x1="6" y1="13" x2="66" y2="13"></line>
+          <line class="cardinality" x1="52" y1="5" x2="52" y2="21"></line>
+        </svg>
+        <span>Exactly one</span>
+      </div>
+      <div class="legend-row">
+        <svg viewBox="0 0 72 26" aria-hidden="true">
+          <line class="connector" x1="6" y1="13" x2="66" y2="13"></line>
+          <circle class="cardinality-circle" cx="44" cy="13" r="5"></circle>
+          <line class="cardinality" x1="58" y1="5" x2="58" y2="21"></line>
+        </svg>
+        <span>Zero or one</span>
+      </div>
+      <div class="legend-row">
+        <svg viewBox="0 0 72 26" aria-hidden="true">
+          <line class="connector" x1="6" y1="13" x2="66" y2="13"></line>
+          <line class="cardinality" x1="42" y1="13" x2="58" y2="13"></line>
+          <line class="cardinality" x1="42" y1="5" x2="58" y2="13"></line>
+          <line class="cardinality" x1="42" y1="21" x2="58" y2="13"></line>
+        </svg>
+        <span>Many</span>
+      </div>
+      <div class="legend-row">
+        <svg viewBox="0 0 72 26" aria-hidden="true">
+          <line class="connector" x1="6" y1="13" x2="66" y2="13"></line>
+          <circle class="cardinality-circle" cx="36" cy="13" r="5"></circle>
+          <line class="cardinality" x1="48" y1="13" x2="64" y2="13"></line>
+          <line class="cardinality" x1="48" y1="5" x2="64" y2="13"></line>
+          <line class="cardinality" x1="48" y1="21" x2="64" y2="13"></line>
+        </svg>
+        <span>Zero or many</span>
+      </div>
+    </aside>
+    <div id="canvas">
+      <svg id="relationships" viewBox="0 0 2300 1500" aria-hidden="true"></svg>
+    </div>
+  </section>
+</main>
+
+<script>
+const entities = [
+  { name: 'AspNetUsers', x: 60, y: 70, fields: [
+    ['string', 'Id', 'PK'], ['string', 'Email', ''], ['string', 'FirstName', ''], ['string', 'LastName', ''], ['string', 'Role', ''],
+  ] },
+  { name: 'Trainees', x: 60, y: 390, fields: [
+    ['int', 'Id', 'PK'], ['string', 'UserId', 'FK'], ['string', 'TraineePublicId', ''], ['string', 'Phone', ''], ['date', 'DateOfBirth', ''],
+  ] },
+  { name: 'Instructors', x: 520, y: 70, fields: [
+    ['int', 'Id', 'PK'], ['string', 'UserId', 'FK'], ['string', 'Bio', ''],
+  ] },
+  { name: 'InstructorAvailability', x: 935, y: 60, fields: [
+    ['int', 'Id', 'PK'], ['int', 'InstructorId', 'FK'], ['int', 'DayOfWeek', ''], ['time', 'StartTime', ''], ['time', 'EndTime', ''],
+  ] },
+  { name: 'Notifications', x: 60, y: 750, fields: [
+    ['int', 'Id', 'PK'], ['string', 'UserId', 'FK'], ['string', 'Message', ''], ['bool', 'IsRead', ''], ['datetime', 'CreatedAt', ''], ['string', 'Type', ''],
+  ] },
+  { name: 'CourseCategories', x: 520, y: 390, fields: [
+    ['int', 'Id', 'PK'], ['string', 'Name', ''], ['string', 'Description', ''],
+  ] },
+  { name: 'Courses', x: 935, y: 350, fields: [
+    ['int', 'Id', 'PK'], ['int', 'CategoryId', 'FK'], ['int', 'PrerequisiteCourseId', 'FK'], ['string', 'Title', ''], ['int', 'DurationHours', ''], ['int', 'Capacity', ''], ['decimal', 'EnrollmentFee', ''],
+  ] },
+  { name: 'Classrooms', x: 1450, y: 70, fields: [
+    ['int', 'Id', 'PK'], ['string', 'Name', ''], ['int', 'Capacity', ''],
+  ] },
+  { name: 'ClassroomEquipment', x: 1800, y: 70, fields: [
+    ['int', 'Id', 'PK'], ['int', 'ClassroomId', 'FK'], ['string', 'EquipmentName', ''],
+  ] },
+  { name: 'CourseSessions', x: 1450, y: 390, fields: [
+    ['int', 'Id', 'PK'], ['int', 'CourseId', 'FK'], ['int', 'InstructorId', 'FK'], ['int', 'ClassroomId', 'FK'], ['datetime', 'StartDateTime', ''], ['datetime', 'EndDateTime', ''], ['int', 'Capacity', ''], ['string', 'Status', ''],
+  ] },
+  { name: 'Enrollments', x: 1450, y: 850, fields: [
+    ['int', 'Id', 'PK'], ['int', 'TraineeId', 'FK'], ['int', 'CourseSessionId', 'FK'], ['string', 'Status', ''], ['datetime', 'EnrolledAt', ''],
+  ] },
+  { name: 'Assessments', x: 1800, y: 790, fields: [
+    ['int', 'Id', 'PK'], ['int', 'EnrollmentId', 'FK'], ['string', 'Result', ''], ['string', 'Notes', ''], ['datetime', 'RecordedAt', ''], ['int', 'RecordedById', 'FK'],
+  ] },
+  { name: 'Payments', x: 1800, y: 1120, fields: [
+    ['int', 'Id', 'PK'], ['int', 'EnrollmentId', 'FK'], ['decimal', 'AmountPaid', ''], ['datetime', 'PaidAt', ''], ['decimal', 'OutstandingBalance', ''],
+  ] },
+  { name: 'CertificationTracks', x: 520, y: 850, fields: [
+    ['int', 'Id', 'PK'], ['string', 'Name', ''], ['string', 'Description', ''], ['string', 'CertRefPrefix', ''],
+  ] },
+  { name: 'CertificationTrackCourses', x: 935, y: 850, fields: [
+    ['int', 'CertificationTrackId', 'FK'], ['int', 'CourseId', 'FK'], ['bool', 'IsRequired', ''],
+  ] },
+  { name: 'TraineeCertifications', x: 935, y: 1160, fields: [
+    ['int', 'Id', 'PK'], ['int', 'TraineeId', 'FK'], ['int', 'CertificationTrackId', 'FK'], ['string', 'Status', ''], ['string', 'CertRefNumber', ''], ['datetime', 'IssuedAt', ''],
+  ] },
+];
+
+const relationships = [
+  ['AspNetUsers', 'Trainees', 'has profile', 'one', 'zero-one'],
+  ['AspNetUsers', 'Instructors', 'has profile', 'one', 'zero-one'],
+  ['AspNetUsers', 'Notifications', 'receives', 'one', 'zero-many'],
+  ['Instructors', 'InstructorAvailability', 'has', 'one', 'zero-many'],
+  ['CourseCategories', 'Courses', 'categorizes', 'one', 'zero-many'],
+  ['Courses', 'Courses', 'prerequisite for', 'one', 'zero-one'],
+  ['Classrooms', 'ClassroomEquipment', 'has', 'one', 'zero-many'],
+  ['Courses', 'CourseSessions', 'scheduled as', 'one', 'zero-many'],
+  ['Instructors', 'CourseSessions', 'teaches', 'one', 'zero-many'],
+  ['Classrooms', 'CourseSessions', 'hosts', 'one', 'zero-many'],
+  ['Trainees', 'Enrollments', 'enrolls in', 'one', 'zero-many'],
+  ['CourseSessions', 'Enrollments', 'has', 'one', 'zero-many'],
+  ['Enrollments', 'Assessments', 'results in', 'one', 'zero-one'],
+  ['Enrollments', 'Payments', 'paid via', 'one', 'zero-many'],
+  ['CertificationTracks', 'CertificationTrackCourses', 'includes', 'one', 'zero-many'],
+  ['Courses', 'CertificationTrackCourses', 'part of', 'one', 'zero-many'],
+  ['Trainees', 'TraineeCertifications', 'earns', 'one', 'zero-many'],
+  ['CertificationTracks', 'TraineeCertifications', 'awarded via', 'one', 'zero-many'],
+];
+
+const canvas = document.getElementById('canvas');
+const svg = document.getElementById('relationships');
+const editModeToggle = document.getElementById('edit-mode-toggle');
+const entityMap = new Map();
+const savedPositions = JSON.parse(localStorage.getItem('training-platform-erd-positions') || '{}');
+const savedTables = JSON.parse(localStorage.getItem('training-platform-erd-tables') || '{}');
+let editMode = false;
+
+renderEntities();
+setEditMode(editMode);
+renderRelationships();
+
+editModeToggle.addEventListener('click', () => {
+  setEditMode(!editMode);
 });
 
-document.querySelectorAll('#erd svg .row-rect-odd path, #erd svg .row-rect-even path').forEach(p => {
-  p.setAttribute('stroke', 'none');
-});
+function renderEntities() {
+  entities.forEach((entity) => {
+    const tableData = savedTables[entity.name] || { name: entity.name, fields: entity.fields };
+    const position = savedPositions[entity.name] || { x: entity.x, y: entity.y };
+    const table = document.createElement('article');
+    table.className = 'entity';
+    table.dataset.name = entity.name;
+    table.style.left = `${position.x}px`;
+    table.style.top = `${position.y}px`;
+
+    const title = document.createElement('div');
+    title.className = 'entity-title';
+    title.dataset.role = 'title';
+    makeEditable(title, tableData.name);
+    table.appendChild(title);
+
+    tableData.fields.forEach((field) => {
+      table.appendChild(createRow(field));
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'entity-actions';
+    const addRow = document.createElement('button');
+    addRow.type = 'button';
+    addRow.textContent = '+ Row';
+    addRow.addEventListener('click', () => {
+      const row = createRow(['', 'NewField', '']);
+      table.insertBefore(row, actions);
+      saveTableEdits(table);
+      renderRelationships();
+      row.querySelector('[data-col="field"]').focus();
+    });
+    actions.appendChild(addRow);
+    table.appendChild(actions);
+
+    canvas.appendChild(table);
+    entityMap.set(entity.name, table);
+    makeDraggable(table);
+  });
+}
+
+function createRow([type, field, key]) {
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const typeCell = cell('type', type);
+  const fieldCell = cell('field', field);
+  const keyCell = cell('key', key);
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'delete-row';
+  deleteButton.textContent = 'x';
+  deleteButton.title = 'Delete row';
+  deleteButton.addEventListener('click', () => {
+    const table = row.closest('.entity');
+    row.remove();
+    saveTableEdits(table);
+    renderRelationships();
+  });
+
+  row.append(typeCell, fieldCell, keyCell, deleteButton);
+  return row;
+}
+
+function cell(column, value) {
+  const item = document.createElement('div');
+  item.className = `cell ${column}`;
+  item.dataset.col = column;
+  makeEditable(item, value);
+  return item;
+}
+
+function makeEditable(element, value) {
+  element.contentEditable = editMode ? 'true' : 'false';
+  element.spellcheck = false;
+  element.textContent = value;
+
+  element.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      element.blur();
+    }
+  });
+
+  element.addEventListener('input', () => {
+    if (!editMode) return;
+    saveTableEdits(element.closest('.entity'));
+    renderRelationships();
+  });
+
+  element.addEventListener('blur', () => {
+    if (!editMode) return;
+    element.textContent = cleanEditableText(element.textContent);
+    saveTableEdits(element.closest('.entity'));
+    renderRelationships();
+  });
+}
+
+function setEditMode(enabled) {
+  editMode = enabled;
+  document.body.classList.toggle('edit-mode', enabled);
+  editModeToggle.classList.toggle('active', enabled);
+  editModeToggle.setAttribute('aria-pressed', String(enabled));
+  editModeToggle.textContent = enabled ? 'Editing On' : 'Edit Mode';
+  document.querySelectorAll('.entity-title, .cell').forEach((item) => {
+    item.contentEditable = enabled ? 'true' : 'false';
+    item.tabIndex = enabled ? 0 : -1;
+  });
+}
+
+function ensureCanvasBounds() {
+  let width = 2300;
+  let height = 1500;
+
+  entityMap.forEach((element) => {
+    width = Math.max(width, element.offsetLeft + element.offsetWidth + 260);
+    height = Math.max(height, element.offsetTop + element.offsetHeight + 220);
+  });
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+}
+
+function renderRelationships() {
+  ensureCanvasBounds();
+  svg.replaceChildren();
+
+  relationships.forEach(([sourceName, targetName, label, sourceCardinality, targetCardinality], index) => {
+    const source = entityMap.get(sourceName);
+    const target = entityMap.get(targetName);
+    if (!source || !target) return;
+
+    const sourceBox = boxOf(source);
+    const targetBox = boxOf(target);
+    const isSelf = sourceName === targetName;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('class', 'connector');
+
+    let start;
+    let end;
+    let labelPoint;
+
+    if (isSelf) {
+      const spaceRight = canvas.offsetWidth - sourceBox.right;
+      const loopDirection = spaceRight < 260 ? -1 : 1;
+      const loopX = loopDirection === 1 ? sourceBox.right : sourceBox.left;
+      start = { x: loopX, y: sourceBox.top + sourceBox.height * 0.35 };
+      end = { x: loopX, y: sourceBox.top + sourceBox.height * 0.7 };
+      const loopWidth = 190 * loopDirection;
+      line.setAttribute('d', `M ${start.x} ${start.y} C ${start.x + loopWidth} ${start.y - 80}, ${end.x + loopWidth} ${end.y + 80}, ${end.x} ${end.y}`);
+      labelPoint = { x: loopX + loopWidth + 18 * loopDirection, y: sourceBox.top + sourceBox.height * 0.55 };
+    } else {
+      const sourceCenter = center(sourceBox);
+      const targetCenter = center(targetBox);
+      start = edgePoint(sourceBox, targetCenter);
+      end = edgePoint(targetBox, sourceCenter);
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const bend = Math.min(170, Math.max(55, Math.hypot(dx, dy) * 0.16));
+      const horizontal = Math.abs(dx) >= Math.abs(dy);
+      const sign = horizontal ? Math.sign(dx || 1) : Math.sign(dy || 1);
+      const c1 = horizontal ? { x: start.x + bend * sign, y: start.y } : { x: start.x, y: start.y + bend * sign };
+      const c2 = horizontal ? { x: end.x - bend * sign, y: end.y } : { x: end.x, y: end.y - bend * sign };
+      line.setAttribute('d', `M ${start.x} ${start.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${end.x} ${end.y}`);
+      labelPoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 10 - ((index % 3) * 2) };
+    }
+
+    svg.appendChild(line);
+    svg.appendChild(cardinalityMarker(start, end, sourceCardinality));
+    svg.appendChild(cardinalityMarker(end, start, targetCardinality));
+    svg.appendChild(text(label, labelPoint));
+  });
+}
+
+function makeDraggable(element) {
+  element.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    if (event.target.closest('[contenteditable="true"], button')) return;
+    element.classList.add('dragging');
+    element.setPointerCapture(event.pointerId);
+
+    const start = { x: event.clientX, y: event.clientY };
+    const origin = {
+      x: Number.parseFloat(element.style.left) || 0,
+      y: Number.parseFloat(element.style.top) || 0,
+    };
+
+    const move = (moveEvent) => {
+      const nextX = Math.max(0, origin.x + moveEvent.clientX - start.x);
+      const nextY = Math.max(0, origin.y + moveEvent.clientY - start.y);
+      element.style.left = `${nextX}px`;
+      element.style.top = `${nextY}px`;
+      renderRelationships();
+    };
+
+    const finish = (upEvent) => {
+      element.classList.remove('dragging');
+      element.releasePointerCapture(upEvent.pointerId);
+      element.removeEventListener('pointermove', move);
+      element.removeEventListener('pointerup', finish);
+      element.removeEventListener('pointercancel', finish);
+      savePositions();
+    };
+
+    element.addEventListener('pointermove', move);
+    element.addEventListener('pointerup', finish);
+    element.addEventListener('pointercancel', finish);
+  });
+}
+
+function savePositions() {
+  const positions = {};
+  entityMap.forEach((element, name) => {
+    positions[name] = {
+      x: Number.parseFloat(element.style.left) || 0,
+      y: Number.parseFloat(element.style.top) || 0,
+    };
+  });
+  localStorage.setItem('training-platform-erd-positions', JSON.stringify(positions));
+}
+
+function saveTableEdits(table) {
+  if (!table) return;
+
+  savedTables[table.dataset.name] = {
+    name: cleanEditableText(table.querySelector('[data-role="title"]').textContent),
+    fields: [...table.querySelectorAll('.row')].map((row) => [
+      cleanEditableText(row.querySelector('[data-col="type"]').textContent),
+      cleanEditableText(row.querySelector('[data-col="field"]').textContent),
+      cleanEditableText(row.querySelector('[data-col="key"]').textContent),
+    ]),
+  };
+  localStorage.setItem('training-platform-erd-tables', JSON.stringify(savedTables));
+}
+
+function cleanEditableText(value) {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function boxOf(element) {
+  return {
+    left: element.offsetLeft,
+    top: element.offsetTop,
+    width: element.offsetWidth,
+    height: element.offsetHeight,
+    right: element.offsetLeft + element.offsetWidth,
+    bottom: element.offsetTop + element.offsetHeight,
+  };
+}
+
+function center(box) {
+  return {
+    x: box.left + box.width / 2,
+    y: box.top + box.height / 2,
+  };
+}
+
+function edgePoint(box, toward) {
+  const c = center(box);
+  const dx = toward.x - c.x;
+  const dy = toward.y - c.y;
+  const scaleX = dx === 0 ? Infinity : Math.abs((box.width / 2) / dx);
+  const scaleY = dy === 0 ? Infinity : Math.abs((box.height / 2) / dy);
+  const scale = Math.min(scaleX, scaleY);
+  return {
+    x: c.x + dx * scale,
+    y: c.y + dy * scale,
+  };
+}
+
+function cardinalityMarker(point, otherPoint, cardinality) {
+  const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  const dx = otherPoint.x - point.x;
+  const dy = otherPoint.y - point.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const ux = dx / length;
+  const uy = dy / length;
+  const px = -uy;
+  const py = ux;
+
+  if (cardinality.includes('zero')) {
+    const c = pointAlong(point, ux, uy, 10);
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('class', 'cardinality-circle');
+    circle.setAttribute('cx', c.x);
+    circle.setAttribute('cy', c.y);
+    circle.setAttribute('r', 5);
+    group.appendChild(circle);
+  }
+
+  if (cardinality.includes('many')) {
+    const base = pointAlong(point, ux, uy, cardinality.includes('zero') ? 22 : 10);
+    const tip = pointAlong(base, ux, uy, 14);
+    group.appendChild(markerLine(base, tip));
+    group.appendChild(markerLine(pointAlong(base, px, py, 8), tip));
+    group.appendChild(markerLine(pointAlong(base, -px, -py, 8), tip));
+  } else {
+    const offset = cardinality.includes('zero') ? 22 : 10;
+    const bar = pointAlong(point, ux, uy, offset);
+    group.appendChild(markerLine(pointAlong(bar, px, py, 8), pointAlong(bar, -px, -py, 8)));
+  }
+
+  return group;
+}
+
+function markerLine(a, b) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('class', 'cardinality');
+  line.setAttribute('x1', a.x);
+  line.setAttribute('y1', a.y);
+  line.setAttribute('x2', b.x);
+  line.setAttribute('y2', b.y);
+  return line;
+}
+
+function pointAlong(point, ux, uy, distance) {
+  return {
+    x: point.x + ux * distance,
+    y: point.y + uy * distance,
+  };
+}
+
+function text(value, point) {
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('class', 'connector-label');
+  label.setAttribute('x', point.x);
+  label.setAttribute('y', point.y);
+  label.setAttribute('text-anchor', 'middle');
+  label.textContent = value;
+  return label;
+}
 </script>
+</body>
+</html>
