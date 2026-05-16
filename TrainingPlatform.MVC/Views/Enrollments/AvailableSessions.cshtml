@@ -1,0 +1,32 @@
+﻿@section Scripts {
+    <script src="~/js/signalr/signalr.js"></script>
+    <script src="~/js/enrollment-ui.js" asp-append-version="true"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/enrollment")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("EnrollmentUpdated", function (data) {
+            EnrollmentUI.updateCounter(
+                data.courseSessionId,
+                data.enrolledCount,
+                data.capacity,
+                data.remainingSpots,
+                data.isFull
+            );
+        });
+
+        connection.start()
+            .then(function () {
+                console.log("SignalR connected");
+                @foreach (var session in Model)
+                {
+                        <text>connection.invoke("GetEnrollmentCount", @session.Id);</text>
+                }
+            })
+            .catch(function (err) {
+                console.error("SignalR error:", err);
+            });
+    </script>
+}

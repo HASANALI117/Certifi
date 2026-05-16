@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Services;
+using TrainingPlatform.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<TrainingPlatformDbContext>(options =>
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
@@ -17,7 +18,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.SignIn.RequireConfirmedAccount = false;
 })
-.AddEntityFrameworkStores<TrainingPlatformDbContext>()
+.AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -34,6 +35,7 @@ builder.Services.AddHttpClient<ICertificationLookupService, CertificationLookupS
 });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -41,7 +43,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in new[] { "Training Coordinator", "Instructor", "Trainee" })
+    foreach (var role in new[] { "TrainingCoordinator", "Instructor", "Trainee" })
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
@@ -61,6 +63,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapHub<EnrollmentHub>("/Hubs/Enrollment");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")

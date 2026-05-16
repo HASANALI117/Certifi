@@ -1,0 +1,98 @@
+﻿@model IEnumerable<TrainingPlatform.API.Models.Enrollment>
+@{
+    ViewData["Title"] = "Billing & Alerts";
+    var statuses = ViewBag.PaymentStatuses as Dictionary<int, string>;
+    var balances = ViewBag.OutstandingBalances as Dictionary<int, decimal>;
+    var notifications = ViewBag.Notifications as IEnumerable<TrainingPlatform.API.Models.Notification>;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Student Dashboard</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">My Course Enrollments</div>
+                <div class="card-body">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Fee</th>
+                                <th>Balance</th>
+                                <th>Payment Status</th>
+                                <th>Lifecycle</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td><strong>@item.CourseSession.Course.Title</strong></td>
+                                    <td>@item.CourseSession.Course.EnrollmentFee.ToString("C")</td>
+                                    <td class="text-danger">
+                                        @(balances != null && balances.ContainsKey(item.Id) 
+                                            ? balances[item.Id].ToString("C") 
+                                            : "-")
+                                    </td>
+                                    <td>
+                                        <span class="badge @(statuses != null && statuses.ContainsKey(item.Id) && statuses[item.Id] == "Paid" ? "bg-success" : "bg-warning")">
+                                            @(statuses != null && statuses.ContainsKey(item.Id) 
+                                                ? statuses[item.Id] 
+                                                : "-")
+                                        </span>
+                                    </td>
+                                    <td><small class="text-muted">@item.Status</small></td>
+                                    <td>
+                                        @if (balances != null && balances.ContainsKey(item.Id) && balances[item.Id] > 0)
+                                        {
+                                            <form asp-action="RecordPayment" method="post" class="d-inline">
+                                                <input type="hidden" name="enrollmentId" value="@item.Id" />
+                                                <div class="input-group input-group-sm" style="width: 150px;">
+                                                    <input type="number" name="amount" class="form-control" placeholder="Amount" step="0.01" required />
+                                                    <button class="btn btn-outline-primary" type="submit">Pay</button>
+                                                </div>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-dark text-white">Latest Notifications</div>
+                <ul class="list-group list-group-flush">
+                    @if (notifications != null && notifications.Any())
+                    {
+                        @foreach (var note in notifications)
+                        {
+                            <li class="list-group-item @(note.IsRead ? "" : "bg-light")">
+                                <small class="text-muted d-block">@note.CreatedAt.ToShortDateString()</small>
+                                <span>@note.Message</span>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="list-group-item">No recent alerts.</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
