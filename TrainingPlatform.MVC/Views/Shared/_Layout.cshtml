@@ -28,10 +28,9 @@
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/carrd-theme.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TrainingPlatform.MVC.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
 </head>
-<body>
+<body class="cd-body">
     @{
         var fullWidth = ViewData["FullWidth"] as bool? ?? false;
         var bodyWrapClass = fullWidth ? "cd-container" : "cd-container container py-4";

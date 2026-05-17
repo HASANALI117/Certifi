@@ -1,31 +1,29 @@
-:root,
-[data-theme="dark"],
-[data-theme="light"] {
-  --cd-ink: #fff;
-  --cd-ink-soft: rgba(255, 255, 255, 0.65);
-  --cd-panel: rgba(36, 37, 45, 0.6);
-  --cd-panel-soft: rgba(36, 37, 45, 0.175);
-  --cd-border: rgba(255, 255, 255, 0.075);
-  --cd-line: rgba(255, 255, 255, 0.25);
-  --cd-accent: #33ada9;
+/* Theme token overrides — last-load wins over site.css :root defaults */
+body {
+  --text-color: #fff;
+  --text-color-soft: rgba(255, 255, 255, 0.65);
+  --panel-bg: rgba(36, 37, 45, 0.6);
+  --panel-bg-soft: rgba(36, 37, 45, 0.175);
+  --border-color: rgba(255, 255, 255, 0.075);
+  --divider-color: rgba(255, 255, 255, 0.25);
+  --accent-color: #33ada9;
 
   --bs-primary: #6e7fc1;
   --bs-primary-rgb: 110, 127, 193;
-  --bs-body-color: var(--cd-ink);
+  --bs-body-color: var(--text-color);
   --bs-body-bg: transparent;
 }
 
-html,
 body {
   min-height: 100%;
 }
 
 /* === Layered background — hexagon overlay + diagonal gradient + animated twinkle SVG === */
 body {
-  color: var(--cd-ink);
+  color: var(--text-color);
   background-color: #24252d;
   margin: 0;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   position: relative;
   overflow-x: hidden;
@@ -54,6 +52,14 @@ body::before {
   background-image:
     url("/images/cd-overlay.png"),
     linear-gradient(45deg, #6e436c 25%, #2a4584 75%);
+  /* background-image:
+    url("/images/cd-overlay.png"),
+    linear-gradient(
+      45deg,
+      rgba(69, 93, 217, 0.871) 25%,
+      rgba(48, 161, 120, 0.78) 75%
+    ); */
+
   background-position: center, center;
   background-repeat: repeat, no-repeat;
   background-size: 256px, cover;
@@ -62,7 +68,7 @@ body::after {
   background: url("/images/cd-bg.svg") top center / cover no-repeat;
 }
 
-/* === Typography === */
+/* === Typography (scoped to landing) === */
 h1,
 h2,
 h3,
@@ -76,11 +82,11 @@ h6 {
   margin: 0;
 }
 p {
-  color: var(--cd-ink);
+  color: var(--text-color);
   line-height: 1.65;
 }
 a {
-  color: var(--cd-ink);
+  color: var(--text-color);
   text-decoration: none;
 }
 a:hover {
@@ -121,7 +127,7 @@ a:hover {
   left: calc(50% - 1px);
   width: 2px;
   height: 10em;
-  background: var(--cd-line);
+  background: var(--divider-color);
 }
 .cd-inner > section:last-child::after {
   display: none;
@@ -142,10 +148,10 @@ a:hover {
 }
 
 .cd-inner > section.style1 {
-  background-color: var(--cd-panel);
+  background-color: var(--panel-bg);
 }
 .cd-inner > section.style2 {
-  box-shadow: inset 0 0 0 2px var(--cd-line);
+  box-shadow: inset 0 0 0 2px var(--divider-color);
 }
 
 /* === Buttons (carrd .button) === */
@@ -178,7 +184,7 @@ a:hover {
 }
 .cd-btn.special,
 .button.special {
-  background-color: var(--cd-accent);
+  background-color: var(--accent-color);
   box-shadow: none;
   color: #fff;
 }
@@ -276,7 +282,7 @@ a:hover {
   left: calc(50% - 1px);
   width: 2px;
   height: 12.5em;
-  background: var(--cd-line);
+  background: var(--divider-color);
 }
 
 /* === ABOUT (header + carousel) === */
@@ -297,7 +303,7 @@ a:hover {
 }
 
 .carousel {
-  background-color: var(--cd-panel);
+  background-color: var(--panel-bg);
   border-radius: 0 0 6px 6px;
   overflow: hidden;
 }
@@ -432,7 +438,7 @@ a:hover {
 }
 .highlights-wrapper .content {
   padding: 4em 4em 2em;
-  background-color: var(--cd-panel);
+  background-color: var(--panel-bg);
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -478,7 +484,7 @@ a:hover {
     left: calc(50% - 1px);
     width: 2px;
     height: 2.5em;
-    background: var(--cd-line);
+    background: var(--divider-color);
   }
 }
 
@@ -488,7 +494,7 @@ a:hover {
 }
 .pro-wrapper > .content {
   padding: 6em 4em 4em;
-  background-color: var(--cd-panel-soft);
+  background-color: var(--panel-bg-soft);
   color: #fff;
   border-radius: 0 0 6px 6px;
 }
@@ -518,7 +524,7 @@ a:hover {
   width: 3em;
   height: 3em;
   border-radius: 3em;
-  box-shadow: inset 0 0 0 2px var(--cd-border);
+  box-shadow: inset 0 0 0 2px var(--border-color);
   background: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='648' height='552' viewBox='0 0 648 552'%3E%3Cpath d='M225.3,517.7L2.1,293.1l68.1-67.7L226,382.3L578.1,35.6l67.4,68.4L225.3,517.7z' fill='%2333ada9' /%3E%3C/svg%3E")
     center / 1.5em no-repeat;
 }
@@ -710,49 +716,50 @@ a:hover {
 }
 
 /* ============================================================
-   Cross-page (Courses/Login/etc.) — neutralize old dark-on-dark
-   styles so content stays readable on the new bg.
+   Cross-page (Courses/Login/etc.) — re-skin Bootstrap chrome for the
+   landing dark gradient. Scoped to body so the marketing layout
+   doesn't repaint dashboard / non-landing pages.
    ============================================================ */
 .card,
 .alert,
 .modal-content,
 .dropdown-menu,
 .list-group-item {
-  background: var(--cd-panel) !important;
-  border: 1px solid var(--cd-border) !important;
-  color: var(--cd-ink) !important;
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 6px;
 }
 .table {
-  color: var(--cd-ink);
+  color: var(--text-color);
 }
 .table th,
 .table td {
-  color: var(--cd-ink);
-  border-color: var(--cd-border);
+  color: var(--text-color);
+  border-color: var(--border-color);
 }
 .form-control,
 .form-select {
   background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--cd-border);
-  color: var(--cd-ink);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
   border-radius: 6px;
 }
 .form-control:focus,
 .form-select:focus {
   background: rgba(0, 0, 0, 0.35);
-  color: var(--cd-ink);
-  border-color: var(--cd-accent);
+  color: var(--text-color);
+  border-color: var(--accent-color);
   box-shadow: 0 0 0 0.2rem rgba(51, 173, 169, 0.18);
 }
 .form-label,
 label {
-  color: var(--cd-ink-soft);
+  color: var(--text-color-soft);
 }
 .btn-primary {
-  background: var(--cd-accent);
+  background: var(--accent-color);
   border: 0;
   color: #fff;
   border-radius: 6px;
