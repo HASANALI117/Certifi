@@ -3,5 +3,17 @@
         Context.Request.Headers["X-Requested-With"],
         "XMLHttpRequest",
         StringComparison.OrdinalIgnoreCase);
-    Layout = isAjax ? null : "_Layout";
+
+    if (isAjax)
+    {
+        Layout = null;
+    }
+    else if (User.Identity?.IsAuthenticated == true)
+    {
+        Layout = "_DashboardLayout";
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
 }

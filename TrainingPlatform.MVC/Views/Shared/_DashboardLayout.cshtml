@@ -36,7 +36,9 @@
     <div class="dash-shell">
         <aside class="dash-sidebar">
             <a class="dash-brand" data-dash-nav-skip="true" asp-controller="Dashboard" asp-action="Index">
-                <span class="dash-brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                <span class="dash-brand-mark">
+                    <img src="~/images/logo-2.png" alt="Certifi" class="dash-brand-logo" />
+                </span>
                 <span class="dash-brand-text">Certifi</span>
             </a>
 
@@ -169,6 +171,13 @@
                         return;
                     }
                     var html = await resp.text();
+                    // Safety net: if the server returned a full HTML document
+                    // (e.g., a stale cached response or a page that isn't AJAX-aware),
+                    // don't inject it as a fragment — do a real navigation instead.
+                    if (/<!DOCTYPE/i.test(html) || /<html[\s>]/i.test(html)) {
+                        window.location.href = finalUrl;
+                        return;
+                    }
                     target.innerHTML = html;
                     rebindScripts(target);
                     var title = extractTitle(html);

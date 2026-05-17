@@ -28,18 +28,38 @@ public class DashboardController : Controller
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? "User";
 
-        var categoriesQuery = _db.CourseCategories
-            .Select(c => new DashboardCategoryTab
-            {
-                Id = c.Id,
-                Name = c.Name,
-                CourseCount = c.Courses.Count
-            });
-
         var coursesQuery = _db.Courses
             .Include(c => c.Category)
             .Include(c => c.Sessions)
             .AsQueryable();
+
+        // Trainee dashboard only shows courses they're registered for (non-dropped enrollments).
+        if (role == "Trainee")
+        {
+            var trainee = await _db.Trainees.FirstOrDefaultAsync(t => t.UserId == user.Id);
+            if (trainee is null)
+            {
+                coursesQuery = coursesQuery.Where(_ => false);
+            }
+            else
+            {
+                coursesQuery = coursesQuery.Where(c => c.Sessions.Any(s =>
+                    s.Enrollments.Any(e => e.TraineeId == trainee.Id && e.Status != EnrollmentStatus.Dropped)));
+            }
+        }
+
+        // Snapshot the role-scoped (but un-faceted) course query so the category tab
+        // counts reflect the user's full eligible set, not the active filter.
+        var scopedCoursesQuery = coursesQuery;
+
+        var categoriesQuery = _db.CourseCategories
+            .Where(c => scopedCoursesQuery.Any(course => course.CategoryId == c.Id))
+            .Select(c => new DashboardCategoryTab
+            {
+                Id = c.Id,
+                Name = c.Name,
+                CourseCount = scopedCoursesQuery.Count(course => course.CategoryId == c.Id)
+            });
 
         if (!string.IsNullOrWhiteSpace(search))
             coursesQuery = coursesQuery.Where(c => c.Title.Contains(search) || c.Description.Contains(search));

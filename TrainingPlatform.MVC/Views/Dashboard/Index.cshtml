@@ -85,8 +85,8 @@
 
         <section class="dash-section">
             <div class="dash-section-head">
-                <h2 class="dash-section-title">Courses</h2>
-                <a class="dash-link" asp-controller="Courses" asp-action="Index">See all <i class="bi bi-arrow-right"></i></a>
+                <h2 class="dash-section-title">@(Model.Role == "Trainee" ? "My Courses" : "Courses")</h2>
+                <a class="dash-link" asp-controller="Courses" asp-action="Index">@(Model.Role == "Trainee" ? "Browse catalog" : "See all") <i class="bi bi-arrow-right"></i></a>
             </div>
 
             <div class="dash-tabs">
@@ -107,8 +107,16 @@
             {
                 <div class="dash-empty">
                     <i class="bi bi-inbox"></i>
-                    <h4>No courses yet</h4>
-                    <p>Try a different filter or check back soon.</p>
+                    @if (Model.Role == "Trainee")
+                    {
+                        <h4>You're not registered for any courses yet</h4>
+                        <p>Browse the catalog and enrol to see your courses here.</p>
+                    }
+                    else
+                    {
+                        <h4>No courses yet</h4>
+                        <p>Try a different filter or check back soon.</p>
+                    }
                 </div>
             }
             else
