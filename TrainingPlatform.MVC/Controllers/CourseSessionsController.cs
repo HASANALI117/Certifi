@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -8,22 +9,30 @@ using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-[Authorize(Roles = "TrainingCoordinator")]
+[Authorize]
 public class CourseSessionsController : Controller
 {
     private readonly AppDbContext _db;
+    private readonly UserManager<AppUser> _userManager;
 
-    public CourseSessionsController(AppDbContext db) => _db = db;
+    public CourseSessionsController(AppDbContext db, UserManager<AppUser> userManager)
+    {
+        _db = db;
+        _userManager = userManager;
+    }
 
     public async Task<IActionResult> Index()
     {
-        var sessions = await _db.CourseSessions
+        var scopedQuery = await ScopeQueryForCurrentUserAsync(_db.CourseSessions
             .Include(s => s.Course)
             .Include(s => s.Instructor).ThenInclude(i => i.User)
             .Include(s => s.Classroom)
             .Include(s => s.Enrollments)
-            .OrderBy(s => s.StartDateTime)
-            .ToListAsync();
+            .AsQueryable());
+
+        if (scopedQuery is null) return Challenge();
+
+        var sessions = await scopedQuery.OrderBy(s => s.StartDateTime).ToListAsync();
 
         var viewModels = sessions.Select(s => new CourseSessionListItemViewModel
         {
@@ -42,12 +51,16 @@ public class CourseSessionsController : Controller
 
     public async Task<IActionResult> Details(int id)
     {
-        var session = await _db.CourseSessions
+        var scopedQuery = await ScopeQueryForCurrentUserAsync(_db.CourseSessions
             .Include(s => s.Course)
             .Include(s => s.Instructor).ThenInclude(i => i.User)
             .Include(s => s.Classroom).ThenInclude(c => c.Equipment)
             .Include(s => s.Enrollments)
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .AsQueryable());
+
+        if (scopedQuery is null) return Challenge();
+
+        var session = await scopedQuery.FirstOrDefaultAsync(s => s.Id == id);
 
         if (session == null) return NotFound();
 
@@ -67,12 +80,14 @@ public class CourseSessionsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Create()
     {
         return View(await BuildFormAsync(null));
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Create(CourseSessionFormViewModel model)
     {
         if (!ModelState.IsValid)
@@ -131,6 +146,7 @@ public class CourseSessionsController : Controller
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Delete(int id)
     {
         var session = await _db.CourseSessions.Include(s => s.Enrollments).FirstOrDefaultAsync(s => s.Id == id);
@@ -146,6 +162,39 @@ public class CourseSessionsController : Controller
         await _db.SaveChangesAsync();
         TempData["Success"] = "Session deleted.";
         return RedirectToAction(nameof(Index));
+    }
+
+    // Filters the session query so each role only sees their own sessions:
+    // - Coordinator: every session
+    // - Instructor: sessions they teach
+    // - Trainee: sessions they're enrolled in (non-dropped)
+    // Returns null when the signed-in user record can't be resolved.
+    private async Task<IQueryable<CourseSession>?> ScopeQueryForCurrentUserAsync(IQueryable<CourseSession> query)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return null;
+
+        if (User.IsInRole("TrainingCoordinator"))
+        {
+            return query;
+        }
+
+        if (User.IsInRole("Instructor"))
+        {
+            var instructor = await _db.Instructors.FirstOrDefaultAsync(i => i.UserId == user.Id);
+            if (instructor is null) return query.Where(_ => false);
+            return query.Where(s => s.InstructorId == instructor.Id);
+        }
+
+        if (User.IsInRole("Trainee"))
+        {
+            var trainee = await _db.Trainees.FirstOrDefaultAsync(t => t.UserId == user.Id);
+            if (trainee is null) return query.Where(_ => false);
+            return query.Where(s => s.Enrollments.Any(e =>
+                e.TraineeId == trainee.Id && e.Status != EnrollmentStatus.Dropped));
+        }
+
+        return query.Where(_ => false);
     }
 
     private async Task<CourseSessionFormViewModel> BuildFormAsync(CourseSessionFormViewModel? existing)
