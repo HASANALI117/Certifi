@@ -1,0 +1,79 @@
+﻿@model TrainingPlatform.API.Models.Enrollment
+
+@{
+    ViewData["Title"] = "Confirm Deletion";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-danger shadow-sm rounded-3">
+                <div class="card-header bg-danger text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deletion
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">
+                        Are you absolutely sure you want to delete this enrollment? This action is permanent and cannot be undone.
+                    </p>
+
+                    <div class="row mb-4">
+                        <div class="col-sm-4 text-secondary fw-semibold">Trainee</div>
+                        <div class="col-sm-8 fw-bold text-dark mb-2">
+                            @(Model.Trainee?.User != null ? $"{Model.Trainee.User.FirstName} {Model.Trainee.User.LastName}" : "Unknown Trainee")
+                            <small class="text-muted d-block fw-normal">ID: @Model.TraineeId</small>
+                        </div>
+
+                        <div class="col-12"><hr class="my-2 text-muted" /></div>
+
+                        <div class="col-sm-4 text-secondary fw-semibold">Course</div>
+                        <div class="col-sm-8 fw-semibold mb-2">
+                            @(Model.CourseSession?.Course?.Title ?? "N/A")
+                            <small class="text-muted d-block fw-normal">Session ID: @Model.CourseSessionId</small>
+                        </div>
+
+                        <div class="col-12"><hr class="my-2 text-muted" /></div>
+
+                        <div class="col-sm-4 text-secondary fw-semibold">Status</div>
+                        <div class="col-sm-8 mb-2">
+                            @{
+                                var statusString = Model.Status.ToString();
+                                var badgeClass = statusString switch
+                                {
+                                    "Completed" => "bg-success",
+                                    "Attending" => "bg-info text-dark",
+                                    "Confirmed" => "bg-primary",
+                                    "Dropped" => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass px-2 py-1">@statusString</span>
+                        </div>
+
+                        <div class="col-12"><hr class="my-2 text-muted" /></div>
+
+                        <div class="col-sm-4 text-secondary fw-semibold">Enrolled On</div>
+                        <div class="col-sm-8 mb-2">
+                            @Model.EnrolledAt.ToLocalTime().ToString("g")
+                        </div>
+                    </div>
+
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash-fill me-1"></i> Permanently Delete Enrollment
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                Cancel & Back to List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

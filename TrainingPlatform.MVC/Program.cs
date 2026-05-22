@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
 using TrainingPlatform.API.Models;
+using TrainingPlatform.MVC.Hubs;
 using TrainingPlatform.MVC.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +35,7 @@ builder.Services.AddHttpClient<ICertificationLookupService, CertificationLookupS
 });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -84,6 +86,7 @@ app.Use(async (ctx, next) =>
 });
 
 app.MapStaticAssets();
+app.MapHub<EnrollmentHub>("/hubs/enrollment");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")

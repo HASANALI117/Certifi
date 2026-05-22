@@ -1,0 +1,121 @@
+@model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.AvailableSessionViewModel>
+
+@{
+    ViewData["Title"] = "Available Sessions";
+}
+
+<div data-tp-live-page="available-sessions"></div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Available Sessions</h2>
+        <p class="text-muted mb-0">Choose an upcoming course session and watch seat availability update live.</p>
+    </div>
+    @if (User.IsInRole("Trainee"))
+    {
+        <a asp-action="BillingAndAlerts" class="btn btn-outline-primary">My Enrollments</a>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No scheduled sessions are currently open for enrollment.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-lg-2 g-3">
+        @foreach (var session in Model)
+        {
+            var isFull = session.AvailableSpots <= 0;
+
+            <div class="col">
+                <div class="card h-100 shadow-sm enrollment-session-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <h5 class="card-title mb-1">@session.CourseTitle</h5>
+                                <p class="text-muted mb-2">@session.ClassroomName</p>
+                            </div>
+                            <div id="enrollment-counter-@session.Id" class="text-end flex-shrink-0">
+                                @if (isFull)
+                                {
+                                    <span class="badge bg-danger">Full</span>
+                                    <small class="text-muted d-block">(@session.EnrolledCount/@session.Capacity)</small>
+                                }
+                                else
+                                {
+                                    <span class="badge @(session.AvailableSpots <= 5 ? "bg-warning text-dark" : "bg-success")">
+                                        @session.AvailableSpots spots left
+                                    </span>
+                                    <small class="text-muted d-block">(@session.EnrolledCount/@session.Capacity)</small>
+                                }
+                            </div>
+                        </div>
+
+                        <dl class="row small mb-0">
+                            <dt class="col-4">Instructor</dt>
+                            <dd class="col-8">@session.InstructorName</dd>
+                            <dt class="col-4">Date</dt>
+                            <dd class="col-8">@session.SessionDate.ToString("dd MMM yyyy")</dd>
+                            <dt class="col-4">Time</dt>
+                            <dd class="col-8">@session.StartTime.ToString("hh\\:mm tt") - @session.EndTime.ToString("hh\\:mm tt")</dd>
+                            <dt class="col-4">Fee</dt>
+                            <dd class="col-8">@session.Fee.ToString("C")</dd>
+                        </dl>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-end">
+                        @if (User.IsInRole("Trainee"))
+                        {
+                            <form asp-action="Enroll" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="courseSessionId" value="@session.Id" />
+                                <button id="enroll-btn-@session.Id" type="submit" class="btn @(isFull ? "btn-secondary" : "btn-primary")" disabled="@isFull">
+                                    @(isFull ? "Session Full" : "Enroll Now")
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary">Login to Enroll</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/enrollment-ui.js" asp-append-version="true"></script>
+    <script>
+        const connection = window.TrainingPlatformRealtime?.connection || new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/enrollment")
+            .withAutomaticReconnect()
+            .build();
+
+        const startConnection = window.TrainingPlatformRealtime?.start || function () {
+            return connection.start();
+        };
+
+        connection.on("EnrollmentUpdated", function (data) {
+            EnrollmentUI.updateCounter(
+                data.courseSessionId,
+                data.enrolledCount,
+                data.capacity,
+                data.remainingSpots,
+                data.isFull
+            );
+        });
+
+        startConnection()
+            .then(function () {
+                @foreach (var session in Model)
+                {
+                    <text>connection.invoke("GetEnrollmentCount", @session.Id);</text>
+                }
+            })
+            .catch(function (err) {
+                console.error(err.toString());
+            });
+    </script>
+}
