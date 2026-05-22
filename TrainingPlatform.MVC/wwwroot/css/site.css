@@ -21,6 +21,45 @@ body {
   margin-bottom: 60px;
 }
 
+.member3-table {
+  border: 1px solid rgba(0, 0, 0, 0.075);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.member3-status-select {
+  min-width: 132px;
+}
+
+.member3-payment-form {
+  max-width: 220px;
+}
+
+.enrollment-session-card {
+  border-radius: 8px;
+}
+
+.member3-notifications .list-group-item {
+  border-left: 0;
+  border-right: 0;
+}
+
+#notification-toast-container {
+  z-index: 1080;
+}
+
+@media (max-width: 576px) {
+  .member3-payment-form {
+    width: 100%;
+    max-width: none;
+  }
+
+  .member3-payment-form .form-control {
+    min-width: 0;
+  }
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

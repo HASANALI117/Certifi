@@ -2,29 +2,30 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-[Authorize(Roles = "Training Coordinator")]
+[Authorize(Roles = "TrainingCoordinator")]
 public class ClassroomsController : Controller
 {
-    private readonly TrainingPlatformDbContext _db;
+    private readonly AppDbContext _db;
 
-    public ClassroomsController(TrainingPlatformDbContext db) => _db = db;
+    public ClassroomsController(AppDbContext db) => _db = db;
 
     public async Task<IActionResult> Index()
     {
         var classrooms = await _db.Classrooms
-            .Include(c => c.Sessions)
+            .Include(c => c.Equipment)
+            .Include(c => c.CourseSessions)
             .Select(c => new ClassroomViewModel
             {
                 Id = c.Id,
                 Name = c.Name,
                 Capacity = c.Capacity,
-                Equipment = c.Equipment,
-                SessionCount = c.Sessions.Count
+                Equipment = string.Join(", ", c.Equipment.Select(e => e.EquipmentName)),
+                SessionCount = c.CourseSessions.Count
             })
             .ToListAsync();
 
@@ -44,7 +45,7 @@ public class ClassroomsController : Controller
         {
             Name = model.Name,
             Capacity = model.Capacity,
-            Equipment = model.Equipment
+            Equipment = BuildEquipment(model.Equipment)
         });
 
         await _db.SaveChangesAsync();
@@ -55,7 +56,9 @@ public class ClassroomsController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var room = await _db.Classrooms.FindAsync(id);
+        var room = await _db.Classrooms
+            .Include(c => c.Equipment)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (room == null) return NotFound();
 
         return View(new ClassroomViewModel
@@ -63,7 +66,7 @@ public class ClassroomsController : Controller
             Id = room.Id,
             Name = room.Name,
             Capacity = room.Capacity,
-            Equipment = room.Equipment
+            Equipment = string.Join(", ", room.Equipment.Select(e => e.EquipmentName))
         });
     }
 
@@ -73,12 +76,15 @@ public class ClassroomsController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var room = await _db.Classrooms.FindAsync(model.Id);
+        var room = await _db.Classrooms
+            .Include(c => c.Equipment)
+            .FirstOrDefaultAsync(c => c.Id == model.Id);
         if (room == null) return NotFound();
 
         room.Name = model.Name;
         room.Capacity = model.Capacity;
-        room.Equipment = model.Equipment;
+        _db.ClassroomEquipment.RemoveRange(room.Equipment);
+        room.Equipment = BuildEquipment(model.Equipment);
         await _db.SaveChangesAsync();
         TempData["Success"] = "Classroom updated.";
         return RedirectToAction(nameof(Index));
@@ -87,10 +93,10 @@ public class ClassroomsController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var room = await _db.Classrooms.Include(c => c.Sessions).FirstOrDefaultAsync(c => c.Id == id);
+        var room = await _db.Classrooms.Include(c => c.CourseSessions).FirstOrDefaultAsync(c => c.Id == id);
         if (room == null) return NotFound();
 
-        if (room.Sessions.Any())
+        if (room.CourseSessions.Any())
         {
             TempData["Error"] = "Cannot delete a classroom that has scheduled sessions.";
             return RedirectToAction(nameof(Index));
@@ -101,4 +107,10 @@ public class ClassroomsController : Controller
         TempData["Success"] = "Classroom deleted.";
         return RedirectToAction(nameof(Index));
     }
+
+    private static List<ClassroomEquipment> BuildEquipment(string equipment) =>
+        equipment
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(name => new ClassroomEquipment { EquipmentName = name })
+            .ToList();
 }

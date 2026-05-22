@@ -1,98 +1,168 @@
-﻿@model IEnumerable<TrainingPlatform.API.Models.Enrollment>
+@using TrainingPlatform.API.Models
+@model IEnumerable<Enrollment>
+
 @{
-    ViewData["Title"] = "Billing & Alerts";
-    var statuses = ViewBag.PaymentStatuses as Dictionary<int, string>;
-    var balances = ViewBag.OutstandingBalances as Dictionary<int, decimal>;
-    var notifications = ViewBag.Notifications as IEnumerable<TrainingPlatform.API.Models.Notification>;
+    ViewData["Title"] = "My Enrollment Dashboard";
+    var statuses = ViewBag.PaymentStatuses as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var balances = ViewBag.OutstandingBalances as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
+    var notifications = ViewBag.Notifications as IEnumerable<Notification> ?? new List<Notification>();
+    var certifications = ViewBag.Certifications as IEnumerable<TraineeCertification> ?? new List<TraineeCertification>();
 }
 
-<div class="container mt-4">
-    <h2 class="mb-4">Student Dashboard</h2>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">My Enrollment Dashboard</h2>
+        <p class="text-muted mb-0">Review progress, payment balance, notifications, and certification status.</p>
+    </div>
+    <a asp-action="AvailableSessions" class="btn btn-outline-primary">Browse Sessions</a>
+</div>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">My Course Enrollments</div>
-                <div class="card-body">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Course</th>
-                                <th>Fee</th>
-                                <th>Balance</th>
-                                <th>Payment Status</th>
-                                <th>Lifecycle</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td><strong>@item.CourseSession.Course.Title</strong></td>
-                                    <td>@item.CourseSession.Course.EnrollmentFee.ToString("C")</td>
-                                    <td class="text-danger">
-                                        @(balances != null && balances.ContainsKey(item.Id) 
-                                            ? balances[item.Id].ToString("C") 
-                                            : "-")
-                                    </td>
-                                    <td>
-                                        <span class="badge @(statuses != null && statuses.ContainsKey(item.Id) && statuses[item.Id] == "Paid" ? "bg-success" : "bg-warning")">
-                                            @(statuses != null && statuses.ContainsKey(item.Id) 
-                                                ? statuses[item.Id] 
-                                                : "-")
-                                        </span>
-                                    </td>
-                                    <td><small class="text-muted">@item.Status</small></td>
-                                    <td>
-                                        @if (balances != null && balances.ContainsKey(item.Id) && balances[item.Id] > 0)
-                                        {
-                                            <form asp-action="RecordPayment" method="post" class="d-inline">
-                                                <input type="hidden" name="enrollmentId" value="@item.Id" />
-                                                <div class="input-group input-group-sm" style="width: 150px;">
-                                                    <input type="number" name="amount" class="form-control" placeholder="Amount" step="0.01" required />
-                                                    <button class="btn btn-outline-primary" type="submit">Pay</button>
-                                                </div>
-                                            </form>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-dark text-white">Latest Notifications</div>
-                <ul class="list-group list-group-flush">
-                    @if (notifications != null && notifications.Any())
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="table-responsive member3-table">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Course</th>
+                        <th>Lifecycle</th>
+                        <th>Payment</th>
+                        <th>Assessment</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
                     {
-                        @foreach (var note in notifications)
-                        {
-                            <li class="list-group-item @(note.IsRead ? "" : "bg-light")">
-                                <small class="text-muted d-block">@note.CreatedAt.ToShortDateString()</small>
-                                <span>@note.Message</span>
-                            </li>
-                        }
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">You do not have any enrollments yet.</td>
+                        </tr>
                     }
                     else
                     {
-                        <li class="list-group-item">No recent alerts.</li>
+                        foreach (var item in Model)
+                        {
+                            var fee = item.CourseSession?.Course?.EnrollmentFee ?? 0m;
+                            var balance = balances.GetValueOrDefault(item.Id, fee);
+                            var paid = item.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+                            var paymentStatus = statuses.GetValueOrDefault(item.Id, "Unpaid");
+
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.CourseSession?.Course?.Title</div>
+                                    <small class="text-muted">@item.CourseSession?.StartDateTime.ToString("dd MMM yyyy HH:mm")</small>
+                                </td>
+                                <td>
+                                    <span class="badge @(item.Status == EnrollmentStatus.Completed ? "bg-success" : item.Status == EnrollmentStatus.Dropped ? "bg-danger" : "bg-primary")">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge @(paymentStatus == "Paid" ? "bg-success" : paymentStatus == "Partial" ? "bg-warning text-dark" : "bg-secondary")">
+                                        @paymentStatus
+                                    </span>
+                                    <small class="d-block text-muted">Paid @paid.ToString("C") / @fee.ToString("C")</small>
+                                    <small class="d-block text-muted">Balance @balance.ToString("C")</small>
+                                </td>
+                                <td>
+                                    @if (item.Assessment == null)
+                                    {
+                                        <span class="text-muted small">Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge @(item.Assessment.Result == AssessmentResult.Pass ? "bg-success" : "bg-danger")">@item.Assessment.Result</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (item.Status == EnrollmentStatus.Dropped)
+                                    {
+                                        <span class="text-muted small fw-semibold">Closed</span>
+                                    }
+                                    else if (balance > 0)
+                                    {
+                                        <form asp-action="RecordPayment" method="post" class="d-inline-flex gap-1 justify-content-end member3-payment-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="enrollmentId" value="@item.Id" />
+                                            <input type="number" name="amount" class="form-control form-control-sm" placeholder="Amount" step="0.01" min="0.01" max="@balance" required />
+                                            <button class="btn btn-sm btn-outline-primary" type="submit">Pay</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success small fw-semibold">Paid</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
                     }
-                </ul>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <h3 class="h5 mb-3">Certification Progress</h3>
+            <div class="table-responsive member3-table">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Certification</th>
+                            <th>Status</th>
+                            <th>Reference</th>
+                            <th>Issued</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!certifications.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-3 text-muted">No certification progress yet.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var cert in certifications)
+                            {
+                                <tr>
+                                    <td>@cert.CertificationTrack?.Name</td>
+                                    <td>
+                                        <span class="badge @(cert.Status == CertificationStatus.Issued ? "bg-success" : cert.Status == CertificationStatus.Eligible ? "bg-warning text-dark" : "bg-secondary")">
+                                            @cert.Status
+                                        </span>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "-" : cert.CertRefNumber)</td>
+                                    <td>@(cert.IssuedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "-")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
             </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="member3-notifications">
+            <h3 class="h5 mb-3">Latest Notifications</h3>
+            @if (!notifications.Any())
+            {
+                <div class="alert alert-light border" data-notification-empty>No recent alerts.</div>
+                <div class="list-group" data-notification-list></div>
+            }
+            else
+            {
+                <div class="list-group" data-notification-list>
+                    @foreach (var note in notifications)
+                    {
+                        <div class="list-group-item @(note.IsRead ? "" : "list-group-item-light")">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="badge bg-secondary">@note.Type</span>
+                                <small class="text-muted">@note.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")</small>
+                            </div>
+                            <p class="mb-0 mt-2">@note.Message</p>
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>

@@ -1,142 +1,239 @@
-﻿@using TrainingPlatform.API.Models
-@model List<Enrollment>
+@using TrainingPlatform.API.Models
+@model IEnumerable<Enrollment>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-primary fw-semibold mb-1">Manage Enrollments</h2>
-            <p class="text-muted mb-0">Update trainee progress, transition statuses, and record course payments.</p>
-        </div>
+@{
+    ViewData["Title"] = "Manage Enrollments";
+    var certifications = ViewBag.Certifications as IEnumerable<TraineeCertification> ?? new List<TraineeCertification>();
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Manage Enrollments</h2>
+        <p class="text-muted mb-0">Track lifecycle status, payments, assessments, notifications, and certification eligibility.</p>
+    </div>
+    @if (User.IsInRole("TrainingCoordinator"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Register New Enrollment</a>
+    }
+</div>
+
+<div class="table-responsive member3-table">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+            <tr>
+                <th>Trainee</th>
+                <th>Course</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Assessment</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No enrollments found.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var e in Model)
+                {
+                    var traineeName = e.Trainee?.User != null ? $"{e.Trainee.User.FirstName} {e.Trainee.User.LastName}" : "Unknown Trainee";
+                    var courseTitle = e.CourseSession?.Course?.Title ?? "N/A";
+                    var fee = e.CourseSession?.Course?.EnrollmentFee ?? 0m;
+                    var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+                    var balance = Math.Max(0m, fee - paid);
+                    var canRecordPayment = balance > 0 && e.Status != EnrollmentStatus.Dropped;
+                    var statusClass = e.Status switch
+                    {
+                        EnrollmentStatus.Completed => "bg-success",
+                        EnrollmentStatus.Attending => "bg-info text-dark",
+                        EnrollmentStatus.Confirmed => "bg-primary",
+                        EnrollmentStatus.Dropped => "bg-danger",
+                        _ => "bg-secondary"
+                    };
+
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@traineeName</div>
+                            <small class="text-muted">@e.Trainee?.TraineePublicId</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">@courseTitle</div>
+                            <small class="text-muted">@e.CourseSession?.StartDateTime.ToString("dd MMM yyyy HH:mm")</small>
+                        </td>
+                        <td>
+                            <span class="badge @statusClass">@e.Status</span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold @(balance > 0 ? "text-danger" : "text-success")">@balance.ToString("C")</div>
+                            <small class="text-muted">Paid @paid.ToString("C") / @fee.ToString("C")</small>
+                        </td>
+                        <td>
+                            @if (e.Assessment == null)
+                            {
+                                <span class="badge bg-light text-dark border">Not recorded</span>
+                            }
+                            else
+                            {
+                                <span class="badge @(e.Assessment.Result == AssessmentResult.Pass ? "bg-success" : "bg-danger")">@e.Assessment.Result</span>
+                                <small class="text-muted d-block">@e.Assessment.RecordedAt.ToLocalTime().ToString("g")</small>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex flex-wrap justify-content-end gap-2">
+                                @if (User.IsInRole("TrainingCoordinator"))
+                                {
+                                    <form asp-action="UpdateStatus" method="post" class="d-inline-flex gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@e.Id" />
+                                        <select name="newStatus" class="form-select form-select-sm member3-status-select">
+                                            @foreach (var status in Enum.GetValues<EnrollmentStatus>())
+                                            {
+                                                <option value="@status" selected="@(status == e.Status)">@status</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                    </form>
+
+                                    <button type="button" class="btn btn-sm btn-outline-success"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#payModal@e.Id"
+                                            disabled="@(!canRecordPayment)">
+                                        Payment
+                                    </button>
+                                }
+
+                                <button type="button" class="btn btn-sm btn-outline-dark"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#assessmentModal@e.Id">
+                                    Assessment
+                                </button>
+                            </div>
+
+                            <div class="modal fade text-start" id="payModal@e.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Record Payment</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form asp-action="RecordPayment" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <div class="modal-body">
+                                                <input type="hidden" name="enrollmentId" value="@e.Id" />
+                                                <p class="text-muted mb-3">@traineeName - @courseTitle</p>
+                                                <label class="form-label">Amount</label>
+                                                <input type="number" name="amount" class="form-control" step="0.01" min="0.01" max="@balance" required />
+                                                <small class="text-muted">Outstanding balance: @balance.ToString("C")</small>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-success">Save Payment</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade text-start" id="assessmentModal@e.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Record Assessment</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form asp-action="RecordAssessment" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <div class="modal-body">
+                                                <input type="hidden" name="enrollmentId" value="@e.Id" />
+                                                <p class="text-muted mb-3">@traineeName - @courseTitle</p>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Result</label>
+                                                    <select name="result" class="form-select">
+                                                        @foreach (var result in Enum.GetValues<AssessmentResult>())
+                                                        {
+                                                            <option value="@result" selected="@(e.Assessment?.Result == result)">@result</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Notes</label>
+                                                    <textarea name="notes" class="form-control" rows="3">@e.Assessment?.Notes</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-dark">Save Assessment</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h5 mb-0">Certification Tracking</h3>
+        <span class="text-muted small">@certifications.Count() records</span>
     </div>
 
-    <div class="card shadow-sm border-0 rounded-3">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
+    <div class="table-responsive member3-table">
+        <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Trainee</th>
+                    <th>Certification</th>
+                    <th>Status</th>
+                    <th>Reference</th>
+                    <th>Issued</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!certifications.Any())
+                {
                     <tr>
-                        <th class="ps-4">Trainee</th>
-                        <th>Course</th>
-                        <th>Status</th>
-                        <th>Outstanding Balance</th>
-                        <th class="text-end pe-4">Actions</th>
+                        <td colspan="6" class="text-center py-4 text-muted">No certification progress is being tracked yet.</td>
                     </tr>
-                </thead>
-                <tbody>
-                    @if (Model == null || !Model.Any())
+                }
+                else
+                {
+                    foreach (var cert in certifications)
                     {
+                        var traineeName = cert.Trainee?.User != null ? $"{cert.Trainee.User.FirstName} {cert.Trainee.User.LastName}" : "Unknown Trainee";
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">No enrollments found.</td>
+                            <td>@traineeName</td>
+                            <td>@cert.CertificationTrack?.Name</td>
+                            <td>
+                                <span class="badge @(cert.Status == CertificationStatus.Issued ? "bg-success" : cert.Status == CertificationStatus.Eligible ? "bg-warning text-dark" : "bg-secondary")">
+                                    @cert.Status
+                                </span>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "-" : cert.CertRefNumber)</td>
+                            <td>@(cert.IssuedAt?.ToLocalTime().ToString("g") ?? "-")</td>
+                            <td class="text-end">
+                                @if (User.IsInRole("TrainingCoordinator") && cert.Status == CertificationStatus.Eligible)
+                                {
+                                    <form asp-action="IssueCertification" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="certificationId" value="@cert.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Issue</button>
+                                    </form>
+                                }
+                            </td>
                         </tr>
                     }
-                    else
-                    {
-                        foreach (var e in Model)
-                        {
-                            // Safely calculate balance by checking if Payments list exists
-                            var totalPaid = e.Payments?.Sum(p => p.AmountPaid) ?? 0;
-                            var baseFee = e.CourseSession?.Course?.EnrollmentFee ?? 0;
-                            var remainingBalance = baseFee - totalPaid;
-
-                            // Safe string conversion for Enum rendering
-                            string statusString = e.Status.ToString();
-
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="fw-bold text-dark">
-                                        @(e.Trainee?.User != null ? $"{e.Trainee.User.FirstName} {e.Trainee.User.LastName}" : "Unknown Trainee")
-                                    </div>
-                                    <small class="text-muted">ID: @e.TraineeId</small>
-                                </td>
-                                <td>
-                                    <span class="fw-semibold">@(e.CourseSession?.Course?.Title ?? "N/A")</span>
-                                </td>
-                                <td>
-                                    @* Dynamic badge color depending on status *@
-                                    @{
-                                        var badgeClass = statusString switch
-                                        {
-                                            "Completed" => "bg-success",
-                                            "Attending" => "bg-info text-dark",
-                                            "Confirmed" => "bg-primary",
-                                            "Dropped" => "bg-danger",
-                                            _ => "bg-secondary"
-                                        };
-                                    }
-                                    <span class="badge @badgeClass px-2 py-2">
-                                        @statusString
-                                    </span>
-                                </td>
-                                <td class="fw-bold @(remainingBalance > 0 ? "text-danger" : "text-success")">
-                                    @remainingBalance.ToString("C")
-                                </td>
-                                <td class="text-end pe-4">
-                                    <div class="d-inline-flex gap-2">
-                                        @* Updated Action form to cleanly post custom fields *@
-                                        <form asp-action="UpdateStatus" method="post" class="d-inline-flex gap-1">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@e.Id" />
-
-                                            <select name="newStatus" class="form-select form-select-sm w-auto">
-                                                <!option value="Enrolled" @(statusString == "Enrolled" ? "selected" : "")>Enrolled</!option>
-                                                <!option value="Confirmed" @(statusString == "Confirmed" ? "selected" : "")>Confirmed</!option>
-                                                <!option value="Attending" @(statusString == "Attending" ? "selected" : "")>Attending</!option>
-                                                <!option value="Completed" @(statusString == "Completed" ? "selected" : "")>Completed</!option>
-                                                <!option value="Dropped" @(statusString == "Dropped" ? "selected" : "")>Dropped</!option>
-                                            </select>
-                                            <button type="submit" class="btn btn-sm btn-warning">
-                                                Update
-                                            </button>
-                                        </form>
-
-                                        <button class="btn btn-sm btn-success d-inline-flex align-items-center"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#payModal@e.Id">
-                                            <i class="bi bi-cash-stack me-1"></i> Pay
-                                        </button>
-                                    </div>
-
-                                    <div class="modal fade text-start" id="payModal@e.Id" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow">
-                                                <div class="modal-header bg-success text-white">
-                                                    <h5 class="modal-title"><i class="bi bi-wallet2 me-2"></i>Record Payment</h5>
-                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <form asp-action="RecordPayment" method="post">
-                                                    @Html.AntiForgeryToken()
-                                                    <div class="modal-body">
-                                                        <input type="hidden" name="enrollmentId" value="@e.Id" />
-
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Amount to Pay (Remaining: @remainingBalance.ToString("C"))</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text">$</span>
-                                                                <input type="number" name="amount" class="form-control" step="0.01" max="@remainingBalance" required />
-                                                            </div>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Type</label>
-                                                            <select name="paymentType" class="form-select">
-                                                                <option value="Full">Full Payment</option>
-                                                                <option value="Partial">Partial Payment</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="submit" class="btn btn-success">Save Transaction</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
+                }
+            </tbody>
+        </table>
     </div>
 </div>

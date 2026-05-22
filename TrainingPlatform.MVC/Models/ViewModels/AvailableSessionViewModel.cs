@@ -11,6 +11,7 @@ namespace TrainingPlatform.MVC.Models.ViewModels
         public DateOnly SessionDate { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
+        public decimal Fee { get; set; }
         public int Capacity { get; set; }
         public int EnrolledCount { get; set; }
         public int AvailableSpots { get; set; }

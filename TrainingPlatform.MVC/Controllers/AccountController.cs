@@ -1,20 +1,26 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Data;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
 public class AccountController : Controller
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<AppUser> _userManager;
+    private readonly SignInManager<AppUser> _signInManager;
+    private readonly AppDbContext _db;
 
-    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    public AccountController(
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        AppDbContext db)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _db = db;
     }
 
     [HttpGet]
@@ -30,9 +36,11 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var user = new ApplicationUser
+        var (firstName, lastName) = SplitFullName(model.FullName);
+        var user = new AppUser
         {
-            FullName = model.FullName,
+            FirstName = firstName,
+            LastName = lastName,
             UserName = model.Email,
             Email = model.Email
         };
@@ -46,6 +54,7 @@ public class AccountController : Controller
         }
 
         await _userManager.AddToRoleAsync(user, model.Role);
+        await CreateRoleProfileAsync(user, model.Role);
         await _signInManager.SignInAsync(user, isPersistent: false);
         return RedirectToAction("Index", "Home");
     }
@@ -82,4 +91,38 @@ public class AccountController : Controller
 
     [HttpGet]
     public IActionResult AccessDenied() => View();
+
+    private async Task CreateRoleProfileAsync(AppUser user, string role)
+    {
+        if (role == "Trainee")
+        {
+            _db.Trainees.Add(new Trainee
+            {
+                UserId = user.Id,
+                TraineePublicId = $"TRN-{user.Id[..8].ToUpperInvariant()}",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Today)
+            });
+        }
+        else if (role == "Instructor")
+        {
+            _db.Instructors.Add(new Instructor
+            {
+                UserId = user.Id,
+                Bio = "New instructor profile"
+            });
+        }
+
+        await _db.SaveChangesAsync();
+    }
+
+    private static (string FirstName, string LastName) SplitFullName(string fullName)
+    {
+        var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length switch
+        {
+            0 => (string.Empty, string.Empty),
+            1 => (parts[0], string.Empty),
+            _ => (parts[0], parts[1])
+        };
+    }
 }

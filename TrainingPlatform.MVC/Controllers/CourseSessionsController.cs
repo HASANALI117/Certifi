@@ -3,38 +3,41 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
-using TrainingPlatform.API.Entities;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-[Authorize(Roles = "Training Coordinator")]
+[Authorize(Roles = "TrainingCoordinator")]
 public class CourseSessionsController : Controller
 {
-    private readonly TrainingPlatformDbContext _db;
+    private readonly AppDbContext _db;
 
-    public CourseSessionsController(TrainingPlatformDbContext db) => _db = db;
+    public CourseSessionsController(AppDbContext db) => _db = db;
 
     public async Task<IActionResult> Index()
     {
-        var sessions = await _db.CourseSessions
+        var sessionEntities = await _db.CourseSessions
             .Include(s => s.Course)
             .Include(s => s.Instructor).ThenInclude(i => i.User)
             .Include(s => s.Classroom)
             .Include(s => s.Enrollments)
-            .OrderBy(s => s.SessionDate).ThenBy(s => s.StartTime)
+            .OrderBy(s => s.StartDateTime)
+            .ToListAsync();
+
+        var sessions = sessionEntities
             .Select(s => new CourseSessionListItemViewModel
             {
                 Id = s.Id,
                 CourseTitle = s.Course.Title,
-                InstructorName = s.Instructor.User.FullName,
+                InstructorName = FullName(s.Instructor.User),
                 ClassroomName = s.Classroom.Name,
-                SessionDate = s.SessionDate,
-                StartTime = s.StartTime,
-                AvailableSpots = s.AvailableSpots,
+                SessionDate = DateOnly.FromDateTime(s.StartDateTime),
+                StartTime = TimeOnly.FromDateTime(s.StartDateTime),
+                AvailableSpots = s.Capacity,
                 EnrollmentCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
             })
-            .ToListAsync();
+            .ToList();
 
         return View(sessions);
     }
@@ -44,7 +47,7 @@ public class CourseSessionsController : Controller
         var session = await _db.CourseSessions
             .Include(s => s.Course)
             .Include(s => s.Instructor).ThenInclude(i => i.User)
-            .Include(s => s.Classroom)
+            .Include(s => s.Classroom).ThenInclude(c => c.Equipment)
             .Include(s => s.Enrollments)
             .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -55,12 +58,12 @@ public class CourseSessionsController : Controller
             Id = session.Id,
             CourseTitle = session.Course.Title,
             CourseDescription = session.Course.Description,
-            InstructorName = session.Instructor.User.FullName,
+            InstructorName = FullName(session.Instructor.User),
             ClassroomName = session.Classroom.Name,
-            ClassroomEquipment = session.Classroom.Equipment,
-            SessionDate = session.SessionDate,
-            StartTime = session.StartTime,
-            AvailableSpots = session.AvailableSpots,
+            ClassroomEquipment = string.Join(", ", session.Classroom.Equipment.Select(e => e.EquipmentName)),
+            SessionDate = DateOnly.FromDateTime(session.StartDateTime),
+            StartTime = TimeOnly.FromDateTime(session.StartDateTime),
+            AvailableSpots = session.Capacity,
             EnrollmentCount = session.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
         });
     }
@@ -77,11 +80,19 @@ public class CourseSessionsController : Controller
         if (!ModelState.IsValid)
             return View(await BuildFormAsync(model));
 
+        var startDateTime = model.SessionDate.ToDateTime(model.StartTime);
+
+        var course = await _db.Courses.FindAsync(model.CourseId);
+        if (course == null)
+        {
+            ModelState.AddModelError("CourseId", "Selected course was not found.");
+            return View(await BuildFormAsync(model));
+        }
+
         // Validate instructor not double-booked on this date and time
         var instructorConflict = await _db.CourseSessions.AnyAsync(s =>
             s.InstructorId == model.InstructorId &&
-            s.SessionDate == model.SessionDate &&
-            s.StartTime == model.StartTime);
+            s.StartDateTime == startDateTime);
 
         if (instructorConflict)
         {
@@ -93,8 +104,7 @@ public class CourseSessionsController : Controller
         // Validate classroom not double-booked
         var roomConflict = await _db.CourseSessions.AnyAsync(s =>
             s.ClassroomId == model.ClassroomId &&
-            s.SessionDate == model.SessionDate &&
-            s.StartTime == model.StartTime);
+            s.StartDateTime == startDateTime);
 
         if (roomConflict)
         {
@@ -117,9 +127,10 @@ public class CourseSessionsController : Controller
             CourseId = model.CourseId,
             InstructorId = model.InstructorId,
             ClassroomId = model.ClassroomId,
-            SessionDate = model.SessionDate,
-            StartTime = model.StartTime,
-            AvailableSpots = model.AvailableSpots
+            StartDateTime = startDateTime,
+            EndDateTime = startDateTime.AddHours(course.DurationHours),
+            Capacity = model.AvailableSpots,
+            Status = SessionStatus.Scheduled
         });
 
         await _db.SaveChangesAsync();
@@ -155,7 +166,7 @@ public class CourseSessionsController : Controller
 
         model.Instructors = await _db.Instructors
             .Include(i => i.User)
-            .Select(i => new SelectListItem { Value = i.Id.ToString(), Text = i.User.FullName })
+            .Select(i => new SelectListItem { Value = i.Id.ToString(), Text = i.User.FirstName + " " + i.User.LastName })
             .ToListAsync();
 
         model.Classrooms = await _db.Classrooms
@@ -164,4 +175,7 @@ public class CourseSessionsController : Controller
 
         return model;
     }
+
+    private static string FullName(AppUser user) =>
+        $"{user.FirstName} {user.LastName}".Trim();
 }

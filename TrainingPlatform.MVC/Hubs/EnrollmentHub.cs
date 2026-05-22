@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
+using TrainingPlatform.API.Models;
 
 namespace TrainingPlatform.Hubs
 {
@@ -15,39 +16,30 @@ namespace TrainingPlatform.Hubs
 
         public async Task UpdateEnrollmentCount(int courseSessionId)
         {
-            var session = await _db.CourseSessions
-                .Include(cs => cs.Enrollments)
-                .FirstOrDefaultAsync(cs => cs.Id == courseSessionId);
-
-            if (session == null) return;
-
-            int enrolledCount = session.Enrollments.Count;
-            int remainingSpots = session.Capacity - enrolledCount;
-
-            var data = new
-            {
-                CourseSessionId = courseSessionId,
-                EnrolledCount = enrolledCount,
-                Capacity = session.Capacity,
-                RemainingSpots = remainingSpots,
-                IsFull = remainingSpots <= 0
-            };
-
-            await Clients.All.SendAsync("EnrollmentUpdated", data);
+            var data = await BuildEnrollmentCounterAsync(courseSessionId);
+            if (data != null)
+                await Clients.All.SendAsync("EnrollmentUpdated", data);
         }
 
         public async Task GetEnrollmentCount(int courseSessionId)
+        {
+            var data = await BuildEnrollmentCounterAsync(courseSessionId);
+            if (data != null)
+                await Clients.Caller.SendAsync("EnrollmentUpdated", data);
+        }
+
+        private async Task<object?> BuildEnrollmentCounterAsync(int courseSessionId)
         {
             var session = await _db.CourseSessions
                 .Include(cs => cs.Enrollments)
                 .FirstOrDefaultAsync(cs => cs.Id == courseSessionId);
 
-            if (session == null) return;
+            if (session == null) return null;
 
-            int enrolledCount = session.Enrollments.Count;
-            int remainingSpots = session.Capacity - enrolledCount;
+            var enrolledCount = session.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped);
+            var remainingSpots = Math.Max(0, session.Capacity - enrolledCount);
 
-            var data = new
+            return new
             {
                 CourseSessionId = courseSessionId,
                 EnrolledCount = enrolledCount,
@@ -55,8 +47,6 @@ namespace TrainingPlatform.Hubs
                 RemainingSpots = remainingSpots,
                 IsFull = remainingSpots <= 0
             };
-
-            await Clients.Caller.SendAsync("EnrollmentUpdated", data);
         }
     }
 }

@@ -63,7 +63,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
-app.MapHub<EnrollmentHub>("/Hubs/Enrollment");
+app.MapHub<EnrollmentHub>("/hubs/enrollment");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
