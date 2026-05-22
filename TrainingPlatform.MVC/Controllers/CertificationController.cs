@@ -4,14 +4,9 @@ using TrainingPlatform.MVC.Services;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-public class CertificationController : Controller
+public class CertificationController(ICertificationLookupService lookupService) : Controller
 {
-    private readonly ICertificationLookupService _lookupService;
-
-    public CertificationController(ICertificationLookupService lookupService)
-    {
-        _lookupService = lookupService;
-    }
+    private readonly ICertificationLookupService _lookupService = lookupService;
 
     [HttpGet]
     public IActionResult Lookup() => View(new CertificationLookupViewModel());

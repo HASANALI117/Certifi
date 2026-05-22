@@ -3,18 +3,21 @@ using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Services;
 
-public class CertificationLookupService : ICertificationLookupService
+public class CertificationLookupService(HttpClient httpClient) : ICertificationLookupService
 {
-    private readonly HttpClient _httpClient;
-
-    public CertificationLookupService(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
+    private readonly HttpClient _httpClient = httpClient;
 
     public async Task<CertificationVerifyResponse?> VerifyAsync(string traineeId, string certRef)
     {
-        return await _httpClient.GetFromJsonAsync<CertificationVerifyResponse>(
+        var response = await _httpClient.GetAsync(
             $"api/certifications/verify?traineeId={Uri.EscapeDataString(traineeId)}&certRef={Uri.EscapeDataString(certRef)}");
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CertificationVerifyResponse>();
     }
 }
