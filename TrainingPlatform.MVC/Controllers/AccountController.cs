@@ -29,18 +29,16 @@ public class AccountController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        // Only Trainee and Instructor can self-register
         if (!new[] { "Trainee", "Instructor" }.Contains(model.Role))
             ModelState.AddModelError("Role", "Invalid role selected.");
 
         if (!ModelState.IsValid)
             return View(model);
 
-        var (firstName, lastName) = SplitFullName(model.FullName);
         var user = new AppUser
         {
-            FirstName = firstName,
-            LastName = lastName,
+            FirstName = model.FirstName,
+            LastName = model.LastName,
             UserName = model.Email,
             Email = model.Email
         };
@@ -56,7 +54,7 @@ public class AccountController : Controller
         await _userManager.AddToRoleAsync(user, model.Role);
         await CreateRoleProfileAsync(user, model.Role);
         await _signInManager.SignInAsync(user, isPersistent: false);
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Dashboard");
     }
 
     [HttpGet]
@@ -76,7 +74,12 @@ public class AccountController : Controller
             model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
-            return LocalRedirect(returnUrl ?? "/");
+        {
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
+
+            return RedirectToAction("Index", "Dashboard");
+        }
 
         ModelState.AddModelError(string.Empty, "Invalid email or password.");
         return View(model);
@@ -108,21 +111,11 @@ public class AccountController : Controller
             _db.Instructors.Add(new Instructor
             {
                 UserId = user.Id,
-                Bio = "New instructor profile"
+                Bio = "New instructor profile",
+                ExpertiseAreas = "General"
             });
         }
 
         await _db.SaveChangesAsync();
-    }
-
-    private static (string FirstName, string LastName) SplitFullName(string fullName)
-    {
-        var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length switch
-        {
-            0 => (string.Empty, string.Empty),
-            1 => (parts[0], string.Empty),
-            _ => (parts[0], parts[1])
-        };
     }
 }

@@ -19,17 +19,18 @@ public class ClassroomsController : Controller
         var classrooms = await _db.Classrooms
             .Include(c => c.Equipment)
             .Include(c => c.CourseSessions)
-            .Select(c => new ClassroomViewModel
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Capacity = c.Capacity,
-                Equipment = string.Join(", ", c.Equipment.Select(e => e.EquipmentName)),
-                SessionCount = c.CourseSessions.Count
-            })
             .ToListAsync();
 
-        return View(classrooms);
+        var viewModels = classrooms.Select(c => new ClassroomViewModel
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Capacity = c.Capacity,
+            Equipment = string.Join(", ", c.Equipment.Select(e => e.EquipmentName)),
+            SessionCount = c.CourseSessions.Count
+        }).ToList();
+
+        return View(viewModels);
     }
 
     [HttpGet]
@@ -45,7 +46,11 @@ public class ClassroomsController : Controller
         {
             Name = model.Name,
             Capacity = model.Capacity,
-            Equipment = BuildEquipment(model.Equipment)
+            Equipment = string.IsNullOrWhiteSpace(model.Equipment)
+                ? []
+                : model.Equipment.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(e => new ClassroomEquipment { EquipmentName = e.Trim() })
+                    .ToList()
         });
 
         await _db.SaveChangesAsync();
@@ -83,8 +88,14 @@ public class ClassroomsController : Controller
 
         room.Name = model.Name;
         room.Capacity = model.Capacity;
-        _db.ClassroomEquipment.RemoveRange(room.Equipment);
-        room.Equipment = BuildEquipment(model.Equipment);
+
+        room.Equipment.Clear();
+        if (!string.IsNullOrWhiteSpace(model.Equipment))
+        {
+            foreach (var name in model.Equipment.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                room.Equipment.Add(new ClassroomEquipment { EquipmentName = name.Trim(), ClassroomId = room.Id });
+        }
+
         await _db.SaveChangesAsync();
         TempData["Success"] = "Classroom updated.";
         return RedirectToAction(nameof(Index));
@@ -93,7 +104,9 @@ public class ClassroomsController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var room = await _db.Classrooms.Include(c => c.CourseSessions).FirstOrDefaultAsync(c => c.Id == id);
+        var room = await _db.Classrooms
+            .Include(c => c.CourseSessions)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (room == null) return NotFound();
 
         if (room.CourseSessions.Any())
@@ -107,10 +120,4 @@ public class ClassroomsController : Controller
         TempData["Success"] = "Classroom deleted.";
         return RedirectToAction(nameof(Index));
     }
-
-    private static List<ClassroomEquipment> BuildEquipment(string equipment) =>
-        equipment
-            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(name => new ClassroomEquipment { EquipmentName = name })
-            .ToList();
 }

@@ -31,7 +31,7 @@ public class InstructorsController : Controller
                 Id = i.Id,
                 FullName = i.User.FirstName + " " + i.User.LastName,
                 Email = i.User.Email ?? string.Empty,
-                ExpertiseAreas = i.Bio,
+                ExpertiseAreas = i.ExpertiseAreas,
                 SessionCount = i.CourseSessions.Count
             })
             .ToListAsync();
@@ -52,13 +52,13 @@ public class InstructorsController : Controller
         return View(new InstructorDetailsViewModel
         {
             Id = instructor.Id,
-            FullName = FullName(instructor.User),
+            FullName = instructor.User.FirstName + " " + instructor.User.LastName,
             Email = instructor.User.Email ?? string.Empty,
-            ExpertiseAreas = instructor.Bio,
+            ExpertiseAreas = instructor.ExpertiseAreas,
             Bio = instructor.Bio,
             UpcomingSessions = instructor.CourseSessions
                 .Where(s => s.StartDateTime >= DateTime.Today)
-                .Select(s => $"{s.Course.Title} - {s.StartDateTime:dd MMM yyyy HH:mm}")
+                .Select(s => $"{s.Course.Title} — {s.StartDateTime:d MMM yyyy HH:mm}")
                 .ToList()
         });
     }
@@ -84,7 +84,8 @@ public class InstructorsController : Controller
         _db.Instructors.Add(new Instructor
         {
             UserId = model.UserId,
-            Bio = BuildBio(model)
+            ExpertiseAreas = model.ExpertiseAreas,
+            Bio = model.Bio
         });
 
         await _db.SaveChangesAsync();
@@ -102,7 +103,7 @@ public class InstructorsController : Controller
         {
             Id = instructor.Id,
             UserId = instructor.UserId,
-            ExpertiseAreas = instructor.Bio,
+            ExpertiseAreas = instructor.ExpertiseAreas,
             Bio = instructor.Bio
         };
 
@@ -118,7 +119,8 @@ public class InstructorsController : Controller
         var instructor = await _db.Instructors.FindAsync(model.Id);
         if (instructor == null) return NotFound();
 
-        instructor.Bio = BuildBio(model);
+        instructor.ExpertiseAreas = model.ExpertiseAreas;
+        instructor.Bio = model.Bio;
         await _db.SaveChangesAsync();
         TempData["Success"] = "Instructor profile updated.";
         return RedirectToAction(nameof(Index));
@@ -133,22 +135,8 @@ public class InstructorsController : Controller
 
         model.AvailableUsers = instructorRoleUsers
             .Where(u => !instructorUsers.Contains(u.Id) || u.Id == existing?.UserId)
-            .Select(u => new SelectListItem { Value = u.Id, Text = $"{FullName(u)} ({u.Email})" });
+            .Select(u => new SelectListItem { Value = u.Id, Text = $"{u.FirstName} {u.LastName} ({u.Email})" });
 
         return model;
-    }
-
-    private static string FullName(AppUser user) =>
-        $"{user.FirstName} {user.LastName}".Trim();
-
-    private static string BuildBio(InstructorFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Bio))
-            return model.ExpertiseAreas;
-
-        if (string.IsNullOrWhiteSpace(model.ExpertiseAreas) || model.Bio.Contains(model.ExpertiseAreas))
-            return model.Bio;
-
-        return $"{model.ExpertiseAreas}{Environment.NewLine}{model.Bio}";
     }
 }

@@ -1,37 +1,68 @@
 @model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.ClassroomViewModel>
 @{ ViewData["Title"] = "Classrooms"; }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Classrooms</h2>
-    <a asp-action="Create" class="btn btn-primary">+ New Classroom</a>
+<div class="tp-page-header">
+    <div>
+        <span class="tp-page-eyebrow"><i class="bi bi-door-open"></i> Manage</span>
+        <h1 class="tp-page-title">Classrooms</h1>
+        <p class="tp-page-subtitle">Track room capacity and equipment available for sessions.</p>
+    </div>
+    <div class="tp-page-actions">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> New Classroom
+        </a>
+    </div>
 </div>
 
-<table class="table table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>Name</th>
-            <th>Capacity</th>
-            <th>Equipment</th>
-            <th>Sessions</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var room in Model)
-        {
-            <tr>
-                <td>@room.Name</td>
-                <td>@room.Capacity</td>
-                <td>@(string.IsNullOrWhiteSpace(room.Equipment) ? "—" : room.Equipment)</td>
-                <td>@room.SessionCount</td>
-                <td class="text-end">
-                    <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                    <form asp-action="Delete" asp-route-id="@room.Id" method="post" class="d-inline"
-                          onsubmit="return confirm('Delete @room.Name?');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+@if (!Model.Any())
+{
+    <div class="tp-empty">
+        <i class="bi bi-door-open"></i>
+        <h4>No classrooms yet</h4>
+        <p>Add a classroom so you can schedule sessions.</p>
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Classroom</a>
+    </div>
+}
+else
+{
+    <div class="tp-table-card">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th style="width: 120px;">Capacity</th>
+                    <th>Equipment</th>
+                    <th style="width: 120px;">Sessions</th>
+                    <th class="text-end" style="width: 200px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var room in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <span class="tp-icon-circle"><i class="bi bi-door-open-fill"></i></span>
+                                <span class="fw-semibold">@room.Name</span>
+                            </div>
+                        </td>
+                        <td><span class="d-inline-flex align-items-center gap-1 tp-text-soft"><i class="bi bi-people"></i> @room.Capacity</span></td>
+                        <td class="tp-text-soft">@(string.IsNullOrWhiteSpace(room.Equipment) ? "—" : room.Equipment)</td>
+                        <td><span class="badge bg-primary">@room.SessionCount</span></td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@room.Id" method="post" class="d-inline m-0"
+                                  onsubmit="return confirm('Delete @room.Name?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

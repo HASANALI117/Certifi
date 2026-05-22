@@ -62,6 +62,29 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// AJAX-aware caching: tell the browser the response varies on X-Requested-With,
+// and never cache fragment (AJAX) responses — otherwise the cache will serve a
+// layout-less fragment when the user navigates to the same URL via the address bar.
+app.Use(async (ctx, next) =>
+{
+    var isAjax = string.Equals(
+        ctx.Request.Headers["X-Requested-With"],
+        "XMLHttpRequest",
+        StringComparison.OrdinalIgnoreCase);
+
+    ctx.Response.OnStarting(() =>
+    {
+        ctx.Response.Headers["Vary"] = "X-Requested-With";
+        if (isAjax)
+        {
+            ctx.Response.Headers["Cache-Control"] = "no-store";
+        }
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
 app.MapStaticAssets();
 app.MapHub<EnrollmentHub>("/hubs/enrollment");
 app.MapControllerRoute(

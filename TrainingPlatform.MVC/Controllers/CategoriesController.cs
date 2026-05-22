@@ -70,7 +70,9 @@ public class CategoriesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var category = await _db.CourseCategories.Include(c => c.Courses).FirstOrDefaultAsync(c => c.Id == id);
+        var category = await _db.CourseCategories
+            .Include(c => c.Courses)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (category == null) return NotFound();
 
         if (category.Courses.Any())
