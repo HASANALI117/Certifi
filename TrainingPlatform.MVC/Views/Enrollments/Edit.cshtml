@@ -1,0 +1,73 @@
+﻿@model TrainingPlatform.API.Models.Enrollment
+
+@{
+    ViewData["Title"] = "Edit Enrollment";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow border-0 rounded-3">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h4 class="mb-0 fw-semibold">
+                        <i class="bi bi-pencil-square me-2"></i>Edit Enrollment
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
+
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="TraineeId" class="form-label fw-semibold">Trainee</label>
+                            <select asp-for="TraineeId" class="form-select" asp-items="ViewBag.TraineeId">
+                                <option value="">-- Select Trainee --</option>
+                            </select>
+                            <span asp-validation-for="TraineeId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CourseSessionId" class="form-label fw-semibold">Course Session</label>
+                            <select asp-for="CourseSessionId" class="form-select" asp-items="ViewBag.CourseSessionId">
+                                <option value="">-- Select Course Session --</option>
+                            </select>
+                            <span asp-validation-for="CourseSessionId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label fw-semibold">Status</label>
+                            <select asp-for="Status" class="form-select"
+                                    asp-items="Html.GetEnumSelectList<TrainingPlatform.API.Models.EnrollmentStatus>()">
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="EnrolledAt" class="form-label fw-semibold">Enrolled Date & Time</label>
+                            <input asp-for="EnrolledAt" class="form-control" type="datetime-local"
+                                   value="@Model.EnrolledAt.ToString("yyyy-MM-ddTHH:mm")" />
+                            <span asp-validation-for="EnrolledAt" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning text-dark fw-semibold">
+                                <i class="bi bi-save me-1"></i> Save Changes
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Cancel & Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

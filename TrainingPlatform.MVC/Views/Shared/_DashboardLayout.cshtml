@@ -4,6 +4,8 @@
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     string NavActive(string ctrl) => string.Equals(ctrl, currentController, StringComparison.OrdinalIgnoreCase) ? "active" : "";
     var isCoordinator = User.IsInRole("TrainingCoordinator");
+    var isInstructor = User.IsInRole("Instructor");
+    var isTrainee = User.IsInRole("Trainee");
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -52,12 +54,30 @@
                 <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
                     <i class="bi bi-calendar-event"></i><span>Sessions</span>
                 </a>
+                @if (isTrainee)
+                {
+                    <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="AvailableSessions">
+                        <i class="bi bi-journal-plus"></i><span>Browse Sessions</span>
+                    </a>
+                    <a class="dash-nav-item" asp-controller="Enrollments" asp-action="BillingAndAlerts">
+                        <i class="bi bi-receipt"></i><span>My Enrollments</span>
+                    </a>
+                }
+                @if (isInstructor)
+                {
+                    <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="Manage">
+                        <i class="bi bi-clipboard-check"></i><span>Assessments</span>
+                    </a>
+                }
                 <a class="dash-nav-item @NavActive("Certification")" asp-controller="Certification" asp-action="Lookup">
                     <i class="bi bi-patch-check"></i><span>Certifications</span>
                 </a>
                 @if (isCoordinator)
                 {
                     <div class="dash-nav-section">Manage</div>
+                    <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="Manage">
+                        <i class="bi bi-people-fill"></i><span>Enrollments</span>
+                    </a>
                     <a class="dash-nav-item @NavActive("Categories")" asp-controller="Categories" asp-action="Index">
                         <i class="bi bi-tags"></i><span>Categories</span>
                     </a>
@@ -71,6 +91,38 @@
             </nav>
 
             <div class="dash-sidebar-footer">
+                <div class="dropdown dropup w-100 mb-2 tp-live-wrap">
+                    <button type="button" class="tp-live-pill w-100" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" data-dash-nav-skip="true" data-live-pill data-state="connecting">
+                        <span class="tp-live-dot tp-live-connecting" data-live-dot></span>
+                        <span class="tp-live-label" data-live-label>Connecting</span>
+                        <span class="tp-live-time" data-live-time>--:--:--</span>
+                    </button>
+                    <div class="dropdown-menu p-0 tp-live-menu">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <strong class="small">Live activity</strong>
+                            <span class="small text-muted">SignalR feed</span>
+                        </div>
+                        <div class="tp-live-feed" data-live-feed>
+                            <div class="text-muted small text-center py-3" data-live-feed-empty>No events yet.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dropdown dropup w-100 mb-2 tp-notif-wrap">
+                    <button class="dash-logout-btn position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" data-dash-nav-skip="true">
+                        <i class="bi bi-bell-fill"></i><span>Notifications</span>
+                        <span data-notif-badge class="badge bg-danger rounded-pill position-absolute top-0 end-0 mt-1 me-2 d-none">0</span>
+                    </button>
+                    <div class="dropdown-menu p-0 tp-notif-menu">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <strong class="small">Notifications</strong>
+                            <a href="#" class="small text-decoration-none" data-notif-clear>Mark all read</a>
+                        </div>
+                        <div class="list-group list-group-flush tp-notif-list" data-notif-list>
+                            <div class="list-group-item text-muted small text-center py-3">Loading…</div>
+                        </div>
+                    </div>
+                </div>
                 <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
                     <button type="submit" class="dash-logout-btn">
                         <i class="bi bi-box-arrow-left"></i><span>Log out</span>
@@ -105,8 +157,14 @@
         </div>
     </div>
 
+    <div class="tp-toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1080" data-toast-container></div>
+    <form style="display:none">@Html.AntiForgeryToken()</form>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/realtime.js" asp-append-version="true"></script>
+    <script src="~/js/enrollment-ui.js" asp-append-version="true"></script>
     <script>
         (function () {
             var shell = document.querySelector('.dash-shell');
@@ -193,6 +251,7 @@
                     setActiveByUrl(relUrl);
                     target.scrollTop = 0;
                     window.scrollTo(0, 0);
+                    window.dispatchEvent(new CustomEvent('tp:navigated', { detail: { url: relUrl } }));
                 } catch (e) {
                     window.location.href = url;
                 } finally {
@@ -203,6 +262,12 @@
             function loadInto(url, updateHistory) {
                 return doFetch(url, { method: 'GET' }, updateHistory || 'push');
             }
+
+            // Exposed for realtime.js — silent in-place refresh of the current dashboard fragment.
+            window.dashReload = function () {
+                var current = window.location.pathname + window.location.search;
+                return loadInto(current, 'replace');
+            };
 
             function submitForm(form) {
                 var method = (form.method || 'GET').toUpperCase();
