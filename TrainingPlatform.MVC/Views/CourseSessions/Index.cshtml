@@ -1,19 +1,21 @@
 @model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.CourseSessionListItemViewModel>
 @{
-    ViewData["Title"] = "Course Schedule";
+    ViewData["Title"] = "Course Sessions";
     var isCoordinator = User.IsInRole("TrainingCoordinator");
     var isInstructor = User.IsInRole("Instructor");
+    var isTrainee = User.IsInRole("Trainee");
     var subtitle = isCoordinator
         ? "All scheduled sessions. The system prevents instructor and classroom double-booking."
         : isInstructor
             ? "Sessions you're scheduled to teach."
-            : "Sessions you're enrolled in.";
+            : "Browse upcoming sessions and enrol. Seat availability updates live.";
 }
+
+<div data-tp-live-page="sessions"></div>
 
 <div class="tp-page-header">
     <div>
-        <span class="tp-page-eyebrow"><i class="bi bi-calendar-event"></i> @(isCoordinator ? "Manage" : "My Schedule")</span>
-        <h1 class="tp-page-title">Course Schedule</h1>
+        <h1 class="tp-page-title">Course Sessions</h1>
         <p class="tp-page-subtitle">@subtitle</p>
     </div>
     @if (isCoordinator)
@@ -30,7 +32,7 @@
 {
     <div class="tp-empty">
         <i class="bi bi-calendar-event"></i>
-        <h4>No sessions scheduled</h4>
+        <h4>No sessions @(isTrainee ? "available" : "scheduled")</h4>
         @if (isCoordinator)
         {
             <p>Schedule your first session to start enrolling trainees.</p>
@@ -42,7 +44,7 @@
         }
         else
         {
-            <p>You aren't enrolled in any sessions yet. Browse the course catalog to get started.</p>
+            <p>There are no upcoming sessions open for enrolment right now. Check back soon.</p>
         }
     </div>
 }
@@ -57,20 +59,21 @@ else
                     <th>Classroom</th>
                     <th>Date</th>
                     <th>Time</th>
+                    <th>Fee</th>
                     <th>Spots</th>
-                    <th>Enrolled</th>
-                    <th class="text-end" style="width: 220px;">Actions</th>
+                    <th class="text-end" style="width: 240px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var s in Model)
                 {
-                    var spotsLeft = s.AvailableSpots - s.EnrollmentCount;
+                    var spotsLeft = s.RemainingSpots;
+                    var isFull = spotsLeft <= 0;
                     var (badgeClass, badgeIcon, badgeText) =
-                        spotsLeft <= 0 ? ("bg-danger", "bi-x-circle-fill", "Full") :
-                        spotsLeft <= 5 ? ("bg-warning", "bi-exclamation-circle-fill", spotsLeft + " left") :
+                        isFull ? ("bg-danger", "bi-x-circle-fill", "Full") :
+                        spotsLeft <= 5 ? ("bg-warning text-dark", "bi-exclamation-circle-fill", spotsLeft + " left") :
                         ("bg-success", "bi-check-circle-fill", spotsLeft + " left");
-                    <tr>
+                    <tr data-session-card="@s.Id">
                         <td><span class="fw-semibold">@s.CourseTitle</span></td>
                         <td class="tp-text-soft">
                             <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-person"></i> @s.InstructorName</span>
@@ -80,16 +83,37 @@ else
                         </td>
                         <td class="tp-text-soft tp-mono" style="font-size: .9rem;">@s.SessionDate.ToString("dd MMM yyyy")</td>
                         <td class="tp-text-soft tp-mono" style="font-size: .9rem;">@s.StartTime.ToString("hh\\:mm tt")</td>
+                        <td class="tp-text-soft">@s.Fee.ToString("C")</td>
                         <td>
-                            <span class="badge @badgeClass">
-                                <i class="bi @badgeIcon"></i> @badgeText
+                            <span id="enrollment-counter-@s.Id">
+                                <span class="badge @badgeClass"><i class="bi @badgeIcon"></i> @badgeText</span>
+                                <small class="text-muted d-block">(@s.EnrollmentCount/@s.Capacity)</small>
                             </span>
+                            <span class="d-none" data-session-remaining="@s.Id">@spotsLeft</span>
+                            <span class="d-none" data-session-enrolled="@s.Id">@s.EnrollmentCount</span>
+                            <span class="d-none" data-session-capacity="@s.Id">@s.Capacity</span>
                         </td>
-                        <td class="tp-text-soft">@s.EnrollmentCount / @s.AvailableSpots</td>
                         <td class="text-end">
                             <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-eye"></i> Details
                             </a>
+                            @if (isTrainee)
+                            {
+                                if (s.IsEnrolledByCurrentUser)
+                                {
+                                    <span class="badge bg-info text-dark ms-1">Enrolled</span>
+                                }
+                                else
+                                {
+                                    <form asp-controller="Enrollments" asp-action="Enroll" method="post" class="d-inline m-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="courseSessionId" value="@s.Id" />
+                                        <button id="enroll-btn-@s.Id" type="submit" class="btn btn-sm @(isFull ? "btn-secondary" : "btn-primary")" disabled="@isFull">
+                                            @(isFull ? "Session Full" : "Enroll Now")
+                                        </button>
+                                    </form>
+                                }
+                            }
                             @if (isCoordinator)
                             {
                                 <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline m-0"

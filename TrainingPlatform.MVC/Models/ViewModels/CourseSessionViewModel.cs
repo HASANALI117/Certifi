@@ -13,6 +13,10 @@ public class CourseSessionListItemViewModel
     public TimeOnly StartTime { get; set; }
     public int AvailableSpots { get; set; }
     public int EnrollmentCount { get; set; }
+    public decimal Fee { get; set; }
+    public int Capacity { get; set; }
+    public bool IsEnrolledByCurrentUser { get; set; }
+    public int RemainingSpots => Math.Max(0, Capacity - EnrollmentCount);
 }
 
 public class CourseSessionFormViewModel

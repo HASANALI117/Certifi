@@ -34,6 +34,21 @@ public class CourseSessionsController : Controller
 
         var sessions = await scopedQuery.OrderBy(s => s.StartDateTime).ToListAsync();
 
+        // Sessions the current trainee is actively enrolled in (drives Enroll vs Enrolled state).
+        var enrolledSessionIds = new HashSet<int>();
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var trainee = user is null ? null : await _db.Trainees.FirstOrDefaultAsync(t => t.UserId == user.Id);
+            if (trainee != null)
+            {
+                enrolledSessionIds = (await _db.Enrollments
+                    .Where(e => e.TraineeId == trainee.Id && e.Status != EnrollmentStatus.Dropped)
+                    .Select(e => e.CourseSessionId)
+                    .ToListAsync()).ToHashSet();
+            }
+        }
+
         var viewModels = sessions.Select(s => new CourseSessionListItemViewModel
         {
             Id = s.Id,
@@ -42,8 +57,11 @@ public class CourseSessionsController : Controller
             ClassroomName = s.Classroom.Name,
             SessionDate = DateOnly.FromDateTime(s.StartDateTime),
             StartTime = TimeOnly.FromDateTime(s.StartDateTime),
+            Capacity = s.Capacity,
             AvailableSpots = s.Capacity,
-            EnrollmentCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
+            EnrollmentCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
+            Fee = s.Course.EnrollmentFee,
+            IsEnrolledByCurrentUser = enrolledSessionIds.Contains(s.Id)
         }).ToList();
 
         return View(viewModels);
@@ -188,10 +206,8 @@ public class CourseSessionsController : Controller
 
         if (User.IsInRole("Trainee"))
         {
-            var trainee = await _db.Trainees.FirstOrDefaultAsync(t => t.UserId == user.Id);
-            if (trainee is null) return query.Where(_ => false);
-            return query.Where(s => s.Enrollments.Any(e =>
-                e.TraineeId == trainee.Id && e.Status != EnrollmentStatus.Dropped));
+            // Unified browse + enroll: trainees see all upcoming scheduled sessions.
+            return query.Where(s => s.Status == SessionStatus.Scheduled && s.StartDateTime > DateTime.Now);
         }
 
         return query.Where(_ => false);
