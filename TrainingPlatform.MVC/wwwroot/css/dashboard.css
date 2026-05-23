@@ -883,13 +883,35 @@ body.dash-body::after {
 .dash-content-area p {
   color: var(--text-color-soft);
 }
+/* Match the enrollment (dash-page-head) header look on every dashboard page. */
 .dash-content-area .tp-page-header {
-  border-bottom-color: var(--border-color);
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin: 0 0 1.5rem;
+  align-items: flex-end;
+}
+.dash-content-area .tp-page-title {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.85rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.dash-content-area .tp-page-subtitle {
+  font-size: 0.92rem;
+  margin: 0.35rem 0 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* Cards / panels — unify every dashboard surface with the Manage page's glass panel. */
 .dash-content-area .tp-surface,
 .dash-content-area .tp-form-card,
 .dash-content-area .tp-empty,
+.dash-content-area .tp-table-card,
+.dash-content-area .tp-course-card,
 .dash-content-area .card,
 .dash-content-area .alert,
 .dash-content-area .modal-content,
@@ -903,11 +925,17 @@ body.dash-body::after {
   border-radius: var(--border-radius);
 }
 
-.dash-content-area .tp-course-card {
-  background: var(--panel-bg);
-  border-color: var(--border-color);
-  color: var(--text-color);
+/* Table card wraps its table edge-to-edge, exactly like .dash-panel. */
+.dash-content-area .tp-table-card {
+  overflow: hidden;
+  padding: 0;
 }
+.dash-content-area .tp-empty {
+  text-align: center;
+  color: var(--text-color-muted);
+  padding: 2.5rem 1rem;
+}
+
 .dash-content-area .tp-course-card .card-body,
 .dash-content-area .tp-course-card .card-footer {
   background: transparent !important;
@@ -919,25 +947,45 @@ body.dash-body::after {
   color: var(--text-color);
 }
 
-.dash-content-area .table,
-.dash-content-area .table th,
-.dash-content-area .table td {
+/* Tables — match .dash-data-table: transparent head, uppercase labels,
+   row borders, subtle hover tint (no Bootstrap striping). */
+.dash-content-area .table {
   color: var(--text-color);
-  border-color: var(--border-color);
+  margin: 0;
+  --bs-table-bg: transparent;
 }
-.dash-content-area .table-striped > tbody > tr:nth-of-type(odd) > * {
-  background: var(--panel-bg-soft);
+.dash-content-area .table > thead th {
+  background: transparent;
+  color: var(--text-color-muted);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.dash-content-area .table > tbody > tr > td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  border-top: 0;
+  vertical-align: middle;
   color: var(--text-color);
+}
+.dash-content-area .table > tbody > tr:last-child > td {
+  border-bottom: 0;
 }
 .dash-content-area .table-hover > tbody > tr:hover > * {
-  background: var(--accent-color-soft);
+  background: rgba(51, 173, 169, 0.06);
+  color: var(--text-color);
 }
 
+/* Forms */
 .dash-content-area .form-control,
 .dash-content-area .form-select {
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border-color);
   color: var(--text-color);
+  border-radius: var(--border-radius-sm);
 }
 .dash-content-area .form-control::placeholder {
   color: var(--text-color-muted);
@@ -959,23 +1007,32 @@ body.dash-body::after {
   color: var(--text-color-soft);
 }
 
+/* Buttons — pill shape + accent fill to match .dash-btn on the Manage page. */
+.dash-content-area .btn {
+  border-radius: 999px;
+  font-weight: 500;
+  text-decoration: none;
+}
 .dash-content-area .btn-primary {
   background: var(--accent-color);
   border-color: var(--accent-color);
-  color: #fff;
+  color: #0b1a1a;
+  font-weight: 600;
 }
 .dash-content-area .btn-primary:hover,
 .dash-content-area .btn-primary:focus {
   background: var(--accent-color-hover);
   border-color: var(--accent-color-hover);
-  color: #fff;
+  color: #0b1a1a;
 }
-.dash-content-area .btn-secondary {
+.dash-content-area .btn-secondary,
+.dash-content-area .btn-outline-secondary {
   background: transparent;
   border: 1px solid var(--border-color-strong);
   color: var(--text-color);
 }
-.dash-content-area .btn-secondary:hover {
+.dash-content-area .btn-secondary:hover,
+.dash-content-area .btn-outline-secondary:hover {
   background: var(--panel-bg-soft);
   color: var(--text-color);
 }
@@ -985,8 +1042,29 @@ body.dash-body::after {
 }
 .dash-content-area .btn-outline-primary:hover {
   background: var(--accent-color);
-  color: #fff;
+  color: #0b1a1a;
 }
+.dash-content-area .btn-outline-danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.dash-content-area .btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+/* Badges — pill palette matching .dash-pill. */
+.dash-content-area .badge {
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+}
+.dash-content-area .badge.bg-success   { background: rgba(16, 185, 129, 0.16) !important; color: #34d399 !important; }
+.dash-content-area .badge.bg-danger    { background: rgba(239, 68, 68, 0.16) !important; color: #fca5a5 !important; }
+.dash-content-area .badge.bg-info      { background: rgba(96, 165, 250, 0.16) !important; color: #93c5fd !important; }
+.dash-content-area .badge.bg-primary   { background: rgba(51, 173, 169, 0.16) !important; color: #5fd1cd !important; }
+.dash-content-area .badge.bg-warning   { background: rgba(245, 158, 11, 0.16) !important; color: #fbbf24 !important; }
+.dash-content-area .badge.bg-secondary { background: rgba(255, 255, 255, 0.06) !important; color: var(--text-color-soft) !important; }
 
 .dash-content-area .breadcrumb-item,
 .dash-content-area .breadcrumb-item a {
@@ -1004,14 +1082,6 @@ body.dash-body::after {
 }
 .dash-content-area a:hover {
   color: var(--accent-color-hover);
-}
-.dash-content-area .btn {
-  text-decoration: none;
-}
-
-.dash-content-area .badge.bg-warning {
-  background-color: #f5b441 !important;
-  color: #1a1a1a;
 }
 .dash-content-area .text-danger {
   color: #ff8a8a !important;
@@ -1135,6 +1205,65 @@ body.dash-body::after {
 .tp-toast-container .toast { min-width: 280px; background: #fff; box-shadow: 0 10px 30px rgba(15,23,42,0.18); }
 [data-bs-theme="dark"] .tp-toast-container .toast { background: #1f2937; color: #f3f4f6; }
 
+/* ---------- Sidebar user menu (notifications + logout submenu) ---------- */
+.dash-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.dash-user-btn:hover { background: var(--panel-bg); border-color: var(--border-color-strong); }
+.dash-user-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), #6e436c);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.dash-user-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.dash-user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-user-role {
+  font-size: 0.7rem;
+  color: var(--text-color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.dash-user-caret { font-size: 0.8rem; color: var(--text-color-muted); flex-shrink: 0; }
+.tp-user-badge { top: -4px; right: -4px; }
+.tp-user-menu {
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  max-height: 460px;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.28);
+  border: 1px solid var(--border-color);
+}
+.tp-user-menu .tp-notif-list { max-height: 300px; overflow-y: auto; }
+.tp-user-logout { width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; font-size: 0.9rem; }
+.tp-user-logout:hover { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+
 /* ---------- Live activity pill + feed ---------- */
 .tp-live-pill {
   display: flex;
@@ -1199,3 +1328,404 @@ body.dash-body::after {
 .tp-live-feed-time { font-variant-numeric: tabular-nums; color: #6b7280; font-size: 0.72rem; }
 .tp-live-feed-type { font-size: 0.65rem; }
 .tp-live-feed-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+
+/* ============================================================
+   Enrollments / Manage styles (merged from dashboard-manage.css).
+   Placed last so these win any conflicting earlier rules.
+   ============================================================ */
+/* ============================================================
+   Carrd-themed Enrollments / Manage redesign
+   Scoped under .dash-content-area to keep marketing pages clean.
+   ============================================================ */
+
+/* Page header ------------------------------------------------ */
+.dash-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.dash-page-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.dash-page-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+}
+.dash-page-h {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.85rem);
+  letter-spacing: -0.02em;
+  color: var(--text-color);
+  margin: 0;
+}
+.dash-page-lede {
+  color: var(--text-color-soft);
+  font-size: 0.92rem;
+  margin: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Summary chip strip ---------------------------------------- */
+.dash-chip-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.dash-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.dash-summary-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--accent-color-soft);
+  color: var(--accent-color);
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+.dash-summary-icon.is-warn { background: rgba(245, 158, 11, 0.18); color: #f59e0b; }
+.dash-summary-icon.is-info { background: rgba(96, 165, 250, 0.18); color: #60a5fa; }
+.dash-summary-icon.is-pink { background: rgba(244, 114, 182, 0.18); color: #f472b6; }
+.dash-summary-val {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  color: var(--text-color);
+}
+.dash-summary-lbl {
+  color: var(--text-color-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Panel wrapper --------------------------------------------- */
+.dash-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+.dash-panel + .dash-panel { margin-top: 1.25rem; }
+.dash-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  gap: 1rem;
+}
+.dash-panel-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--text-color);
+  margin: 0;
+}
+.dash-panel-sub {
+  font-size: 0.78rem;
+  color: var(--text-color-muted);
+}
+
+/* Data table ------------------------------------------------ */
+.dash-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.dash-data-table thead th {
+  background: transparent;
+  color: var(--text-color-muted);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+.dash-data-table tbody td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  color: var(--text-color);
+}
+.dash-data-table tbody tr:last-child td { border-bottom: 0; }
+.dash-data-table tbody tr { transition: background 0.15s ease; }
+.dash-data-table tbody tr:hover {
+  background: rgba(51, 173, 169, 0.06);
+}
+.dash-data-table .dash-td-actions { text-align: right; }
+.dash-data-table .dash-td-empty {
+  text-align: center;
+  color: var(--text-color-muted);
+  padding: 2.5rem 1rem;
+}
+
+/* Cell composites ------------------------------------------ */
+.dash-cell-person {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.dash-avatar-sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), #6e436c);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+.dash-cell-line1 {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.92rem;
+  line-height: 1.15;
+}
+.dash-cell-line2 {
+  color: var(--text-color-muted);
+  font-size: 0.74rem;
+  margin-top: 2px;
+}
+
+/* Pill badges ---------------------------------------------- */
+.dash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.dash-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dash-pill-success { background: rgba(16, 185, 129, 0.14); color: #34d399; border-color: rgba(16, 185, 129, 0.28); }
+.dash-pill-primary { background: rgba(51, 173, 169, 0.16); color: #5fd1cd; border-color: rgba(51, 173, 169, 0.3); }
+.dash-pill-info    { background: rgba(96, 165, 250, 0.16); color: #93c5fd; border-color: rgba(96, 165, 250, 0.3); }
+.dash-pill-warning { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+.dash-pill-danger  { background: rgba(239, 68, 68, 0.16);  color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+.dash-pill-muted   { background: rgba(255, 255, 255, 0.06); color: var(--text-color-soft); border-color: var(--border-color); }
+.dash-pill-plain   { padding: 0; border: 0; background: transparent; color: var(--text-color-muted); font-weight: 500; }
+.dash-pill-plain::before { display: none; }
+
+/* Inline payment progress ---------------------------------- */
+.dash-pay { min-width: 140px; }
+.dash-pay-line {
+  font-size: 0.82rem;
+  color: var(--text-color);
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.dash-pay-balance { color: #fbbf24; font-weight: 600; }
+.dash-pay-balance.is-paid { color: #34d399; }
+.dash-pay-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.dash-pay-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color), #5fd1cd);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+.dash-pay-meta {
+  font-size: 0.72rem;
+  color: var(--text-color-muted);
+  margin-top: 4px;
+}
+
+/* Action group + buttons ----------------------------------- */
+.dash-action-group {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.dash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  text-decoration: none;
+  min-height: 36px;
+  white-space: nowrap;
+}
+.dash-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color-strong);
+  color: var(--text-color);
+}
+.dash-btn:active { transform: scale(0.97); }
+.dash-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+.dash-btn:disabled, .dash-btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.dash-btn-primary {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #0b1a1a;
+  font-weight: 600;
+}
+.dash-btn-primary:hover {
+  background: var(--accent-color-hover);
+  border-color: var(--accent-color-hover);
+  color: #0b1a1a;
+}
+.dash-btn-success {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+.dash-btn-success:hover { background: rgba(16, 185, 129, 0.24); color: #34d399; }
+.dash-btn-danger {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+.dash-btn-danger:hover { background: rgba(239, 68, 68, 0.22); color: #fca5a5; }
+.dash-btn-sm { padding: 0.3rem 0.7rem; font-size: 0.74rem; min-height: 30px; }
+
+/* Status select inline ------------------------------------- */
+.dash-status-form {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.dash-status-form select {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  min-width: 130px;
+  cursor: pointer;
+}
+.dash-status-form select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+
+/* Themed Bootstrap modal override -------------------------- */
+.dash-content-area .modal-content,
+.modal .modal-content {
+  background: rgba(36, 37, 45, 0.92) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  color: var(--text-color) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.modal .modal-header { border-bottom: 1px solid var(--border-color); }
+.modal .modal-footer { border-top: 1px solid var(--border-color); }
+.modal .modal-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; }
+.modal .btn-close { filter: invert(1) opacity(0.7); }
+.modal label { color: var(--text-color-soft); font-size: 0.82rem; font-weight: 500; margin-bottom: 0.35rem; }
+.modal .form-control,
+.modal .form-select,
+.modal textarea.form-control {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  border-radius: 10px !important;
+}
+.modal .form-control:focus,
+.modal .form-select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px var(--accent-color-soft) !important;
+}
+
+/* Mobile responsive ---------------------------------------- */
+@media (max-width: 768px) {
+  .dash-data-table thead { display: none; }
+  .dash-data-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .dash-data-table tbody td {
+    padding: 0.25rem 0;
+    border-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+  }
+  .dash-data-table tbody td::before {
+    content: attr(data-label);
+    color: var(--text-color-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .dash-data-table .dash-td-actions { justify-content: flex-end; }
+  .dash-action-group { justify-content: flex-end; flex: 1; }
+}
