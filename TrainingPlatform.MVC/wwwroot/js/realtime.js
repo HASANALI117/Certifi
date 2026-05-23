@@ -69,13 +69,19 @@
         Enrollment: 'bi-mortarboard-fill',
         Payment: 'bi-cash-coin',
         Assessment: 'bi-clipboard-check-fill',
-        Certification: 'bi-patch-check-fill'
+        Certification: 'bi-patch-check-fill',
+        Success: 'bi-check-circle-fill',
+        Error: 'bi-exclamation-triangle-fill',
+        Info: 'bi-info-circle-fill'
     };
     var TYPE_BG = {
         Enrollment: 'bg-primary',
         Payment: 'bg-success',
         Assessment: 'bg-info text-dark',
-        Certification: 'bg-warning text-dark'
+        Certification: 'bg-warning text-dark',
+        Success: 'bg-success',
+        Error: 'bg-danger',
+        Info: 'bg-info text-dark'
     };
 
     function token() {
@@ -263,6 +269,18 @@
         start: start,
         loadRecent: loadRecent,
         markRead: markRead
+    };
+
+    // Public toast helper — used by _DashAlerts.cshtml for TempData flash messages
+    // so server-rendered errors look identical to SignalR notifications.
+    window.TpToast = {
+        show: function (opts) {
+            opts = opts || {};
+            showToast({
+                type: opts.type || 'Notice',
+                message: opts.message || ''
+            });
+        }
     };
 
     // Auto-start and load initial state once.

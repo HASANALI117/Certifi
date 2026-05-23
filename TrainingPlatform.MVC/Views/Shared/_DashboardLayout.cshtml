@@ -91,23 +91,6 @@
             </nav>
 
             <div class="dash-sidebar-footer">
-                <div class="dropdown dropup w-100 mb-2 tp-live-wrap">
-                    <button type="button" class="tp-live-pill w-100" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" data-dash-nav-skip="true" data-live-pill data-state="connecting">
-                        <span class="tp-live-dot tp-live-connecting" data-live-dot></span>
-                        <span class="tp-live-label" data-live-label>Connecting</span>
-                        <span class="tp-live-time" data-live-time>--:--:--</span>
-                    </button>
-                    <div class="dropdown-menu p-0 tp-live-menu">
-                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-                            <strong class="small">Live activity</strong>
-                            <span class="small text-muted">SignalR feed</span>
-                        </div>
-                        <div class="tp-live-feed" data-live-feed>
-                            <div class="text-muted small text-center py-3" data-live-feed-empty>No events yet.</div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="dropdown dropup w-100 mb-2 tp-notif-wrap">
                     <button class="dash-logout-btn position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" data-dash-nav-skip="true">
                         <i class="bi bi-bell-fill"></i><span>Notifications</span>
@@ -132,23 +115,8 @@
         </aside>
 
         <div class="dash-main-wrap">
-            <div class="dash-alerts">
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                }
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                }
-            </div>
             <main id="dash-content-area" class="dash-content-area">
+                <partial name="_DashAlerts" />
                 @RenderBody()
             </main>
             <div id="dash-loading" class="dash-loading" aria-hidden="true">
