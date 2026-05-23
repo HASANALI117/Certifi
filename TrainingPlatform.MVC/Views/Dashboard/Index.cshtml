@@ -35,21 +35,6 @@
                 <h1 class="dash-page-title">Hello, @(string.IsNullOrWhiteSpace(Model.FirstName) ? "there" : Model.FirstName) 👋</h1>
                 <p class="dash-page-sub">Your @Model.Role.ToLowerInvariant() workspace — courses, schedule, and progress at a glance.</p>
             </div>
-            <form method="get" asp-action="Index" class="dash-search">
-                <i class="bi bi-search"></i>
-                <input type="text" name="search" value="@Model.Search" placeholder="Search courses…" autocomplete="off" />
-                @if (Model.SelectedCategoryId.HasValue)
-                {
-                    <input type="hidden" name="categoryId" value="@Model.SelectedCategoryId" />
-                }
-            </form>
-            <div class="dash-user-chip">
-                <span class="dash-avatar">@((string.IsNullOrWhiteSpace(Model.FirstName) ? "U" : Model.FirstName.Substring(0, 1)).ToUpperInvariant())</span>
-                <div>
-                    <div class="dash-user-name">@Model.FirstName @Model.LastName</div>
-                    <div class="dash-user-role">@Model.Role</div>
-                </div>
-            </div>
         </header>
 
         <section class="dash-stats">

@@ -261,6 +261,14 @@
             document.querySelectorAll('[data-notif-list] .tp-notif-unread').forEach(function (n) {
                 n.classList.remove('tp-notif-unread');
             });
+            // Dismiss every visible toast popup in one click.
+            document.querySelectorAll('[data-toast-container] .toast').forEach(function (t) {
+                if (window.bootstrap && bootstrap.Toast) {
+                    bootstrap.Toast.getOrCreateInstance(t).hide();
+                } else {
+                    t.remove();
+                }
+            });
         }
     });
 

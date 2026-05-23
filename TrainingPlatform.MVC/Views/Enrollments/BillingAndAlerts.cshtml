@@ -7,165 +7,259 @@
     var balances = ViewBag.OutstandingBalances as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
     var notifications = ViewBag.Notifications as IEnumerable<Notification> ?? new List<Notification>();
     var certifications = ViewBag.Certifications as IEnumerable<TraineeCertification> ?? new List<TraineeCertification>();
+
+    string StatusPill(EnrollmentStatus s) => s switch
+    {
+        EnrollmentStatus.Completed => "dash-pill-success",
+        EnrollmentStatus.Attending => "dash-pill-info",
+        EnrollmentStatus.Confirmed => "dash-pill-primary",
+        EnrollmentStatus.Dropped   => "dash-pill-danger",
+        _                          => "dash-pill-muted"
+    };
+
+    string CertPill(CertificationStatus s) => s switch
+    {
+        CertificationStatus.Issued   => "dash-pill-success",
+        CertificationStatus.Eligible => "dash-pill-warning",
+        _                            => "dash-pill-muted"
+    };
+
+    var enrollments = Model?.ToList() ?? new List<Enrollment>();
+    var activeCount = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Status != EnrollmentStatus.Completed);
+    var outstandingTotal = enrollments
+        .Where(e => e.Status != EnrollmentStatus.Dropped)
+        .Sum(e => balances.GetValueOrDefault(e.Id, e.CourseSession?.Course?.EnrollmentFee ?? 0m));
+    var issuedCerts = certifications.Count(c => c.Status == CertificationStatus.Issued);
 }
 
 <div data-tp-live-page="billing"></div>
 <partial name="_DashAlerts" />
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
-    <div>
-        <h2 class="mb-1">My Enrollment Dashboard</h2>
-        <p class="text-muted mb-0">Review progress, payment balance, notifications, and certification status.</p>
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">My Enrollment Dashboard</h1>
+            <p class="dash-page-lede">Review progress, payment balance, notifications, and certification status.</p>
+        </div>
     </div>
-    <a asp-action="AvailableSessions" class="btn btn-outline-primary">Browse Sessions</a>
-</div>
+</header>
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="table-responsive member3-table">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
+<section class="dash-chip-row" aria-label="At a glance">
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-journal-bookmark-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@activeCount</div>
+            <div class="dash-summary-lbl">Active enrollments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-warn"><i class="bi bi-cash-coin"></i></span>
+        <div>
+            <div class="dash-summary-val">@outstandingTotal.ToString("C0")</div>
+            <div class="dash-summary-lbl">Outstanding balance</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-pink"><i class="bi bi-patch-check-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@issuedCerts</div>
+            <div class="dash-summary-lbl">Certificates issued</div>
+        </div>
+    </div>
+</section>
+
+<section class="dash-panel" aria-labelledby="my-enroll-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="my-enroll-title">Enrollment lifecycle</h2>
+            <div class="dash-panel-sub">@enrollments.Count record@(enrollments.Count == 1 ? "" : "s")</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Course</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col">Assessment</th>
+                    <th scope="col" class="dash-td-actions">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (enrollments.Count == 0)
+                {
                     <tr>
-                        <th>Course</th>
-                        <th>Lifecycle</th>
-                        <th>Payment</th>
-                        <th>Assessment</th>
-                        <th class="text-end">Action</th>
+                        <td colspan="5" class="dash-td-empty">
+                            <i class="bi bi-inbox" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            You do not have any enrollments yet.
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
+                }
+                else
+                {
+                    foreach (var item in enrollments)
                     {
+                        var courseTitle = item.CourseSession?.Course?.Title ?? "N/A";
+                        var fee = item.CourseSession?.Course?.EnrollmentFee ?? 0m;
+                        var balance = balances.GetValueOrDefault(item.Id, fee);
+                        var paid = item.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+                        var paidPct = fee <= 0 ? 100 : (int)Math.Min(100, Math.Round(100m * paid / fee));
+
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">You do not have any enrollments yet.</td>
+                            <td data-label="Course">
+                                <div class="dash-cell-line1">@courseTitle</div>
+                                <div class="dash-cell-line2">@item.CourseSession?.StartDateTime.ToString("dd MMM yyyy, HH:mm")</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @StatusPill(item.Status)">@item.Status</span>
+                            </td>
+                            <td data-label="Payment">
+                                <div class="dash-pay">
+                                    <div class="dash-pay-line">
+                                        <span>@paid.ToString("C") / @fee.ToString("C")</span>
+                                        <span class="dash-pay-balance @(balance == 0 ? "is-paid" : "")">@(balance == 0 ? "Paid" : balance.ToString("C"))</span>
+                                    </div>
+                                    <div class="dash-pay-bar" role="progressbar" aria-valuenow="@paidPct" aria-valuemin="0" aria-valuemax="100" aria-label="Payment progress">
+                                        <div class="dash-pay-bar-fill" style="width:@(paidPct)%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Assessment">
+                                @if (item.Assessment == null)
+                                {
+                                    <span class="dash-pill dash-pill-muted">Pending</span>
+                                }
+                                else
+                                {
+                                    <span class="dash-pill @(item.Assessment.Result == AssessmentResult.Pass ? "dash-pill-success" : "dash-pill-danger")">@item.Assessment.Result</span>
+                                }
+                            </td>
+                            <td data-label="Action" class="dash-td-actions">
+                                @if (item.Status == EnrollmentStatus.Dropped)
+                                {
+                                    <span class="dash-pill-plain">Closed</span>
+                                }
+                                else if (balance > 0)
+                                {
+                                    <button type="button" class="dash-btn dash-btn-sm dash-btn-success"
+                                            data-tp-modal data-tp-modal-url="@Url.Action("PaymentForm", new { id = item.Id })"
+                                            aria-label="Pay balance for @courseTitle">
+                                        <i class="bi bi-cash-coin"></i><span>Pay</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="dash-pill dash-pill-success">Paid</span>
+                                }
+                            </td>
                         </tr>
                     }
-                    else
-                    {
-                        foreach (var item in Model)
-                        {
-                            var fee = item.CourseSession?.Course?.EnrollmentFee ?? 0m;
-                            var balance = balances.GetValueOrDefault(item.Id, fee);
-                            var paid = item.Payments?.Sum(p => p.AmountPaid) ?? 0m;
-                            var paymentStatus = statuses.GetValueOrDefault(item.Id, "Unpaid");
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
 
-                            <tr>
-                                <td>
-                                    <div class="fw-semibold">@item.CourseSession?.Course?.Title</div>
-                                    <small class="text-muted">@item.CourseSession?.StartDateTime.ToString("dd MMM yyyy HH:mm")</small>
-                                </td>
-                                <td>
-                                    <span class="badge @(item.Status == EnrollmentStatus.Completed ? "bg-success" : item.Status == EnrollmentStatus.Dropped ? "bg-danger" : "bg-primary")">
-                                        @item.Status
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge @(paymentStatus == "Paid" ? "bg-success" : paymentStatus == "Partial" ? "bg-warning text-dark" : "bg-secondary")">
-                                        @paymentStatus
-                                    </span>
-                                    <small class="d-block text-muted">Paid @paid.ToString("C") / @fee.ToString("C")</small>
-                                    <small class="d-block text-muted">Balance @balance.ToString("C")</small>
-                                </td>
-                                <td>
-                                    @if (item.Assessment == null)
-                                    {
-                                        <span class="text-muted small">Pending</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge @(item.Assessment.Result == AssessmentResult.Pass ? "bg-success" : "bg-danger")">@item.Assessment.Result</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    @if (item.Status == EnrollmentStatus.Dropped)
-                                    {
-                                        <span class="text-muted small fw-semibold">Closed</span>
-                                    }
-                                    else if (balance > 0)
-                                    {
-                                        <form asp-action="RecordPayment" method="post" class="d-inline-flex gap-1 justify-content-end member3-payment-form">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="enrollmentId" value="@item.Id" />
-                                            <input type="number" name="amount" class="form-control form-control-sm" placeholder="Amount" step="0.01" min="0.01" max="@balance" required />
-                                            <button class="btn btn-sm btn-outline-primary" type="submit">Pay</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-success small fw-semibold">Paid</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-4">
-            <h3 class="h5 mb-3">Certification Progress</h3>
-            <div class="table-responsive member3-table">
-                <table class="table table-sm align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Certification</th>
-                            <th>Status</th>
-                            <th>Reference</th>
-                            <th>Issued</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!certifications.Any())
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center py-3 text-muted">No certification progress yet.</td>
-                            </tr>
-                        }
-                        else
-                        {
-                            foreach (var cert in certifications)
-                            {
-                                <tr>
-                                    <td>@cert.CertificationTrack?.Name</td>
-                                    <td>
-                                        <span class="badge @(cert.Status == CertificationStatus.Issued ? "bg-success" : cert.Status == CertificationStatus.Eligible ? "bg-warning text-dark" : "bg-secondary")">
-                                            @cert.Status
-                                        </span>
-                                    </td>
-                                    <td>@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "-" : cert.CertRefNumber)</td>
-                                    <td>@(cert.IssuedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "-")</td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
+<section class="dash-panel" aria-labelledby="my-cert-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="my-cert-title">Certification progress</h2>
+            <div class="dash-panel-sub">@certifications.Count() record@(certifications.Count() == 1 ? "" : "s")</div>
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <div class="member3-notifications">
-            <h3 class="h5 mb-3">Latest Notifications</h3>
-            @if (!notifications.Any())
-            {
-                <div class="alert alert-light border" data-notification-empty>No recent alerts.</div>
-                <div class="list-group" data-notification-list></div>
-            }
-            else
-            {
-                <div class="list-group" data-notification-list>
-                    @foreach (var note in notifications)
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Certification</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Reference</th>
+                    <th scope="col">Issued</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!certifications.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="dash-td-empty">
+                            <i class="bi bi-patch-question" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No certification progress yet.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var cert in certifications)
                     {
-                        <div class="list-group-item @(note.IsRead ? "" : "list-group-item-light")">
-                            <div class="d-flex justify-content-between gap-2">
-                                <span class="badge bg-secondary">@note.Type</span>
-                                <small class="text-muted">@note.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")</small>
-                            </div>
-                            <p class="mb-0 mt-2">@note.Message</p>
-                        </div>
+                        <tr>
+                            <td data-label="Certification">
+                                <div class="dash-cell-line1">@cert.CertificationTrack?.Name</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @CertPill(cert.Status)">@cert.Status</span>
+                            </td>
+                            <td data-label="Reference">
+                                <span class="dash-pill-plain">@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "—" : cert.CertRefNumber)</span>
+                            </td>
+                            <td data-label="Issued">
+                                <span class="dash-pill-plain">@(cert.IssuedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</span>
+                            </td>
+                        </tr>
                     }
-                </div>
-            }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="dash-panel" aria-labelledby="my-notif-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="my-notif-title">Latest notifications</h2>
+            <div class="dash-panel-sub">@notifications.Count() recent</div>
         </div>
     </div>
-</div>
+
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Type</th>
+                    <th scope="col">Message</th>
+                    <th scope="col">Received</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!notifications.Any())
+                {
+                    <tr>
+                        <td colspan="3" class="dash-td-empty">
+                            <i class="bi bi-bell-slash" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No recent alerts.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var note in notifications)
+                    {
+                        <tr>
+                            <td data-label="Type">
+                                <span class="dash-pill dash-pill-muted">@note.Type</span>
+                            </td>
+                            <td data-label="Message">
+                                <div class="dash-cell-line1">@note.Message</div>
+                            </td>
+                            <td data-label="Received">
+                                <span class="dash-pill-plain">@note.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
