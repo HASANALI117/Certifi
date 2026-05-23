@@ -1,0 +1,24 @@
+@using System.Text.Json
+@{
+    var success = TempData["Success"] as string;
+    var error = TempData["Error"] as string;
+}
+@if (!string.IsNullOrEmpty(success) || !string.IsNullOrEmpty(error))
+{
+    <script>
+        (function () {
+            function fire() {
+                if (!window.TpToast) { setTimeout(fire, 100); return; }
+                @if (!string.IsNullOrEmpty(success))
+                {
+                    <text>window.TpToast.show({ type: 'Success', message: @Html.Raw(JsonSerializer.Serialize(success)) });</text>
+                }
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <text>window.TpToast.show({ type: 'Error', message: @Html.Raw(JsonSerializer.Serialize(error)) });</text>
+                }
+            }
+            fire();
+        })();
+    </script>
+}
