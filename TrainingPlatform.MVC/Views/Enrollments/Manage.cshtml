@@ -1,236 +1,311 @@
 @using TrainingPlatform.API.Models
+
 @model IEnumerable<Enrollment>
 
 @{
     ViewData["Title"] = "Manage Enrollments";
     var certifications = ViewBag.Certifications as IEnumerable<TraineeCertification> ?? new List<TraineeCertification>();
+
+    string Initials(AppUser? user)
+    {
+        if (user == null) return "?";
+        var f = !string.IsNullOrWhiteSpace(user.FirstName) ? user.FirstName[0] : '?';
+        var l = !string.IsNullOrWhiteSpace(user.LastName) ? user.LastName[0] : ' ';
+        return $"{f}{l}".Trim().ToUpperInvariant();
+    }
+
+    string StatusPill(EnrollmentStatus s) => s switch
+    {
+        EnrollmentStatus.Completed => "dash-pill-success",
+        EnrollmentStatus.Attending => "dash-pill-info",
+        EnrollmentStatus.Confirmed => "dash-pill-primary",
+        EnrollmentStatus.Dropped   => "dash-pill-danger",
+        _                          => "dash-pill-muted"
+    };
+
+    string CertPill(CertificationStatus s) => s switch
+    {
+        CertificationStatus.Issued   => "dash-pill-success",
+        CertificationStatus.Eligible => "dash-pill-warning",
+        _                            => "dash-pill-muted"
+    };
+
+    var enrollments = Model?.ToList() ?? new List<Enrollment>();
+    var activeCount = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Status != EnrollmentStatus.Completed);
+    var outstandingTotal = enrollments
+        .Where(e => e.Status != EnrollmentStatus.Dropped)
+        .Sum(e =>
+        {
+            var fee = e.CourseSession?.Course?.EnrollmentFee ?? 0m;
+            var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+            return Math.Max(0m, fee - paid);
+        });
+    var awaitingAssessment = enrollments.Count(e =>
+        (e.Status == EnrollmentStatus.Attending || e.Status == EnrollmentStatus.Confirmed) && e.Assessment == null);
+    var eligibleCerts = certifications.Count(c => c.Status == CertificationStatus.Eligible);
 }
 
 <div data-tp-live-page="manage"></div>
 <partial name="_DashAlerts" />
 
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
-    <div>
-        <h2 class="mb-1">Manage Enrollments</h2>
-        <p class="text-muted mb-0">Track lifecycle status, payments, assessments, notifications, and certification eligibility.</p>
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Manage Enrollments</h1>
+            <p class="dash-page-lede">Track lifecycle, payments, assessments and certification eligibility across every trainee.</p>
+        </div>
+        @if (User.IsInRole("TrainingCoordinator"))
+        {
+            <button type="button" class="dash-btn dash-btn-primary" data-tp-modal data-tp-modal-url="@Url.Action("Create")">
+                <i class="bi bi-plus-lg"></i><span>New Enrollment</span>
+            </button>
+        }
     </div>
-    @if (User.IsInRole("TrainingCoordinator"))
-    {
-        <a asp-action="Create" class="btn btn-primary">Register New Enrollment</a>
-    }
-</div>
+</header>
 
-<div class="table-responsive member3-table">
-    <table class="table table-hover align-middle mb-0">
-        <thead class="table-dark">
-            <tr>
-                <th>Trainee</th>
-                <th>Course</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Assessment</th>
-                <th class="text-end">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (!Model.Any())
-            {
+<section class="dash-chip-row" aria-label="At a glance">
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-people-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@activeCount</div>
+            <div class="dash-summary-lbl">Active enrollments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-warn"><i class="bi bi-cash-coin"></i></span>
+        <div>
+            <div class="dash-summary-val">@outstandingTotal.ToString("C0")</div>
+            <div class="dash-summary-lbl">Outstanding payments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-info"><i class="bi bi-clipboard-check"></i></span>
+        <div>
+            <div class="dash-summary-val">@awaitingAssessment</div>
+            <div class="dash-summary-lbl">Awaiting assessment</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-pink"><i class="bi bi-patch-check-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@eligibleCerts</div>
+            <div class="dash-summary-lbl">Eligible certifications</div>
+        </div>
+    </div>
+</section>
+
+<section class="dash-panel" aria-labelledby="enroll-panel-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="enroll-panel-title">Enrollment lifecycle</h2>
+            <div class="dash-panel-sub">@enrollments.Count total record@(enrollments.Count == 1 ? "" : "s")</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">No enrollments found.</td>
+                    <th scope="col">Trainee</th>
+                    <th scope="col">Course</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col">Assessment</th>
+                    <th scope="col" class="dash-td-actions">Actions</th>
                 </tr>
-            }
-            else
-            {
-                foreach (var e in Model)
+            </thead>
+            <tbody>
+                @if (enrollments.Count == 0)
                 {
-                    var traineeName = e.Trainee?.User != null ? $"{e.Trainee.User.FirstName} {e.Trainee.User.LastName}" : "Unknown Trainee";
-                    var courseTitle = e.CourseSession?.Course?.Title ?? "N/A";
-                    var fee = e.CourseSession?.Course?.EnrollmentFee ?? 0m;
-                    var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
-                    var balance = Math.Max(0m, fee - paid);
-                    var canRecordPayment = balance > 0 && e.Status != EnrollmentStatus.Dropped;
-                    var statusClass = e.Status switch
-                    {
-                        EnrollmentStatus.Completed => "bg-success",
-                        EnrollmentStatus.Attending => "bg-info text-dark",
-                        EnrollmentStatus.Confirmed => "bg-primary",
-                        EnrollmentStatus.Dropped => "bg-danger",
-                        _ => "bg-secondary"
-                    };
-
                     <tr>
-                        <td>
-                            <div class="fw-semibold">@traineeName</div>
-                            <small class="text-muted">@e.Trainee?.TraineePublicId</small>
-                        </td>
-                        <td>
-                            <div class="fw-semibold">@courseTitle</div>
-                            <small class="text-muted">@e.CourseSession?.StartDateTime.ToString("dd MMM yyyy HH:mm")</small>
-                        </td>
-                        <td>
-                            <span class="badge @statusClass">@e.Status</span>
-                        </td>
-                        <td>
-                            <div class="fw-semibold @(balance > 0 ? "text-danger" : "text-success")">@balance.ToString("C")</div>
-                            <small class="text-muted">Paid @paid.ToString("C") / @fee.ToString("C")</small>
-                        </td>
-                        <td>
-                            @if (e.Assessment == null)
-                            {
-                                <span class="badge bg-light text-dark border">Not recorded</span>
-                            }
-                            else
-                            {
-                                <span class="badge @(e.Assessment.Result == AssessmentResult.Pass ? "bg-success" : "bg-danger")">@e.Assessment.Result</span>
-                                <small class="text-muted d-block">@e.Assessment.RecordedAt.ToLocalTime().ToString("g")</small>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <div class="d-flex flex-wrap justify-content-end gap-2">
-                                @if (User.IsInRole("TrainingCoordinator"))
-                                {
-                                    <form asp-action="UpdateStatus" method="post" class="d-inline-flex gap-1">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@e.Id" />
-                                        <select name="newStatus" class="form-select form-select-sm member3-status-select">
-                                            @foreach (var status in Enum.GetValues<EnrollmentStatus>())
-                                            {
-                                                <option value="@status" selected="@(status == e.Status)">@status</option>
-                                            }
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
-                                    </form>
-
-                                    <button type="button" class="btn btn-sm btn-outline-success"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#payModal@e.Id"
-                                            disabled="@(!canRecordPayment)">
-                                        Payment
-                                    </button>
-                                }
-
-                                <button type="button" class="btn btn-sm btn-outline-dark"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#assessmentModal@e.Id">
-                                    Assessment
-                                </button>
-                            </div>
-
-                            <div class="modal fade text-start" id="payModal@e.Id" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Record Payment</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <form asp-action="RecordPayment" method="post">
-                                            @Html.AntiForgeryToken()
-                                            <div class="modal-body">
-                                                <input type="hidden" name="enrollmentId" value="@e.Id" />
-                                                <p class="text-muted mb-3">@traineeName - @courseTitle</p>
-                                                <label class="form-label">Amount</label>
-                                                <input type="number" name="amount" class="form-control" step="0.01" min="0.01" max="@balance" required />
-                                                <small class="text-muted">Outstanding balance: @balance.ToString("C")</small>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success">Save Payment</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal fade text-start" id="assessmentModal@e.Id" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Record Assessment</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <form asp-action="RecordAssessment" method="post">
-                                            @Html.AntiForgeryToken()
-                                            <div class="modal-body">
-                                                <input type="hidden" name="enrollmentId" value="@e.Id" />
-                                                <p class="text-muted mb-3">@traineeName - @courseTitle</p>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Result</label>
-                                                    <select name="result" class="form-select">
-                                                        @foreach (var result in Enum.GetValues<AssessmentResult>())
-                                                        {
-                                                            <option value="@result" selected="@(e.Assessment?.Result == result)">@result</option>
-                                                        }
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Notes</label>
-                                                    <textarea name="notes" class="form-control" rows="3">@e.Assessment?.Notes</textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-dark">Save Assessment</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
+                        <td colspan="6" class="dash-td-empty">
+                            <i class="bi bi-inbox" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No enrollments yet.
                         </td>
                     </tr>
                 }
-            }
-        </tbody>
-    </table>
-</div>
+                else
+                {
+                    foreach (var e in enrollments)
+                    {
+                        var traineeName = e.Trainee?.User != null ? $"{e.Trainee.User.FirstName} {e.Trainee.User.LastName}" : "Unknown Trainee";
+                        var courseTitle = e.CourseSession?.Course?.Title ?? "N/A";
+                        var fee = e.CourseSession?.Course?.EnrollmentFee ?? 0m;
+                        var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+                        var balance = Math.Max(0m, fee - paid);
+                        var paidPct = fee <= 0 ? 100 : (int)Math.Min(100, Math.Round(100m * paid / fee));
+                        var canRecordPayment = balance > 0 && e.Status != EnrollmentStatus.Dropped;
 
-<div class="mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="h5 mb-0">Certification Tracking</h3>
-        <span class="text-muted small">@certifications.Count() records</span>
+                        <tr>
+                            <td data-label="Trainee">
+                                <div class="dash-cell-person">
+                                    <span class="dash-avatar-sm" aria-hidden="true">@Initials(e.Trainee?.User)</span>
+                                    <div>
+                                        <div class="dash-cell-line1">@traineeName</div>
+                                        <div class="dash-cell-line2">@(e.Trainee?.TraineePublicId ?? "—")</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Course">
+                                <div class="dash-cell-line1">@courseTitle</div>
+                                <div class="dash-cell-line2">@e.CourseSession?.StartDateTime.ToString("dd MMM yyyy, HH:mm")</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @StatusPill(e.Status)">@e.Status</span>
+                            </td>
+                            <td data-label="Payment">
+                                <div class="dash-pay">
+                                    <div class="dash-pay-line">
+                                        <span>@paid.ToString("C") / @fee.ToString("C")</span>
+                                        <span class="dash-pay-balance @(balance == 0 ? "is-paid" : "")">@(balance == 0 ? "Paid" : balance.ToString("C"))</span>
+                                    </div>
+                                    <div class="dash-pay-bar" role="progressbar" aria-valuenow="@paidPct" aria-valuemin="0" aria-valuemax="100" aria-label="Payment progress">
+                                        <div class="dash-pay-bar-fill" style="width:@(paidPct)%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Assessment">
+                                @if (e.Assessment == null)
+                                {
+                                    <span class="dash-pill dash-pill-muted">Not recorded</span>
+                                }
+                                else
+                                {
+                                    <span class="dash-pill @(e.Assessment.Result == AssessmentResult.Pass ? "dash-pill-success" : "dash-pill-danger")">@e.Assessment.Result</span>
+                                    <div class="dash-cell-line2">@e.Assessment.RecordedAt.ToLocalTime().ToString("dd MMM HH:mm")</div>
+                                }
+                            </td>
+                            <td data-label="Actions" class="dash-td-actions">
+                                <div class="dash-action-group">
+                                    @if (User.IsInRole("TrainingCoordinator"))
+                                    {
+                                        <form asp-action="UpdateStatus" method="post" class="dash-status-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@e.Id" />
+                                            <label for="status-@e.Id" class="visually-hidden">Status for @traineeName</label>
+                                            <select id="status-@e.Id" name="newStatus" aria-label="Update status">
+                                                @foreach (var status in Enum.GetValues<EnrollmentStatus>())
+                                                {
+                                                    <option value="@status" selected="@(status == e.Status)">@status</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="dash-btn dash-btn-sm" title="Apply status change">
+                                                <i class="bi bi-arrow-clockwise"></i>
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="dash-btn dash-btn-sm dash-btn-success"
+                                                data-tp-modal data-tp-modal-url="@Url.Action("PaymentForm", new { id = e.Id })"
+                                                disabled="@(!canRecordPayment)" aria-label="Record payment for @traineeName">
+                                            <i class="bi bi-cash-coin"></i><span>Pay</span>
+                                        </button>
+                                    }
+
+                                    <button type="button" class="dash-btn dash-btn-sm"
+                                            data-tp-modal data-tp-modal-url="@Url.Action("AssessmentForm", new { id = e.Id })"
+                                            aria-label="Record assessment for @traineeName">
+                                        <i class="bi bi-clipboard-check"></i><span>Assess</span>
+                                    </button>
+
+                                    <button type="button" class="dash-btn dash-btn-sm"
+                                            data-tp-modal data-tp-modal-url="@Url.Action("Details", new { id = e.Id })"
+                                            aria-label="View details for @traineeName">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+
+                                    @if (User.IsInRole("TrainingCoordinator"))
+                                    {
+                                        <button type="button" class="dash-btn dash-btn-sm"
+                                                data-tp-modal data-tp-modal-url="@Url.Action("Edit", new { id = e.Id })"
+                                                aria-label="Edit enrollment for @traineeName">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button type="button" class="dash-btn dash-btn-sm dash-btn-danger"
+                                                data-tp-modal data-tp-modal-url="@Url.Action("Delete", new { id = e.Id })"
+                                                aria-label="Delete enrollment for @traineeName">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="dash-panel" aria-labelledby="cert-panel-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="cert-panel-title">Certification tracking</h2>
+            <div class="dash-panel-sub">@certifications.Count() record@(certifications.Count() == 1 ? "" : "s")</div>
+        </div>
     </div>
 
-    <div class="table-responsive member3-table">
-        <table class="table table-sm align-middle mb-0">
-            <thead class="table-light">
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
                 <tr>
-                    <th>Trainee</th>
-                    <th>Certification</th>
-                    <th>Status</th>
-                    <th>Reference</th>
-                    <th>Issued</th>
-                    <th class="text-end"></th>
+                    <th scope="col">Trainee</th>
+                    <th scope="col">Certification</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Reference</th>
+                    <th scope="col">Issued</th>
+                    <th scope="col" class="dash-td-actions">Action</th>
                 </tr>
             </thead>
             <tbody>
                 @if (!certifications.Any())
                 {
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">No certification progress is being tracked yet.</td>
+                        <td colspan="6" class="dash-td-empty">
+                            <i class="bi bi-patch-question" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No certification progress tracked yet.
+                        </td>
                     </tr>
                 }
                 else
                 {
                     foreach (var cert in certifications)
                     {
-                        var traineeName = cert.Trainee?.User != null ? $"{cert.Trainee.User.FirstName} {cert.Trainee.User.LastName}" : "Unknown Trainee";
+                        var tName = cert.Trainee?.User != null ? $"{cert.Trainee.User.FirstName} {cert.Trainee.User.LastName}" : "Unknown Trainee";
+
                         <tr>
-                            <td>@traineeName</td>
-                            <td>@cert.CertificationTrack?.Name</td>
-                            <td>
-                                <span class="badge @(cert.Status == CertificationStatus.Issued ? "bg-success" : cert.Status == CertificationStatus.Eligible ? "bg-warning text-dark" : "bg-secondary")">
-                                    @cert.Status
-                                </span>
+                            <td data-label="Trainee">
+                                <div class="dash-cell-person">
+                                    <span class="dash-avatar-sm" aria-hidden="true">@Initials(cert.Trainee?.User)</span>
+                                    <div class="dash-cell-line1">@tName</div>
+                                </div>
                             </td>
-                            <td>@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "-" : cert.CertRefNumber)</td>
-                            <td>@(cert.IssuedAt?.ToLocalTime().ToString("g") ?? "-")</td>
-                            <td class="text-end">
+                            <td data-label="Certification">
+                                <div class="dash-cell-line1">@cert.CertificationTrack?.Name</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @CertPill(cert.Status)">@cert.Status</span>
+                            </td>
+                            <td data-label="Reference">
+                                <span class="dash-pill-plain">@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "—" : cert.CertRefNumber)</span>
+                            </td>
+                            <td data-label="Issued">
+                                <span class="dash-pill-plain">@(cert.IssuedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</span>
+                            </td>
+                            <td data-label="Action" class="dash-td-actions">
                                 @if (User.IsInRole("TrainingCoordinator") && cert.Status == CertificationStatus.Eligible)
                                 {
                                     <form asp-action="IssueCertification" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="certificationId" value="@cert.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-success">Issue</button>
+                                        <button type="submit" class="dash-btn dash-btn-sm dash-btn-success">
+                                            <i class="bi bi-patch-check"></i><span>Issue</span>
+                                        </button>
                                     </form>
+                                }
+                                else
+                                {
+                                    <span class="dash-pill-plain">—</span>
                                 }
                             </td>
                         </tr>
@@ -239,4 +314,4 @@
             </tbody>
         </table>
     </div>
-</div>
+</section>

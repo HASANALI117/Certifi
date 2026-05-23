@@ -24,44 +24,21 @@ public class EnrollmentsController : Controller
         _hubContext = hubContext;
     }
 
-    [AllowAnonymous]
-    public async Task<IActionResult> AvailableSessions()
-    {
-        var sessions = await _context.CourseSessions
-            .Include(cs => cs.Course)
-            .Include(cs => cs.Instructor).ThenInclude(i => i.User)
-            .Include(cs => cs.Classroom)
-            .Include(cs => cs.Enrollments)
-            .Where(cs => cs.StartDateTime > DateTime.Now && cs.Status == SessionStatus.Scheduled)
-            .OrderBy(cs => cs.StartDateTime)
-            .Select(cs => new AvailableSessionViewModel
-            {
-                Id = cs.Id,
-                CourseTitle = cs.Course.Title,
-                InstructorName = cs.Instructor.User.FirstName + " " + cs.Instructor.User.LastName,
-                ClassroomName = cs.Classroom.Name,
-                SessionDate = DateOnly.FromDateTime(cs.StartDateTime),
-                StartTime = TimeOnly.FromDateTime(cs.StartDateTime),
-                EndTime = TimeOnly.FromDateTime(cs.EndDateTime),
-                Fee = cs.Course.EnrollmentFee,
-                Capacity = cs.Capacity,
-                EnrolledCount = cs.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
-                AvailableSpots = cs.Capacity - cs.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped)
-            })
-            .ToListAsync();
+    // True when the request came from the reusable popup component (tp-modal.js).
+    private bool IsModal => Request.Headers.ContainsKey("X-Tp-Modal");
+    private IActionResult JsonOk(string message, string type = "Success") => Json(new { ok = true, message, type });
+    private IActionResult JsonFail(string message) => Json(new { ok = false, message });
 
-        return View(sessions);
+    private async Task<IActionResult> EnrollmentFormResult(Enrollment enrollment)
+    {
+        await SetEnrollmentSelectListsAsync(enrollment.TraineeId, enrollment.CourseSessionId);
+        return PartialView("_EnrollmentForm", enrollment);
     }
 
+    // Index/Create/Edit/Delete/Details no longer have dedicated pages — everything
+    // is managed from the Manage page via the reusable popup component.
     [Authorize(Roles = "TrainingCoordinator")]
-    public async Task<IActionResult> Index()
-    {
-        var enrollments = await EnrollmentQuery()
-            .OrderByDescending(e => e.EnrolledAt)
-            .ToListAsync();
-
-        return View(enrollments);
-    }
+    public IActionResult Index() => RedirectToAction(nameof(Manage));
 
     [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Manage()
@@ -117,16 +94,18 @@ public class EnrollmentsController : Controller
     [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Details(int id)
     {
+        if (!IsModal) return RedirectToAction(nameof(Manage));
         var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == id);
-        return enrollment == null ? NotFound() : View(enrollment);
+        return enrollment == null ? NotFound() : PartialView("_EnrollmentDetails", enrollment);
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
     [HttpGet]
     public async Task<IActionResult> Create()
     {
+        if (!IsModal) return RedirectToAction(nameof(Manage));
         await SetEnrollmentSelectListsAsync();
-        return View(new Enrollment { EnrolledAt = DateTime.Now });
+        return PartialView("_EnrollmentForm", new Enrollment { EnrolledAt = DateTime.Now });
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
@@ -137,8 +116,7 @@ public class EnrollmentsController : Controller
 
         if (!ModelState.IsValid)
         {
-            await SetEnrollmentSelectListsAsync(enrollment.TraineeId, enrollment.CourseSessionId);
-            return View(enrollment);
+            return await EnrollmentFormResult(enrollment);
         }
 
         var session = await _context.CourseSessions
@@ -149,15 +127,13 @@ public class EnrollmentsController : Controller
         if (session == null)
         {
             ModelState.AddModelError(nameof(enrollment.CourseSessionId), "Selected course session was not found.");
-            await SetEnrollmentSelectListsAsync(enrollment.TraineeId, enrollment.CourseSessionId);
-            return View(enrollment);
+            return await EnrollmentFormResult(enrollment);
         }
 
         if (ActiveEnrollmentCount(session) >= session.Capacity)
         {
             ModelState.AddModelError(nameof(enrollment.CourseSessionId), "This course session is full.");
-            await SetEnrollmentSelectListsAsync(enrollment.TraineeId, enrollment.CourseSessionId);
-            return View(enrollment);
+            return await EnrollmentFormResult(enrollment);
         }
 
         var duplicate = await _context.Enrollments.AnyAsync(e =>
@@ -168,8 +144,7 @@ public class EnrollmentsController : Controller
         if (duplicate)
         {
             ModelState.AddModelError(nameof(enrollment.TraineeId), "This trainee is already actively enrolled in the selected session.");
-            await SetEnrollmentSelectListsAsync(enrollment.TraineeId, enrollment.CourseSessionId);
-            return View(enrollment);
+            return await EnrollmentFormResult(enrollment);
         }
 
         enrollment.EnrolledAt = enrollment.EnrolledAt == default ? DateTime.UtcNow : enrollment.EnrolledAt;
@@ -180,19 +155,21 @@ public class EnrollmentsController : Controller
         await SaveChangesAndNotifyAsync();
         await BroadcastEnrollmentCountAsync(enrollment.CourseSessionId);
 
+        if (IsModal) return JsonOk("Enrollment created.");
         TempData["Success"] = "Enrollment created.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Manage));
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
+        if (!IsModal) return RedirectToAction(nameof(Manage));
         var enrollment = await _context.Enrollments.FindAsync(id);
         if (enrollment == null) return NotFound();
 
         await SetEnrollmentSelectListsAsync(enrollment.TraineeId, enrollment.CourseSessionId);
-        return View(enrollment);
+        return PartialView("_EnrollmentForm", enrollment);
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
@@ -205,8 +182,7 @@ public class EnrollmentsController : Controller
 
         if (!ModelState.IsValid)
         {
-            await SetEnrollmentSelectListsAsync(model.TraineeId, model.CourseSessionId);
-            return View(model);
+            return await EnrollmentFormResult(model);
         }
 
         var session = await _context.CourseSessions
@@ -216,8 +192,7 @@ public class EnrollmentsController : Controller
         if (session == null)
         {
             ModelState.AddModelError(nameof(model.CourseSessionId), "Selected course session was not found.");
-            await SetEnrollmentSelectListsAsync(model.TraineeId, model.CourseSessionId);
-            return View(model);
+            return await EnrollmentFormResult(model);
         }
 
         var duplicate = await _context.Enrollments.AnyAsync(e =>
@@ -229,16 +204,14 @@ public class EnrollmentsController : Controller
         if (duplicate)
         {
             ModelState.AddModelError(nameof(model.TraineeId), "This trainee is already actively enrolled in the selected session.");
-            await SetEnrollmentSelectListsAsync(model.TraineeId, model.CourseSessionId);
-            return View(model);
+            return await EnrollmentFormResult(model);
         }
 
         var activeEnrollmentCount = session.Enrollments.Count(e => e.Id != id && e.Status != EnrollmentStatus.Dropped);
         if (model.Status != EnrollmentStatus.Dropped && activeEnrollmentCount >= session.Capacity)
         {
             ModelState.AddModelError(nameof(model.CourseSessionId), "This course session is full.");
-            await SetEnrollmentSelectListsAsync(model.TraineeId, model.CourseSessionId);
-            return View(model);
+            return await EnrollmentFormResult(model);
         }
 
         var enrollment = await _context.Enrollments.FindAsync(id);
@@ -262,16 +235,18 @@ public class EnrollmentsController : Controller
         if (oldSessionId != model.CourseSessionId)
             await BroadcastEnrollmentCountAsync(model.CourseSessionId);
 
+        if (IsModal) return JsonOk("Enrollment updated.");
         TempData["Success"] = "Enrollment updated.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Manage));
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!IsModal) return RedirectToAction(nameof(Manage));
         var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == id);
-        return enrollment == null ? NotFound() : View(enrollment);
+        return enrollment == null ? NotFound() : PartialView("_EnrollmentDelete", enrollment);
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
@@ -294,8 +269,9 @@ public class EnrollmentsController : Controller
         await _context.SaveChangesAsync();
         await BroadcastEnrollmentCountAsync(sessionId);
 
+        if (IsModal) return JsonOk("Enrollment deleted.");
         TempData["Success"] = "Enrollment deleted.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Manage));
     }
 
     [Authorize(Roles = "Trainee")]
@@ -310,7 +286,7 @@ public class EnrollmentsController : Controller
         if (trainee == null)
         {
             TempData["Error"] = "Trainee profile not found.";
-            return RedirectToAction(nameof(AvailableSessions));
+            return RedirectToAction("Index", "CourseSessions");
         }
 
         var session = await _context.CourseSessions
@@ -321,13 +297,13 @@ public class EnrollmentsController : Controller
         if (session == null)
         {
             TempData["Error"] = "Session not found.";
-            return RedirectToAction(nameof(AvailableSessions));
+            return RedirectToAction("Index", "CourseSessions");
         }
 
         if (ActiveEnrollmentCount(session) >= session.Capacity)
         {
             TempData["Error"] = "This session is full.";
-            return RedirectToAction(nameof(AvailableSessions));
+            return RedirectToAction("Index", "CourseSessions");
         }
 
         var existingEnrollment = await _context.Enrollments.FirstOrDefaultAsync(e =>
@@ -336,7 +312,7 @@ public class EnrollmentsController : Controller
         if (existingEnrollment is { Status: not EnrollmentStatus.Dropped })
         {
             TempData["Error"] = "You are already enrolled.";
-            return RedirectToAction(nameof(AvailableSessions));
+            return RedirectToAction("Index", "CourseSessions");
         }
 
         if (existingEnrollment == null)
@@ -362,7 +338,7 @@ public class EnrollmentsController : Controller
         await BroadcastEnrollmentCountAsync(courseSessionId);
 
         TempData["Success"] = "Enrollment successful.";
-        return RedirectToAction(nameof(AvailableSessions));
+        return RedirectToAction("Index", "CourseSessions");
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
@@ -394,6 +370,27 @@ public class EnrollmentsController : Controller
     }
 
     [Authorize(Roles = "TrainingCoordinator,Trainee")]
+    [HttpGet]
+    public async Task<IActionResult> PaymentForm(int id)
+    {
+        if (!IsModal) return RedirectAfterPayment();
+        var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == id);
+        if (enrollment == null) return NotFound();
+        if (User.IsInRole("Trainee") && !await CurrentUserOwnsEnrollmentAsync(id)) return Forbid();
+        return PartialView("_PaymentForm", enrollment);
+    }
+
+    [Authorize(Roles = "TrainingCoordinator,Instructor")]
+    [HttpGet]
+    public async Task<IActionResult> AssessmentForm(int id)
+    {
+        if (!IsModal) return RedirectToAction(nameof(Manage));
+        var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == id);
+        if (enrollment == null) return NotFound();
+        return PartialView("_AssessmentForm", enrollment);
+    }
+
+    [Authorize(Roles = "TrainingCoordinator,Trainee")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> RecordPayment(int enrollmentId, decimal amount)
     {
@@ -405,6 +402,7 @@ public class EnrollmentsController : Controller
 
         if (enrollment.Status == EnrollmentStatus.Dropped)
         {
+            if (IsModal) return JsonFail("Dropped enrollments cannot accept payments.");
             TempData["Error"] = "Dropped enrollments cannot accept payments.";
             return RedirectAfterPayment();
         }
@@ -412,7 +410,9 @@ public class EnrollmentsController : Controller
         var remainingBalance = OutstandingBalance(enrollment);
         if (amount <= 0 || amount > remainingBalance)
         {
-            TempData["Error"] = "Payment amount must be greater than zero and no more than the outstanding balance.";
+            var amountError = "Payment amount must be greater than zero and no more than the outstanding balance.";
+            if (IsModal) return JsonFail(amountError);
+            TempData["Error"] = amountError;
             return RedirectAfterPayment();
         }
 
@@ -442,9 +442,11 @@ public class EnrollmentsController : Controller
 
         await SaveChangesAndNotifyAsync();
 
-        TempData["Success"] = confirmedByPayment
+        var paymentMessage = confirmedByPayment
             ? "Payment recorded. Balance is fully paid and the enrollment is confirmed."
             : newBalance == 0 ? "Payment recorded. Balance is fully paid." : "Payment recorded.";
+        if (IsModal) return JsonOk(paymentMessage, "Payment");
+        TempData["Success"] = paymentMessage;
         return RedirectAfterPayment();
     }
 
@@ -458,6 +460,7 @@ public class EnrollmentsController : Controller
         var recordedById = await GetAssessmentRecorderIdAsync(enrollment);
         if (recordedById == null)
         {
+            if (IsModal) return JsonFail("No instructor profile was found for recording this assessment.");
             TempData["Error"] = "No instructor profile was found for recording this assessment.";
             return RedirectToAction(nameof(Manage));
         }
@@ -488,6 +491,7 @@ public class EnrollmentsController : Controller
             await SaveChangesAndNotifyAsync();
         }
 
+        if (IsModal) return JsonOk("Assessment recorded.", "Assessment");
         TempData["Success"] = "Assessment recorded.";
         return RedirectToAction(nameof(Manage));
     }

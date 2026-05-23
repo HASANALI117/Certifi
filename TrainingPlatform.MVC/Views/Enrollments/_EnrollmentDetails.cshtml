@@ -1,0 +1,41 @@
+@using TrainingPlatform.API.Models
+@model Enrollment
+@{
+    var traineeName = Model.Trainee?.User != null ? $"{Model.Trainee.User.FirstName} {Model.Trainee.User.LastName}" : "Unknown Trainee";
+    var courseTitle = Model.CourseSession?.Course?.Title ?? "N/A";
+    var fee = Model.CourseSession?.Course?.EnrollmentFee ?? 0m;
+    var paid = Model.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+    var balance = Math.Max(0m, fee - paid);
+}
+
+<div class="modal-header">
+    <h5 class="modal-title">Enrollment Details</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <dl class="row small mb-0">
+        <dt class="col-4 text-muted">Trainee</dt>
+        <dd class="col-8">@traineeName <span class="text-muted">(@(Model.Trainee?.TraineePublicId ?? "—"))</span></dd>
+        <dt class="col-4 text-muted">Course</dt>
+        <dd class="col-8">@courseTitle</dd>
+        <dt class="col-4 text-muted">Session</dt>
+        <dd class="col-8">@Model.CourseSession?.StartDateTime.ToString("dd MMM yyyy, HH:mm")</dd>
+        <dt class="col-4 text-muted">Status</dt>
+        <dd class="col-8">@Model.Status</dd>
+        <dt class="col-4 text-muted">Enrolled</dt>
+        <dd class="col-8">@Model.EnrolledAt.ToLocalTime().ToString("g")</dd>
+        <dt class="col-4 text-muted">Payment</dt>
+        <dd class="col-8">@paid.ToString("C") / @fee.ToString("C") @(balance == 0 ? "(Paid)" : $"({balance:C} due)")</dd>
+        <dt class="col-4 text-muted">Assessment</dt>
+        <dd class="col-8">@(Model.Assessment == null ? "Not recorded" : Model.Assessment.Result.ToString())</dd>
+    </dl>
+</div>
+<div class="modal-footer">
+    <button type="button" class="dash-btn" data-bs-dismiss="modal">Close</button>
+    @if (User.IsInRole("TrainingCoordinator"))
+    {
+        <button type="button" class="dash-btn dash-btn-primary" data-tp-modal data-tp-modal-url="@Url.Action("Edit", "Enrollments", new { id = Model.Id })">
+            <i class="bi bi-pencil-square"></i><span>Edit</span>
+        </button>
+    }
+</div>
