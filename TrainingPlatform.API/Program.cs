@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using TrainingPlatform.API.Data;
 using TrainingPlatform.API.Models;
+using TrainingPlatform.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +32,19 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+// JWT token generation
+builder.Services.AddScoped<TokenService>();
+
 // JWT Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+// AddIdentity pins the default authenticate/challenge schemes to the Identity cookie,
+// which makes [Authorize] redirect (302) to /Account/Login instead of honoring the
+// bearer token. Explicitly override all three defaults to JWT for this API.
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
