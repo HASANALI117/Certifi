@@ -1,0 +1,15 @@
+@*
+  Minimal layout used when a request is AJAX-driven by the dashboard's
+  fragment-swap navigation (X-Requested-With: XMLHttpRequest).
+
+  Why it exists: when Layout = null, the page body is rendered without any
+  surrounding chrome — including _DashAlerts, which reads TempData and fires
+  toast notifications for flash messages. Without this layout, TempData set
+  by a POST never reaches the user until they manually refresh the page (at
+  which point the full _DashboardLayout renders the partial).
+
+  This shim ensures every AJAX fragment also includes the alerts partial,
+  so success/error toasts appear immediately after a save.
+*@
+<partial name="_DashAlerts" />
+@RenderBody()

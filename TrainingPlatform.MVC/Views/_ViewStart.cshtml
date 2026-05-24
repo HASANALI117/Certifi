@@ -6,7 +6,10 @@
 
     if (isAjax)
     {
-        Layout = null;
+        // Minimal layout that still renders _DashAlerts so flash-message
+        // toasts fire immediately after a redirected POST, instead of only
+        // appearing after a manual page refresh.
+        Layout = "_AjaxLayout";
     }
     else if (User.Identity?.IsAuthenticated == true)
     {

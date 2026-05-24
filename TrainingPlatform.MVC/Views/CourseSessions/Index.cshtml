@@ -116,6 +116,9 @@ else
                             }
                             @if (isCoordinator)
                             {
+                                <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-outline-secondary ms-1" title="Edit session">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
                                 <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline m-0"
                                       onsubmit="return confirm('Delete this session?');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">

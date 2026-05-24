@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using TrainingPlatform.MVC.Models.Validation;
 
 namespace TrainingPlatform.MVC.Models.ViewModels;
 
@@ -44,7 +45,7 @@ public class CourseFormViewModel
     public int? PrerequisiteCourseId { get; set; }
 
     [Display(Name = "Course Image URL")]
-    [Url(ErrorMessage = "Enter a valid URL.")]
+    [RelativeOrAbsoluteUrl(ErrorMessage = "Enter a valid URL (https://… or /images/…).")]
     [StringLength(500)]
     public string? ImageUrl { get; set; }
 

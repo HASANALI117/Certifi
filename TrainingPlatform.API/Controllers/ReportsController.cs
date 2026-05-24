@@ -31,17 +31,20 @@ public class ReportsController(AppDbContext db) : ControllerBase
             TotalRevenue = await db.Payments.SumAsync(p => (decimal?)p.AmountPaid) ?? 0m
         };
 
-        // Outstanding = latest balance per non-dropped enrollment, or full fee if unpaid.
+        // Outstanding = EnrollmentFee - SUM(AmountPaid), clamped at 0, per non-
+        // dropped enrollment. Computed dynamically so it stays accurate even if
+        // a course's fee is edited after a partial payment was recorded — the
+        // per-payment OutstandingBalance snapshot can go stale and was previously
+        // disagreeing with the MVC controller's derivation.
         var balances = await db.Enrollments
             .Where(e => e.Status != EnrollmentStatus.Dropped)
             .Select(e => new
             {
                 Fee = e.CourseSession.Course.EnrollmentFee,
-                Latest = e.Payments.OrderByDescending(p => p.PaidAt)
-                    .Select(p => (decimal?)p.OutstandingBalance).FirstOrDefault()
+                Paid = e.Payments.Sum(p => (decimal?)p.AmountPaid) ?? 0m
             })
             .ToListAsync();
-        dto.OutstandingRevenue = balances.Sum(b => b.Latest ?? b.Fee);
+        dto.OutstandingRevenue = balances.Sum(b => Math.Max(0m, b.Fee - b.Paid));
 
         return Ok(dto);
     }

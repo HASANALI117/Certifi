@@ -20,6 +20,9 @@ public class DashboardController : Controller
         _userManager = userManager;
     }
 
+    private static string EscapeLike(string input) =>
+        input.Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+
     public async Task<IActionResult> Index(string? search, int? categoryId)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -62,7 +65,15 @@ public class DashboardController : Controller
             });
 
         if (!string.IsNullOrWhiteSpace(search))
-            coursesQuery = coursesQuery.Where(c => c.Title.Contains(search) || c.Description.Contains(search));
+        {
+            // EF.Functions.Like translates to SQL LIKE, which is case-insensitive
+            // under SQL Server's default *_CI_* collation. Wrap user input with %
+            // wildcards and escape LIKE metacharacters to avoid surprising matches.
+            var pattern = $"%{EscapeLike(search)}%";
+            coursesQuery = coursesQuery.Where(c =>
+                EF.Functions.Like(c.Title, pattern) ||
+                EF.Functions.Like(c.Description, pattern));
+        }
 
         if (categoryId.HasValue)
             coursesQuery = coursesQuery.Where(c => c.CategoryId == categoryId.Value);
