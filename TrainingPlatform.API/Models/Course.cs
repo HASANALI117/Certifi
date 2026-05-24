@@ -19,6 +19,7 @@ namespace TrainingPlatform.API.Models
         public int DurationHours { get; set; }
         public int Capacity { get; set; }
         public decimal EnrollmentFee { get; set; }
+        public string? ImageUrl { get; set; }
 
         public ICollection<CourseSession> Sessions { get; set; } = [];
         public ICollection<CertificationTrackCourse> CertificationTrackCourses { get; set; } = [];

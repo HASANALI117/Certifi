@@ -1100,6 +1100,762 @@ thead.table-dark,
   z-index: 1;
 }
 
+/* Static course image — replaces the animated gradient banner on the catalog. */
+.tp-course-image {
+  height: 180px;
+  background: var(--bg-color);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tp-course-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 600ms ease;
+}
+.tp-course-card:hover .tp-course-image img {
+  transform: scale(1.04);
+}
+.tp-course-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color-soft) 0%,
+    var(--primary-color-tint) 100%
+  );
+  color: var(--primary-color);
+  font-size: 2.5rem;
+}
+
+/* Details page hero image. */
+.tp-course-hero-image {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+  background: var(--bg-color);
+}
+.tp-course-hero-image img {
+  width: 100%;
+  height: auto;
+  max-height: 360px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Edit form: preview of the existing course image, with management actions. */
+.tp-course-image-preview {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  background: var(--bg-color);
+}
+.tp-course-image-preview img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  display: block;
+}
+.tp-course-image-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-color);
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Course catalog — horizontal row layout
+   Image is fixed-size on the left so it crops cleanly at any window width.
+   ========================================================================== */
+.tp-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.tp-course-row {
+  background:
+    linear-gradient(var(--surface-color), var(--surface-color)) padding-box,
+    var(--border-color) border-box;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-1);
+  display: grid;
+  grid-template-columns: 280px 1fr auto;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1rem;
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    background var(--transition-base);
+}
+.tp-course-row:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+  background:
+    linear-gradient(var(--surface-color), var(--surface-color)) padding-box,
+    linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%) border-box;
+}
+.tp-course-row.is-selected {
+  background:
+    linear-gradient(var(--surface-color), var(--surface-color)) padding-box,
+    var(--primary-color) border-box;
+  box-shadow: 0 0 0 2px var(--primary-color-soft), var(--shadow-2);
+}
+
+.tp-course-row-image {
+  position: relative;
+  width: 280px;
+  height: 180px;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  background: var(--bg-color);
+  flex-shrink: 0;
+}
+.tp-course-row-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 600ms ease;
+}
+.tp-course-row:hover .tp-course-row-image img {
+  transform: scale(1.04);
+}
+.tp-course-row-image .tp-course-image-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+/* Price badge floats on the image, top-right, like the reference design. */
+.tp-course-row-price {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--border-radius-pill);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.5);
+}
+
+.tp-course-row-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.tp-course-row-body h3 {
+  font-size: 1.25rem;
+  margin: 0;
+  line-height: 1.3;
+}
+.tp-course-row-body .tp-tag {
+  margin: 0;
+}
+
+.tp-course-row-desc {
+  color: var(--text-color-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Small pill widgets shown next to the image (hours, seats, category…) */
+.tp-course-widgets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+.tp-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color-soft);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--border-radius-pill);
+  white-space: nowrap;
+  line-height: 1;
+}
+.tp-widget i {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+}
+.tp-widget-warn {
+  background: var(--warning-color-bg);
+  border-color: #fde68a;
+  color: var(--warning-color-fg);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-widget-warn i {
+  color: var(--warning-color);
+}
+[data-theme="dark"] .tp-widget-warn {
+  background: #261603;
+  border-color: #78350f;
+  color: #fcd34d;
+}
+
+/* ==========================================================================
+   Courses page — two-column layout with right sidebar
+   ========================================================================== */
+.tp-courses-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 1199px) {
+  .tp-courses-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tp-courses-main {
+  min-width: 0;
+}
+
+/* Header sits OUTSIDE the two-column grid so the sidebar aligns below it. */
+.tp-courses-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  margin: 1rem 0 1.5rem;
+}
+.tp-courses-header-titles {
+  min-width: 0;
+}
+.tp-courses-header-titles .tp-page-title {
+  margin: 0;
+}
+.tp-courses-header-titles .tp-page-subtitle {
+  margin: 0.25rem 0 0;
+}
+
+.tp-search-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Pill search input with embedded submit button on the right. */
+.tp-search-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.tp-search-input > i {
+  position: absolute;
+  left: 1rem;
+  color: var(--text-color-muted);
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+.tp-search-input input {
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-color);
+  padding: 0.55rem 3rem 0.55rem 2.5rem;
+  border-radius: var(--border-radius-pill);
+  width: 300px;
+  max-width: 100%;
+  font-size: 0.92rem;
+  height: 42px;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+.tp-search-input input::placeholder {
+  color: var(--text-color-muted);
+}
+.tp-search-input input:focus {
+  border-color: var(--primary-color);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+.tp-search-submit {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+.tp-search-submit:hover,
+.tp-search-submit:focus-visible {
+  background: var(--primary-color-hover);
+  outline: none;
+}
+
+.tp-search-cta {
+  height: 42px;
+  border-radius: var(--border-radius-pill);
+}
+
+/* Horizontal category tabs above the course list. */
+.tp-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.tp-category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--border-radius-pill);
+  color: var(--text-color-soft);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
+}
+.tp-category-tab:hover {
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+.tp-category-tab.active {
+  background: var(--info-color-bg);
+  color: var(--info-color-fg);
+}
+.tp-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 0.4rem;
+  border-radius: var(--border-radius-pill);
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.tp-category-tab.active .tp-tab-count {
+  background: #ffffff;
+  border-color: #bae6fd;
+  color: var(--info-color-fg);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Right sidebar widgets
+   ─────────────────────────────────────────────────────────────────────── */
+.tp-courses-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
+}
+@media (max-width: 1199px) {
+  .tp-courses-sidebar {
+    position: static;
+  }
+}
+
+.tp-sidebar-widget {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-1);
+  padding: 1.1rem 1.15rem;
+}
+.tp-sidebar-widget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+.tp-sidebar-widget-head h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  margin: 0;
+  color: var(--text-color);
+}
+.tp-sidebar-widget-head h3 i {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+.tp-sidebar-empty {
+  color: var(--text-color-muted);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* Selected-course preview — populated by JS when a course row is clicked. */
+.tp-selected-course {
+  padding: 0;
+  overflow: hidden;
+}
+.tp-selected-course-image {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  background: var(--bg-color);
+  overflow: hidden;
+}
+.tp-selected-course-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.tp-selected-course-image .tp-course-image-placeholder {
+  width: 100%;
+  height: 100%;
+}
+.tp-selected-course-image .tp-course-row-price {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+.tp-selected-course-body {
+  padding: 0.9rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.tp-selected-course-body h3 {
+  font-size: 1.05rem;
+  margin: 0;
+  line-height: 1.3;
+  color: var(--text-color);
+}
+.tp-selected-description {
+  font-size: 0.85rem;
+  color: var(--text-color-muted);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tp-selected-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  margin-top: 0.15rem;
+}
+.tp-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-color-soft);
+}
+.tp-stat i {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+}
+.tp-stat-prereq {
+  flex-basis: 100%;
+  color: var(--warning-color-fg);
+}
+.tp-stat-prereq i {
+  color: var(--warning-color);
+}
+.tp-selected-course-cta {
+  align-self: stretch;
+  border-radius: var(--border-radius-pill);
+  margin-top: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/* Close button floats on the panel image, top-left (price badge sits top-right). */
+.tp-selected-close {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(15, 23, 42, 0.7);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background var(--transition-base);
+}
+.tp-selected-close:hover,
+.tp-selected-close:focus-visible {
+  background: rgba(15, 23, 42, 0.9);
+  outline: none;
+}
+
+/* Details list — key/value rows in the selected-course panel */
+.tp-selected-list {
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tp-selected-list-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.86rem;
+}
+.tp-selected-list-row:last-child {
+  border-bottom: none;
+}
+.tp-selected-list-row dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--text-color-soft);
+  font-weight: 500;
+}
+.tp-selected-list-row dt i {
+  color: var(--primary-color);
+}
+.tp-selected-list-row dd {
+  margin: 0;
+  color: var(--text-color);
+  font-weight: 600;
+}
+.tp-selected-list-row-warn dt,
+.tp-selected-list-row-warn dt i,
+.tp-selected-list-row-warn dd {
+  color: var(--warning-color-fg);
+}
+
+.tp-sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tp-sidebar-list > li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.tp-sidebar-list > li:first-child { padding-top: 0; }
+.tp-sidebar-list > li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Upcoming sessions — calendar-style date chip */
+.tp-session-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--border-radius-sm);
+  background: var(--primary-color-soft);
+  color: var(--primary-color-active);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.tp-session-month {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tp-session-day {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  margin-top: 0.1rem;
+}
+.tp-session-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+.tp-session-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-session-title:hover {
+  color: var(--primary-color);
+}
+.tp-session-meta {
+  font-size: 0.78rem;
+  color: var(--text-color-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Instructors list — avatar bubble + name + expertise */
+.tp-instructor-list > li {
+  gap: 0.75rem;
+}
+.tp-instructor-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--accent-violet)
+  );
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.tp-instructor-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.tp-instructor-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-instructor-expertise {
+  font-size: 0.76rem;
+  color: var(--text-color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tp-course-row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: center;
+}
+.tp-course-row-actions .btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  min-height: 0;
+}
+.tp-course-row-actions form { display: block; }
+
+/* Tablet — keep image left but shrink it. */
+@media (max-width: 991px) {
+  .tp-course-row {
+    grid-template-columns: 220px 1fr;
+    grid-template-areas:
+      "image body"
+      "image actions";
+  }
+  .tp-course-row-image {
+    width: 220px;
+    height: 100%;
+    min-height: 160px;
+    grid-area: image;
+  }
+  .tp-course-row-body { grid-area: body; }
+  .tp-course-row-actions {
+    grid-area: actions;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+/* Mobile — stack image on top. */
+@media (max-width: 575px) {
+  .tp-course-row {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "image"
+      "body"
+      "actions";
+    padding: 0.85rem;
+  }
+  .tp-course-row-image {
+    width: 100%;
+    height: 180px;
+  }
+}
+
 .tp-course-card .card-body {
   padding: 1.25rem;
   flex: 1;
@@ -2422,4 +3178,236 @@ code {
   .tp-cert-card {
     transform: none !important;
   }
+}
+
+/* ==========================================================================
+   Dashboard-themed overrides for the Courses page.
+   Active whenever the page is rendered under _DashboardLayout (which adds
+   body.dash-body). Re-skins the courses components in the same glass panel +
+   teal accent language as the rest of the dashboard.
+   ========================================================================== */
+body.dash-body .tp-page-title {
+  color: var(--text-color);
+}
+body.dash-body .tp-page-subtitle {
+  color: var(--text-color-soft);
+}
+body.dash-body .tp-courses-header {
+  border-bottom-color: var(--border-color);
+}
+
+/* Search input — dark panel, teal submit button, teal focus ring. */
+body.dash-body .tp-search-input input {
+  background: var(--panel-bg-soft);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+body.dash-body .tp-search-input input::placeholder {
+  color: var(--text-color-muted);
+}
+body.dash-body .tp-search-input input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+body.dash-body .tp-search-input > i {
+  color: var(--text-color-muted);
+}
+body.dash-body .tp-search-submit {
+  background: var(--accent-color);
+}
+body.dash-body .tp-search-submit:hover,
+body.dash-body .tp-search-submit:focus-visible {
+  background: var(--accent-color-hover);
+}
+body.dash-body .tp-search-cta,
+body.dash-body .tp-search-cta:visited {
+  background: linear-gradient(
+    135deg,
+    var(--accent-color),
+    var(--accent-color-hover)
+  );
+  border-color: transparent;
+  color: #fff;
+}
+body.dash-body .tp-search-cta:hover,
+body.dash-body .tp-search-cta:focus-visible {
+  background: linear-gradient(
+    135deg,
+    var(--accent-color-hover),
+    var(--accent-color)
+  );
+  color: #fff;
+}
+
+/* Category tabs — match .dash-tab look (teal gradient active). */
+body.dash-body .tp-category-tabs {
+  border-bottom-color: var(--border-color);
+}
+body.dash-body .tp-category-tab {
+  color: var(--text-color-soft);
+}
+body.dash-body .tp-category-tab:hover {
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+}
+body.dash-body .tp-category-tab.active {
+  background: linear-gradient(
+    135deg,
+    var(--accent-color),
+    var(--accent-color-hover)
+  );
+  color: #fff;
+}
+body.dash-body .tp-tab-count {
+  background: var(--panel-bg-soft);
+  border-color: var(--border-color);
+  color: var(--text-color-muted);
+}
+body.dash-body .tp-category-tab.active .tp-tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+/* Course rows — glass panel, teal selection ring. Reset the gradient
+   padding-box trick the light theme uses for hover/selected. */
+body.dash-body .tp-course-row {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: none;
+}
+body.dash-body .tp-course-row:hover {
+  background: var(--panel-bg);
+  border-color: var(--accent-color-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.55);
+}
+body.dash-body .tp-course-row.is-selected {
+  background: var(--panel-bg);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 1px var(--accent-color), 0 12px 28px -16px rgba(0, 0, 0, 0.55);
+}
+body.dash-body .tp-course-row-body h3 {
+  color: var(--text-color);
+}
+body.dash-body .tp-course-row-desc {
+  color: var(--text-color-muted);
+}
+body.dash-body .tp-course-row-image {
+  background: var(--panel-bg-solid);
+}
+
+/* Tags & widget chips — recolor against dark backdrop. */
+body.dash-body .tp-tag {
+  background: var(--accent-color-soft);
+  border-color: transparent;
+  color: var(--accent-color);
+}
+body.dash-body .tp-tag i {
+  color: var(--accent-color);
+}
+body.dash-body .tp-widget {
+  background: var(--panel-bg-soft);
+  border-color: var(--border-color);
+  color: var(--text-color-soft);
+}
+body.dash-body .tp-widget i {
+  color: var(--accent-color);
+}
+body.dash-body .tp-widget-warn {
+  background: rgba(245, 180, 65, 0.12);
+  border-color: rgba(245, 180, 65, 0.4);
+  color: #f5b441;
+}
+body.dash-body .tp-widget-warn i {
+  color: #f5b441;
+}
+
+/* Row action buttons — teal primary, ghost secondary/danger. */
+body.dash-body .tp-course-row-actions .btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--accent-color),
+    var(--accent-color-hover)
+  );
+  border-color: transparent;
+  color: #fff;
+}
+body.dash-body .tp-course-row-actions .btn-primary:hover,
+body.dash-body .tp-course-row-actions .btn-primary:focus-visible {
+  background: linear-gradient(
+    135deg,
+    var(--accent-color-hover),
+    var(--accent-color)
+  );
+  color: #fff;
+}
+body.dash-body .tp-course-row-actions .btn-outline-secondary {
+  background: transparent;
+  border-color: var(--border-color-strong);
+  color: var(--text-color-soft);
+}
+body.dash-body .tp-course-row-actions .btn-outline-secondary:hover,
+body.dash-body .tp-course-row-actions .btn-outline-secondary:focus-visible {
+  background: var(--panel-bg-soft);
+  border-color: var(--accent-color-soft);
+  color: var(--text-color);
+}
+body.dash-body .tp-course-row-actions .btn-outline-danger {
+  background: transparent;
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+body.dash-body .tp-course-row-actions .btn-outline-danger:hover,
+body.dash-body .tp-course-row-actions .btn-outline-danger:focus-visible {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.7);
+  color: #fecaca;
+}
+
+/* Sidebar widgets — glass panel matching .dash-stat / .dash-card. */
+body.dash-body .tp-sidebar-widget {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: none;
+}
+body.dash-body .tp-selected-course-image {
+  background: var(--panel-bg-solid);
+}
+body.dash-body .tp-selected-course-body h3 {
+  color: var(--text-color);
+}
+body.dash-body .tp-selected-description {
+  color: var(--text-color-soft);
+}
+body.dash-body .tp-selected-list-row {
+  border-bottom-color: var(--border-color);
+}
+body.dash-body .tp-selected-list-row dt {
+  color: var(--text-color-soft);
+}
+body.dash-body .tp-selected-list-row dt i {
+  color: var(--accent-color);
+}
+body.dash-body .tp-selected-list-row dd {
+  color: var(--text-color);
+}
+body.dash-body .tp-selected-list-row-warn dt,
+body.dash-body .tp-selected-list-row-warn dt i,
+body.dash-body .tp-selected-list-row-warn dd {
+  color: #f5b441;
+}
+
+/* Empty state — dashed dark panel. */
+body.dash-body .tp-empty {
+  background: var(--panel-bg);
+  border: 1px dashed var(--border-color);
+  color: var(--text-color-soft);
+}
+body.dash-body .tp-empty h4 {
+  color: var(--text-color);
 }
