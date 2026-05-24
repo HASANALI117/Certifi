@@ -915,6 +915,47 @@ textarea.form-control {
   white-space: nowrap;
 }
 
+/* Sortable column headers */
+.table thead th.tp-sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: 1.75rem;
+  transition: color var(--transition-base), background-color var(--transition-base);
+}
+.table thead th.tp-sortable:hover {
+  color: var(--text-color);
+  background: var(--border-color);
+}
+.table thead th.tp-sortable::after {
+  content: "";
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: -0.35rem;
+  opacity: 0.35;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 3l3 4H5l3-4zM8 13l-3-4h6l-3 4z'/></svg>") no-repeat center / contain;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 3l3 4H5l3-4zM8 13l-3-4h6l-3 4z'/></svg>") no-repeat center / contain;
+  transition: opacity var(--transition-base);
+}
+.table thead th.tp-sortable[aria-sort="ascending"],
+.table thead th.tp-sortable[aria-sort="descending"] {
+  color: var(--text-color);
+}
+.table thead th.tp-sortable[aria-sort="ascending"]::after {
+  opacity: 1;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4l4 6H4l4-6z'/></svg>") no-repeat center / contain;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4l4 6H4l4-6z'/></svg>") no-repeat center / contain;
+}
+.table thead th.tp-sortable[aria-sort="descending"]::after {
+  opacity: 1;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 12l-4-6h8l-4 6z'/></svg>") no-repeat center / contain;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 12l-4-6h8l-4 6z'/></svg>") no-repeat center / contain;
+}
+
 /* Override hard dark thead used in legacy markup */
 .table-dark,
 thead.table-dark,

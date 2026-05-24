@@ -51,15 +51,15 @@
 else
 {
     <div class="tp-table-card">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle" data-tp-sortable-table>
             <thead>
                 <tr>
-                    <th>Course</th>
-                    <th>Instructor</th>
-                    <th>Classroom</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Spots</th>
+                    <th class="tp-sortable" data-sort-type="text">Course</th>
+                    <th class="tp-sortable" data-sort-type="text">Instructor</th>
+                    <th class="tp-sortable" data-sort-type="text">Classroom</th>
+                    <th class="tp-sortable" data-sort-type="number">Date</th>
+                    <th class="tp-sortable" data-sort-type="number">Time</th>
+                    <th class="tp-sortable" data-sort-type="number">Spots</th>
                     <th class="text-end" style="width: 240px;">Actions</th>
                 </tr>
             </thead>
@@ -80,9 +80,9 @@ else
                         <td class="tp-text-soft">
                             <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-door-open"></i> @s.ClassroomName</span>
                         </td>
-                        <td class="tp-text-soft tp-mono" style="font-size: .9rem;">@s.SessionDate.ToString("dd MMM yyyy")</td>
-                        <td class="tp-text-soft tp-mono" style="font-size: .9rem;">@s.StartTime.ToString("hh\\:mm tt")</td>
-                        <td>
+                        <td class="tp-text-soft tp-mono" style="font-size: .9rem;" data-sort-value="@s.SessionDate.ToString("yyyy-MM-dd")">@s.SessionDate.ToString("dd MMM yyyy")</td>
+                        <td class="tp-text-soft tp-mono" style="font-size: .9rem;" data-sort-value="@s.StartTime.ToString("HH:mm")">@s.StartTime.ToString("hh\\:mm tt")</td>
+                        <td data-sort-value="@spotsLeft">
                             <span id="enrollment-counter-@s.Id">
                                 <span class="badge @badgeClass"><i class="bi @badgeIcon"></i> @badgeText</span>
                                 <small class="text-muted d-block">(@s.EnrollmentCount/@s.Capacity)</small>
@@ -134,4 +134,72 @@ else
             </tbody>
         </table>
     </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            function cellSortValue(row, index) {
+                var cell = row.cells[index];
+                if (!cell) return '';
+                if (cell.dataset && cell.dataset.sortValue != null && cell.dataset.sortValue !== '') {
+                    return cell.dataset.sortValue;
+                }
+                return (cell.textContent || '').trim();
+            }
+
+            function sortBy(table, header, columnIndex) {
+                var currentDir = header.getAttribute('aria-sort');
+                var nextDir = currentDir === 'ascending' ? 'descending' : 'ascending';
+
+                table.querySelectorAll('thead th.tp-sortable').forEach(function (th) {
+                    th.removeAttribute('aria-sort');
+                });
+                header.setAttribute('aria-sort', nextDir);
+
+                var type = header.getAttribute('data-sort-type') || 'text';
+                var tbody = table.tBodies[0];
+                if (!tbody) return;
+                var rows = Array.prototype.slice.call(tbody.rows);
+
+                rows.sort(function (a, b) {
+                    var av = cellSortValue(a, columnIndex);
+                    var bv = cellSortValue(b, columnIndex);
+                    if (type === 'number') {
+                        var an = Number(av);
+                        var bn = Number(bv);
+                        if (!isNaN(an) && !isNaN(bn)) {
+                            return nextDir === 'ascending' ? an - bn : bn - an;
+                        }
+                    }
+                    var cmp = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' });
+                    return nextDir === 'ascending' ? cmp : -cmp;
+                });
+
+                var frag = document.createDocumentFragment();
+                rows.forEach(function (r) { frag.appendChild(r); });
+                tbody.appendChild(frag);
+            }
+
+            function initSortableTables(root) {
+                (root || document).querySelectorAll('table[data-tp-sortable-table]').forEach(function (table) {
+                    if (table.dataset.tpSortBound === '1') return;
+                    table.dataset.tpSortBound = '1';
+                    table.querySelectorAll('thead th.tp-sortable').forEach(function (th, index) {
+                        th.setAttribute('role', 'button');
+                        th.setAttribute('tabindex', '0');
+                        th.addEventListener('click', function () { sortBy(table, th, index); });
+                        th.addEventListener('keydown', function (e) {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                sortBy(table, th, index);
+                            }
+                        });
+                    });
+                });
+            }
+
+            initSortableTables(document);
+        })();
+    </script>
 }
