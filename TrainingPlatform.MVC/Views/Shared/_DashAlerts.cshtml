@@ -7,16 +7,36 @@
 {
     <script>
         (function () {
+            // Toast helper is published by realtime.js, which may not have loaded yet
+            // on a fresh page or an AJAX swap. Poll a bounded number of times, then
+            // fall back to alert() so the message never disappears silently.
+            var MAX_ATTEMPTS = 30;        // ~3 seconds total
+            var INTERVAL_MS = 100;
+            var attempts = 0;
+            @{
+                var successJson = string.IsNullOrEmpty(success) ? "null" : JsonSerializer.Serialize(success);
+                var errorJson = string.IsNullOrEmpty(error) ? "null" : JsonSerializer.Serialize(error);
+            }
+            var successMsg = @Html.Raw(successJson);
+            var errorMsg = @Html.Raw(errorJson);
+
+            function fallback() {
+                if (successMsg) alert(successMsg);
+                if (errorMsg) alert(errorMsg);
+            }
+
             function fire() {
-                if (!window.TpToast) { setTimeout(fire, 100); return; }
-                @if (!string.IsNullOrEmpty(success))
-                {
-                    <text>window.TpToast.show({ type: 'Success', message: @Html.Raw(JsonSerializer.Serialize(success)) });</text>
+                if (window.TpToast) {
+                    if (successMsg) window.TpToast.show({ type: 'Success', message: successMsg });
+                    if (errorMsg) window.TpToast.show({ type: 'Error', message: errorMsg });
+                    return;
                 }
-                @if (!string.IsNullOrEmpty(error))
-                {
-                    <text>window.TpToast.show({ type: 'Error', message: @Html.Raw(JsonSerializer.Serialize(error)) });</text>
+                if (++attempts >= MAX_ATTEMPTS) {
+                    console.warn('[DashAlerts] TpToast never registered; using alert() fallback');
+                    fallback();
+                    return;
                 }
+                setTimeout(fire, INTERVAL_MS);
             }
             fire();
         })();

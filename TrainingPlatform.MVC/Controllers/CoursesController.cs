@@ -23,6 +23,9 @@ public class CoursesController : Controller
         _env = env;
     }
 
+    private static string EscapeLike(string input) =>
+        input.Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+
     public async Task<IActionResult> Index(string? search, int? categoryId)
     {
         var query = _db.Courses
@@ -31,7 +34,13 @@ public class CoursesController : Controller
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.Title.Contains(search) || c.Description.Contains(search));
+        {
+            // SQL LIKE under default CI collation gives case-insensitive matching.
+            var pattern = $"%{EscapeLike(search)}%";
+            query = query.Where(c =>
+                EF.Functions.Like(c.Title, pattern) ||
+                EF.Functions.Like(c.Description, pattern));
+        }
 
         if (categoryId.HasValue)
             query = query.Where(c => c.CategoryId == categoryId.Value);

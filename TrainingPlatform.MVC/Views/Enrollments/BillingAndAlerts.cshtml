@@ -33,7 +33,8 @@
 }
 
 <div data-tp-live-page="billing"></div>
-<partial name="_DashAlerts" />
+@* _DashAlerts is rendered by the layout (_DashboardLayout for full loads,
+   _AjaxLayout for fragment swaps), so it is intentionally omitted here. *@
 
 <header class="dash-page-head">
     <div class="dash-page-head-row">
@@ -106,6 +107,8 @@
                         var balance = balances.GetValueOrDefault(item.Id, fee);
                         var paid = item.Payments?.Sum(p => p.AmountPaid) ?? 0m;
                         var paidPct = fee <= 0 ? 100 : (int)Math.Min(100, Math.Round(100m * paid / fee));
+                        var payStatus = statuses.GetValueOrDefault(item.Id, balance == 0 ? "Paid" : "Unpaid");
+                        var isOverdue = payStatus == "Overdue";
 
                         <tr>
                             <td data-label="Course">
@@ -124,6 +127,12 @@
                                     <div class="dash-pay-bar" role="progressbar" aria-valuenow="@paidPct" aria-valuemin="0" aria-valuemax="100" aria-label="Payment progress">
                                         <div class="dash-pay-bar-fill" style="width:@(paidPct)%"></div>
                                     </div>
+                                    @if (isOverdue)
+                                    {
+                                        <span class="dash-pill dash-pill-danger mt-1" title="Your session has started but the balance is outstanding">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Overdue
+                                        </span>
+                                    }
                                 </div>
                             </td>
                             <td data-label="Assessment">

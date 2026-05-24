@@ -31,6 +31,7 @@
     };
 
     var enrollments = Model?.ToList() ?? new List<Enrollment>();
+    var paymentStatuses = ViewBag.PaymentStatuses as Dictionary<int, string> ?? new Dictionary<int, string>();
     var activeCount = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Status != EnrollmentStatus.Completed);
     var outstandingTotal = enrollments
         .Where(e => e.Status != EnrollmentStatus.Dropped)
@@ -40,13 +41,15 @@
             var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
             return Math.Max(0m, fee - paid);
         });
+    var overdueCount = enrollments.Count(e => paymentStatuses.GetValueOrDefault(e.Id) == "Overdue");
     var awaitingAssessment = enrollments.Count(e =>
         (e.Status == EnrollmentStatus.Attending || e.Status == EnrollmentStatus.Confirmed) && e.Assessment == null);
     var eligibleCerts = certifications.Count(c => c.Status == CertificationStatus.Eligible);
 }
 
 <div data-tp-live-page="manage"></div>
-<partial name="_DashAlerts" />
+@* _DashAlerts is rendered by the layout (_DashboardLayout for full loads,
+   _AjaxLayout for fragment swaps), so it is intentionally omitted here. *@
 
 <header class="dash-page-head">
     <div class="dash-page-head-row">
@@ -76,6 +79,13 @@
         <div>
             <div class="dash-summary-val">@outstandingTotal.ToString("C0")</div>
             <div class="dash-summary-lbl">Outstanding payments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-danger"><i class="bi bi-exclamation-triangle-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@overdueCount</div>
+            <div class="dash-summary-lbl">Overdue payments</div>
         </div>
     </div>
     <div class="dash-summary">
@@ -135,6 +145,8 @@
                         var balance = Math.Max(0m, fee - paid);
                         var paidPct = fee <= 0 ? 100 : (int)Math.Min(100, Math.Round(100m * paid / fee));
                         var canRecordPayment = balance > 0 && e.Status != EnrollmentStatus.Dropped;
+                        var payStatus = paymentStatuses.GetValueOrDefault(e.Id, balance == 0 ? "Paid" : "Unpaid");
+                        var isOverdue = payStatus == "Overdue";
 
                         <tr>
                             <td data-label="Trainee">
@@ -162,6 +174,12 @@
                                     <div class="dash-pay-bar" role="progressbar" aria-valuenow="@paidPct" aria-valuemin="0" aria-valuemax="100" aria-label="Payment progress">
                                         <div class="dash-pay-bar-fill" style="width:@(paidPct)%"></div>
                                     </div>
+                                    @if (isOverdue)
+                                    {
+                                        <span class="dash-pill dash-pill-danger mt-1" title="Session has started but balance is outstanding">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Overdue
+                                        </span>
+                                    }
                                 </div>
                             </td>
                             <td data-label="Assessment">

@@ -1,3 +1,4 @@
+using System.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,6 +49,9 @@ public class EnrollmentsController : Controller
             .ThenBy(e => e.Trainee.User.LastName)
             .ToListAsync();
 
+        await FlagOverduePaymentsAsync(enrollments);
+        ViewBag.PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus);
+
         await LoadCertificationViewBagAsync();
         return View(enrollments);
     }
@@ -74,6 +78,8 @@ public class EnrollmentsController : Controller
             .Where(e => e.TraineeId == trainee.Id)
             .OrderByDescending(e => e.EnrolledAt)
             .ToListAsync();
+
+        await FlagOverduePaymentsAsync(enrollments);
 
         ViewBag.PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus);
         ViewBag.OutstandingBalances = enrollments.ToDictionary(e => e.Id, OutstandingBalance);
@@ -289,6 +295,14 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
+        // Wrap read-check-insert in a serializable transaction so that two
+        // simultaneous enrollments racing for the last seat can't both succeed.
+        // Under serializable isolation, SQL Server takes range locks on the
+        // session's enrollment rows, so the second transaction blocks until the
+        // first commits and then re-evaluates against the updated count.
+        await using var tx = await _context.Database
+            .BeginTransactionAsync(IsolationLevel.Serializable);
+
         var session = await _context.CourseSessions
             .Include(cs => cs.Course)
             .Include(cs => cs.Enrollments)
@@ -306,35 +320,31 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        var existingEnrollment = await _context.Enrollments.FirstOrDefaultAsync(e =>
-            e.TraineeId == trainee.Id && e.CourseSessionId == courseSessionId);
+        var hasActiveEnrollment = await _context.Enrollments.AnyAsync(e =>
+            e.TraineeId == trainee.Id &&
+            e.CourseSessionId == courseSessionId &&
+            e.Status != EnrollmentStatus.Dropped);
 
-        if (existingEnrollment is { Status: not EnrollmentStatus.Dropped })
+        if (hasActiveEnrollment)
         {
             TempData["Error"] = "You are already enrolled.";
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        if (existingEnrollment == null)
+        var newEnrollment = new Enrollment
         {
-            existingEnrollment = new Enrollment
-            {
-                TraineeId = trainee.Id,
-                CourseSessionId = courseSessionId,
-                Status = EnrollmentStatus.Enrolled,
-                EnrolledAt = DateTime.UtcNow
-            };
-            _context.Enrollments.Add(existingEnrollment);
-        }
-        else
-        {
-            existingEnrollment.Status = EnrollmentStatus.Enrolled;
-            existingEnrollment.EnrolledAt = DateTime.UtcNow;
-        }
+            TraineeId = trainee.Id,
+            CourseSessionId = courseSessionId,
+            Status = EnrollmentStatus.Enrolled,
+            EnrolledAt = DateTime.UtcNow
+        };
+        _context.Enrollments.Add(newEnrollment);
 
         await StartCertificationTrackingAsync(trainee.Id, session.CourseId);
         AddNotification(userId, $"Enrolled in {session.Course.Title}.", "Enrollment");
         await SaveChangesAndNotifyAsync();
+        await tx.CommitAsync();
+
         await BroadcastEnrollmentCountAsync(courseSessionId);
 
         TempData["Success"] = "Enrollment successful.";
@@ -394,11 +404,18 @@ public class EnrollmentsController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> RecordPayment(int enrollmentId, decimal amount)
     {
-        var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == enrollmentId);
-        if (enrollment == null) return NotFound();
-
+        // Authorize first, before opening any transaction.
         if (User.IsInRole("Trainee") && !await CurrentUserOwnsEnrollmentAsync(enrollmentId))
             return Forbid();
+
+        // Serializable transaction prevents two concurrent payments against
+        // the same enrollment from both passing the "amount <= balance" check
+        // and inserting (which would over-pay and drive the balance negative).
+        await using var tx = await _context.Database
+            .BeginTransactionAsync(IsolationLevel.Serializable);
+
+        var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == enrollmentId);
+        if (enrollment == null) return NotFound();
 
         if (enrollment.Status == EnrollmentStatus.Dropped)
         {
@@ -441,6 +458,7 @@ public class EnrollmentsController : Controller
         }
 
         await SaveChangesAndNotifyAsync();
+        await tx.CommitAsync();
 
         var paymentMessage = confirmedByPayment
             ? "Payment recorded. Balance is fully paid and the enrollment is confirmed."
@@ -485,11 +503,14 @@ public class EnrollmentsController : Controller
 
         await SaveChangesAndNotifyAsync();
 
-        if (result == AssessmentResult.Pass)
-        {
-            await UpdateCertificationTrackingAsync(enrollment.TraineeId);
-            await SaveChangesAndNotifyAsync();
-        }
+        // Always re-run tracking. UpdateCertificationTrackingAsync now handles
+        // both promotion (Eligible when all required courses passed) and
+        // demotion (back to InProgress when a previous Pass is corrected to
+        // Fail). Already-Issued certifications are intentionally left alone —
+        // a real-world certificate that has been handed out cannot be silently
+        // revoked from the platform.
+        await UpdateCertificationTrackingAsync(enrollment.TraineeId);
+        await SaveChangesAndNotifyAsync();
 
         if (IsModal) return JsonOk("Assessment recorded.", "Assessment");
         TempData["Success"] = "Assessment recorded.";
@@ -509,9 +530,15 @@ public class EnrollmentsController : Controller
 
         certification.Status = CertificationStatus.Issued;
         certification.IssuedAt = DateTime.UtcNow;
-        certification.CertRefNumber = string.IsNullOrWhiteSpace(certification.CertRefNumber)
-            ? BuildCertificateReference(certification)
-            : certification.CertRefNumber;
+
+        // Persist the issued state first so the reference embeds a saved row's
+        // Id (collision-free across coordinators issuing concurrently). On the
+        // happy path the row already had an Id from StartCertificationTrackingAsync,
+        // but using SaveChangesAsync as the anchor keeps the invariant intact
+        // even if the upstream creation flow changes.
+        var generateRef = string.IsNullOrWhiteSpace(certification.CertRefNumber);
+        if (generateRef) await _context.SaveChangesAsync();
+        if (generateRef) certification.CertRefNumber = BuildCertificateReference(certification);
 
         await AddNotificationForTraineeAsync(
             certification.TraineeId,
@@ -649,30 +676,68 @@ public class EnrollmentsController : Controller
                 .Select(ctc => ctc.CourseId)
                 .ToList();
 
-            if (requiredCourseIds.Count == 0 || !requiredCourseIds.Any(passedCourseIds.Contains))
-                continue;
+            // No requirements wired up → nothing to track.
+            if (requiredCourseIds.Count == 0) continue;
 
             var certification = await _context.TraineeCertifications
                 .FirstOrDefaultAsync(c => c.TraineeId == traineeId && c.CertificationTrackId == track.Id);
 
-            if (certification == null)
+            // Issued certificates are real-world artifacts; never silently revoke.
+            if (certification?.Status == CertificationStatus.Issued) continue;
+
+            var allRequiredPassed = requiredCourseIds.All(passedCourseIds.Contains);
+            var anyRequiredPassed = requiredCourseIds.Any(passedCourseIds.Contains);
+
+            // Promotion: create/upgrade to Eligible when fully qualified.
+            if (allRequiredPassed)
             {
-                certification = new TraineeCertification
+                if (certification == null)
+                {
+                    certification = new TraineeCertification
+                    {
+                        TraineeId = traineeId,
+                        CertificationTrackId = track.Id,
+                        Status = CertificationStatus.Eligible
+                    };
+                    _context.TraineeCertifications.Add(certification);
+                    await AddNotificationForTraineeAsync(
+                        traineeId,
+                        $"You are eligible for certification: {track.Name}.",
+                        "Certification");
+                }
+                else if (certification.Status == CertificationStatus.InProgress)
+                {
+                    certification.Status = CertificationStatus.Eligible;
+                    await AddNotificationForTraineeAsync(
+                        traineeId,
+                        $"You are eligible for certification: {track.Name}.",
+                        "Certification");
+                }
+                continue;
+            }
+
+            // Demotion: a prior Eligible cert no longer qualifies (e.g., a Pass
+            // was corrected to Fail). Move it back to InProgress and notify so
+            // the coordinator knows not to issue.
+            if (certification != null && certification.Status == CertificationStatus.Eligible)
+            {
+                certification.Status = CertificationStatus.InProgress;
+                await AddNotificationForTraineeAsync(
+                    traineeId,
+                    $"Certification eligibility for {track.Name} was revoked after an assessment change.",
+                    "Certification");
+                continue;
+            }
+
+            // Start tracking once at least one required course is passed.
+            if (certification == null && anyRequiredPassed)
+            {
+                _context.TraineeCertifications.Add(new TraineeCertification
                 {
                     TraineeId = traineeId,
                     CertificationTrackId = track.Id,
                     Status = CertificationStatus.InProgress
-                };
-                _context.TraineeCertifications.Add(certification);
-            }
-
-            if (requiredCourseIds.All(passedCourseIds.Contains) && certification.Status == CertificationStatus.InProgress)
-            {
-                certification.Status = CertificationStatus.Eligible;
-                await AddNotificationForTraineeAsync(
-                    traineeId,
-                    $"You are eligible for certification: {track.Name}.",
-                    "Certification");
+                });
             }
         }
     }
@@ -763,11 +828,69 @@ public class EnrollmentsController : Controller
     private static decimal OutstandingBalance(Enrollment enrollment) =>
         Math.Max(0m, (enrollment.CourseSession?.Course?.EnrollmentFee ?? 0m) - PaidTotal(enrollment));
 
+    // Overdue when the session has already started but the trainee still owes.
+    // Dropped enrollments never count as overdue.
+    private static bool IsOverdue(Enrollment enrollment)
+    {
+        if (enrollment.Status == EnrollmentStatus.Dropped) return false;
+        if (OutstandingBalance(enrollment) <= 0) return false;
+        var start = enrollment.CourseSession?.StartDateTime;
+        return start.HasValue && start.Value <= DateTime.UtcNow;
+    }
+
     private static string PaymentStatus(Enrollment enrollment)
     {
         var balance = OutstandingBalance(enrollment);
         if (balance <= 0) return "Paid";
+        if (IsOverdue(enrollment)) return "Overdue";
         return PaidTotal(enrollment) > 0 ? "Partial" : "Unpaid";
+    }
+
+    // Idempotently sends a one-time "payment overdue" notification per
+    // enrollment. Identifies prior notifications by an embedded marker in
+    // the message body so we don't need a schema migration.
+    private async Task FlagOverduePaymentsAsync(IEnumerable<Enrollment> enrollments)
+    {
+        var overdue = enrollments.Where(IsOverdue).ToList();
+        if (overdue.Count == 0) return;
+
+        var markerIds = overdue.Select(e => $"[OVERDUE:{e.Id}]").ToList();
+        var alreadyNotifiedMarkers = await _context.Notifications
+            .Where(n => n.Type == "Payment" && markerIds.Any(m => n.Message.Contains(m)))
+            .Select(n => n.Message)
+            .ToListAsync();
+
+        var alreadyNotified = new HashSet<int>(
+            alreadyNotifiedMarkers
+                .Select(ExtractEnrollmentIdMarker)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value));
+
+        var newlyOverdue = overdue.Where(e => !alreadyNotified.Contains(e.Id)).ToList();
+        if (newlyOverdue.Count == 0) return;
+
+        foreach (var enrollment in newlyOverdue)
+        {
+            var balance = OutstandingBalance(enrollment);
+            var courseTitle = enrollment.CourseSession?.Course?.Title ?? "your course";
+            await AddNotificationForTraineeAsync(
+                enrollment.TraineeId,
+                $"Payment overdue for {courseTitle}: {balance:C} outstanding. [OVERDUE:{enrollment.Id}]",
+                "Payment");
+        }
+
+        await SaveChangesAndNotifyAsync();
+    }
+
+    private static int? ExtractEnrollmentIdMarker(string message)
+    {
+        const string marker = "[OVERDUE:";
+        var i = message.IndexOf(marker, StringComparison.Ordinal);
+        if (i < 0) return null;
+        var start = i + marker.Length;
+        var end = message.IndexOf(']', start);
+        if (end < 0) return null;
+        return int.TryParse(message.AsSpan(start, end - start), out var id) ? id : null;
     }
 
     private static string FullName(AppUser user) =>

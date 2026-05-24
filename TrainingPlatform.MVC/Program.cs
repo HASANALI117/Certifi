@@ -34,19 +34,28 @@ builder.Services.AddHttpClient<ICertificationLookupService, CertificationLookupS
         ?? throw new InvalidOperationException("ApiSettings:BaseUrl is not configured."));
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Seed roles on startup
-using (var scope = app.Services.CreateScope())
+// Seed roles + reference data + sample activity. Shared with the API host so a
+// developer running only the MVC project still gets a usable database.
+// DbSeeder is idempotent (guards on "if (table.Any()) return") so re-runs are safe.
+using (var scope = app.Services.CreateAsyncScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in new[] { "TrainingCoordinator", "Instructor", "Trainee" })
+    var services = scope.ServiceProvider;
+    try
     {
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
+        var context = services.GetRequiredService<AppDbContext>();
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await DbSeeder.SeedAsync(context, userManager, roleManager);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Error while seeding the database from the MVC host.");
     }
 }
 

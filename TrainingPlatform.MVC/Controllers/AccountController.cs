@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TrainingPlatform.API.Models;
+using TrainingPlatform.MVC.Infrastructure;
 using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
@@ -68,11 +69,7 @@ public class AccountController : Controller
             model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
-        {
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                return LocalRedirect(returnUrl);
-            return RedirectToAction("Index", "Dashboard");
-        }
+            return this.SafeLocalRedirect(returnUrl, "Index", "Dashboard");
 
         ModelState.AddModelError(string.Empty, "Invalid email or password.");
         return View(model);
