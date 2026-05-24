@@ -142,14 +142,16 @@ public class EnrollmentsController : Controller
             return await EnrollmentFormResult(enrollment);
         }
 
-        var duplicate = await _context.Enrollments.AnyAsync(e =>
-            e.TraineeId == enrollment.TraineeId &&
-            e.CourseSessionId == enrollment.CourseSessionId &&
-            e.Status != EnrollmentStatus.Dropped);
+        // (TraineeId, CourseSessionId) is unique and a dropped session is not re-joinable.
+        var existing = await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.TraineeId == enrollment.TraineeId &&
+                                      e.CourseSessionId == enrollment.CourseSessionId);
 
-        if (duplicate)
+        if (existing != null)
         {
-            ModelState.AddModelError(nameof(enrollment.TraineeId), "This trainee is already actively enrolled in the selected session.");
+            ModelState.AddModelError(nameof(enrollment.TraineeId), existing.Status == EnrollmentStatus.Dropped
+                ? "This trainee previously dropped this session — choose a different session."
+                : "This trainee is already actively enrolled in the selected session.");
             return await EnrollmentFormResult(enrollment);
         }
 
@@ -314,31 +316,41 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
+        // A session is a one-shot, time-bound instance: only an upcoming, Scheduled
+        // session is open for enrollment. The browse list already hides others; this
+        // closes the direct-POST hole.
+        if (session.Status != SessionStatus.Scheduled || session.StartDateTime <= DateTime.UtcNow)
+        {
+            TempData["Error"] = "This session is no longer open for enrollment.";
+            return RedirectToAction("Index", "CourseSessions");
+        }
+
         if (ActiveEnrollmentCount(session) >= session.Capacity)
         {
             TempData["Error"] = "This session is full.";
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        var hasActiveEnrollment = await _context.Enrollments.AnyAsync(e =>
-            e.TraineeId == trainee.Id &&
-            e.CourseSessionId == courseSessionId &&
-            e.Status != EnrollmentStatus.Dropped);
+        // (TraineeId, CourseSessionId) is unique. A dropped session is not re-joinable —
+        // the trainee must enroll in a different upcoming session of the course instead.
+        var existing = await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.TraineeId == trainee.Id && e.CourseSessionId == courseSessionId);
 
-        if (hasActiveEnrollment)
+        if (existing != null)
         {
-            TempData["Error"] = "You are already enrolled.";
+            TempData["Error"] = existing.Status == EnrollmentStatus.Dropped
+                ? "You previously dropped this session. Enroll in another upcoming session of this course."
+                : "You are already enrolled.";
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        var newEnrollment = new Enrollment
+        _context.Enrollments.Add(new Enrollment
         {
             TraineeId = trainee.Id,
             CourseSessionId = courseSessionId,
             Status = EnrollmentStatus.Enrolled,
             EnrolledAt = DateTime.UtcNow
-        };
-        _context.Enrollments.Add(newEnrollment);
+        });
 
         await StartCertificationTrackingAsync(trainee.Id, session.CourseId);
         AddNotification(userId, $"Enrolled in {session.Course.Title}.", "Enrollment");
@@ -379,14 +391,16 @@ public class EnrollmentsController : Controller
         return RedirectToAction(nameof(Manage));
     }
 
-    [Authorize(Roles = "TrainingCoordinator,Trainee")]
+    // Trainees self-pay via Stripe Checkout (PaymentsController). This just renders the
+    // amount-entry modal; the actual charge is handled by Stripe + the webhook.
+    [Authorize(Roles = "Trainee")]
     [HttpGet]
     public async Task<IActionResult> PaymentForm(int id)
     {
         if (!IsModal) return RedirectAfterPayment();
         var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == id);
         if (enrollment == null) return NotFound();
-        if (User.IsInRole("Trainee") && !await CurrentUserOwnsEnrollmentAsync(id)) return Forbid();
+        if (!await CurrentUserOwnsEnrollmentAsync(id)) return Forbid();
         return PartialView("_PaymentForm", enrollment);
     }
 
@@ -400,73 +414,9 @@ public class EnrollmentsController : Controller
         return PartialView("_AssessmentForm", enrollment);
     }
 
-    [Authorize(Roles = "TrainingCoordinator,Trainee")]
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> RecordPayment(int enrollmentId, decimal amount)
-    {
-        // Authorize first, before opening any transaction.
-        if (User.IsInRole("Trainee") && !await CurrentUserOwnsEnrollmentAsync(enrollmentId))
-            return Forbid();
-
-        // Serializable transaction prevents two concurrent payments against
-        // the same enrollment from both passing the "amount <= balance" check
-        // and inserting (which would over-pay and drive the balance negative).
-        await using var tx = await _context.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable);
-
-        var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == enrollmentId);
-        if (enrollment == null) return NotFound();
-
-        if (enrollment.Status == EnrollmentStatus.Dropped)
-        {
-            if (IsModal) return JsonFail("Dropped enrollments cannot accept payments.");
-            TempData["Error"] = "Dropped enrollments cannot accept payments.";
-            return RedirectAfterPayment();
-        }
-
-        var remainingBalance = OutstandingBalance(enrollment);
-        if (amount <= 0 || amount > remainingBalance)
-        {
-            var amountError = "Payment amount must be greater than zero and no more than the outstanding balance.";
-            if (IsModal) return JsonFail(amountError);
-            TempData["Error"] = amountError;
-            return RedirectAfterPayment();
-        }
-
-        var newBalance = remainingBalance - amount;
-        _context.Payments.Add(new Payment
-        {
-            EnrollmentId = enrollmentId,
-            AmountPaid = amount,
-            PaidAt = DateTime.UtcNow,
-            OutstandingBalance = newBalance
-        });
-
-        await AddNotificationForTraineeAsync(
-            enrollment.TraineeId,
-            $"Payment of {amount:C} recorded for {enrollment.CourseSession.Course.Title}. Remaining balance: {newBalance:C}.",
-            "Payment");
-
-        var confirmedByPayment = newBalance <= 0 && enrollment.Status == EnrollmentStatus.Enrolled;
-        if (confirmedByPayment)
-        {
-            enrollment.Status = EnrollmentStatus.Confirmed;
-            await AddNotificationForTraineeAsync(
-                enrollment.TraineeId,
-                $"Your enrollment for {enrollment.CourseSession.Course.Title} is confirmed after full payment.",
-                "Enrollment");
-        }
-
-        await SaveChangesAndNotifyAsync();
-        await tx.CommitAsync();
-
-        var paymentMessage = confirmedByPayment
-            ? "Payment recorded. Balance is fully paid and the enrollment is confirmed."
-            : newBalance == 0 ? "Payment recorded. Balance is fully paid." : "Payment recorded.";
-        if (IsModal) return JsonOk(paymentMessage, "Payment");
-        TempData["Success"] = paymentMessage;
-        return RedirectAfterPayment();
-    }
+    // Manual/offline payment recording has been removed — all payments go through
+    // Stripe Checkout (see PaymentsController). The Stripe webhook is the single
+    // writer of Payment rows.
 
     [Authorize(Roles = "TrainingCoordinator,Instructor")]
     [HttpPost, ValidateAntiForgeryToken]

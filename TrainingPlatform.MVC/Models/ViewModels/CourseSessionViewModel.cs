@@ -16,6 +16,7 @@ public class CourseSessionListItemViewModel
     public decimal Fee { get; set; }
     public int Capacity { get; set; }
     public bool IsEnrolledByCurrentUser { get; set; }
+    public bool WasDroppedByCurrentUser { get; set; }
     public int RemainingSpots => Math.Max(0, Capacity - EnrollmentCount);
 }
 

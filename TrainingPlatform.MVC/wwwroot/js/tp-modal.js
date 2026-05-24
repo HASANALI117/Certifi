@@ -84,6 +84,12 @@
             if (ct.indexOf('application/json') !== -1) {
                 var data = await resp.json();
                 if (data.ok) {
+                    // Redirect responses (e.g. Stripe Checkout) navigate away instead
+                    // of closing + reloading the dashboard in place.
+                    if (data.redirect) {
+                        window.location.assign(data.redirect);
+                        return;
+                    }
                     close();
                     toast(data.type || 'Success', data.message || 'Saved.');
                     if (typeof window.dashReload === 'function') window.dashReload();

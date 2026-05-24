@@ -101,6 +101,10 @@ else
                                 {
                                     <span class="badge bg-info text-dark ms-1">Enrolled</span>
                                 }
+                                else if (s.WasDroppedByCurrentUser)
+                                {
+                                    <span class="badge bg-secondary ms-1" title="Dropped — enroll in another upcoming session of this course">Dropped — pick another session</span>
+                                }
                                 else
                                 {
                                     <form asp-controller="Enrollments" asp-action="Enroll" method="post" class="d-inline m-0">
