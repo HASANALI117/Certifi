@@ -11,7 +11,7 @@
 <div class="row">
     <div class="col-xl-8">
         <div class="tp-form-card">
-            <form asp-action="Edit" method="post" novalidate>
+            <form asp-action="Edit" method="post" enctype="multipart/form-data" novalidate>
                 <input type="hidden" asp-for="Id" />
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
                     <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
@@ -60,6 +60,55 @@
                         <select asp-for="PrerequisiteCourseId" asp-items="Model.Courses" class="form-select">
                             <option value="">-- None --</option>
                         </select>
+                    </div>
+                </div>
+
+                <hr class="tp-divider" />
+                <h2 style="font-size: 1.05rem; margin-bottom: .25rem;">Course image</h2>
+                <p class="tp-text-muted" style="font-size: .88rem; margin-bottom: 1rem;">
+                    Replace the image by uploading a new file, pasting a new URL, or remove it entirely.
+                </p>
+
+                <input type="hidden" asp-for="ExistingImageUrl" />
+
+                @if (!string.IsNullOrWhiteSpace(Model.ExistingImageUrl))
+                {
+                    <div class="tp-course-image-preview mb-3">
+                        <img src="@Model.ExistingImageUrl" alt="Current course image" />
+                        <div class="tp-course-image-actions">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="RemoveImage" />
+                                <label class="form-check-label" asp-for="RemoveImage"></label>
+                            </div>
+                            <form asp-action="DeleteImage" asp-route-id="@Model.Id" method="post"
+                                  onsubmit="return confirm('Delete the current image now?');" class="m-0">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i> Delete image
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-image"></i>
+                        <div class="flex-grow-1">No image set. Upload a file or paste a URL below.</div>
+                    </div>
+                }
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="ImageFile" class="form-label"></label>
+                        <input asp-for="ImageFile" type="file" accept="image/*" class="form-control" />
+                        <div class="form-text">Max 5 MB. JPG, PNG, GIF, or WEBP.</div>
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ImageUrl" class="form-label"></label>
+                        <input asp-for="ImageUrl" class="form-control" placeholder="https://... or /images/your-image.jpg" />
+                        <div class="form-text">Used only if no file is uploaded.</div>
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
                     </div>
                 </div>
 

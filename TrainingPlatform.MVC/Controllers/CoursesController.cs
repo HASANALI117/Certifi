@@ -10,9 +10,18 @@ namespace TrainingPlatform.MVC.Controllers;
 
 public class CoursesController : Controller
 {
-    private readonly AppDbContext _db;
+    private const string UploadFolder = "images/courses";
+    private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
+    private const long MaxImageBytes = 5 * 1024 * 1024; // 5 MB
 
-    public CoursesController(AppDbContext db) => _db = db;
+    private readonly AppDbContext _db;
+    private readonly IWebHostEnvironment _env;
+
+    public CoursesController(AppDbContext db, IWebHostEnvironment env)
+    {
+        _db = db;
+        _env = env;
+    }
 
     public async Task<IActionResult> Index(string? search, int? categoryId)
     {
@@ -32,11 +41,14 @@ public class CoursesController : Controller
             {
                 Id = c.Id,
                 Title = c.Title,
+                Description = c.Description,
                 CategoryName = c.Category.Name,
                 DurationHours = c.DurationHours,
                 Capacity = c.Capacity,
                 Fee = c.EnrollmentFee,
-                PrerequisiteTitle = c.PrerequisiteCourse != null ? c.PrerequisiteCourse.Title : null
+                PrerequisiteTitle = c.PrerequisiteCourse != null ? c.PrerequisiteCourse.Title : null,
+                ImageUrl = c.ImageUrl,
+                SessionCount = c.Sessions.Count
             })
             .ToListAsync();
 
@@ -45,6 +57,15 @@ public class CoursesController : Controller
             .ToListAsync();
         ViewBag.SelectedCategoryId = categoryId;
         ViewBag.Search = search;
+
+        ViewBag.CategoryStats = await _db.CourseCategories
+            .Select(c => new CategoryWidgetViewModel
+            {
+                Id = c.Id,
+                Name = c.Name,
+                CourseCount = _db.Courses.Count(co => co.CategoryId == c.Id)
+            })
+            .ToListAsync();
 
         return View(courses);
     }
@@ -69,7 +90,8 @@ public class CoursesController : Controller
             Capacity = course.Capacity,
             Fee = course.EnrollmentFee,
             PrerequisiteTitle = course.PrerequisiteCourse?.Title,
-            SessionCount = course.Sessions.Count
+            SessionCount = course.Sessions.Count,
+            ImageUrl = course.ImageUrl
         });
     }
 
@@ -84,8 +106,12 @@ public class CoursesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CourseFormViewModel model)
     {
+        ValidateImageFile(model);
+
         if (!ModelState.IsValid)
             return View(await BuildFormViewModelAsync(model));
+
+        string? imageUrl = await ResolveImageUrlAsync(model, currentImageUrl: null);
 
         _db.Courses.Add(new Course
         {
@@ -95,7 +121,8 @@ public class CoursesController : Controller
             Capacity = model.Capacity,
             EnrollmentFee = model.Fee,
             CategoryId = model.CategoryId,
-            PrerequisiteCourseId = model.PrerequisiteCourseId
+            PrerequisiteCourseId = model.PrerequisiteCourseId,
+            ImageUrl = imageUrl
         });
 
         await _db.SaveChangesAsync();
@@ -119,7 +146,9 @@ public class CoursesController : Controller
             Capacity = course.Capacity,
             Fee = course.EnrollmentFee,
             CategoryId = course.CategoryId,
-            PrerequisiteCourseId = course.PrerequisiteCourseId
+            PrerequisiteCourseId = course.PrerequisiteCourseId,
+            ImageUrl = course.ImageUrl,
+            ExistingImageUrl = course.ImageUrl
         };
 
         return View(await BuildFormViewModelAsync(model));
@@ -129,11 +158,23 @@ public class CoursesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(CourseFormViewModel model)
     {
-        if (!ModelState.IsValid)
-            return View(await BuildFormViewModelAsync(model));
+        ValidateImageFile(model);
 
         var course = await _db.Courses.FindAsync(model.Id);
         if (course == null) return NotFound();
+
+        model.ExistingImageUrl = course.ImageUrl;
+
+        if (!ModelState.IsValid)
+            return View(await BuildFormViewModelAsync(model));
+
+        string? newImageUrl = await ResolveImageUrlAsync(model, currentImageUrl: course.ImageUrl);
+
+        // Delete previously stored upload if we are replacing it or removing it.
+        if (!string.Equals(course.ImageUrl, newImageUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            DeleteUploadedImageIfOwned(course.ImageUrl);
+        }
 
         course.Title = model.Title;
         course.Description = model.Description;
@@ -142,10 +183,26 @@ public class CoursesController : Controller
         course.EnrollmentFee = model.Fee;
         course.CategoryId = model.CategoryId;
         course.PrerequisiteCourseId = model.PrerequisiteCourseId;
+        course.ImageUrl = newImageUrl;
 
         await _db.SaveChangesAsync();
         TempData["Success"] = "Course updated.";
         return RedirectToAction(nameof(Index));
+    }
+
+    [Authorize(Roles = "TrainingCoordinator")]
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteImage(int id)
+    {
+        var course = await _db.Courses.FindAsync(id);
+        if (course == null) return NotFound();
+
+        DeleteUploadedImageIfOwned(course.ImageUrl);
+        course.ImageUrl = null;
+        await _db.SaveChangesAsync();
+
+        TempData["Success"] = "Course image removed.";
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
@@ -155,6 +212,7 @@ public class CoursesController : Controller
         var course = await _db.Courses.FindAsync(id);
         if (course == null) return NotFound();
 
+        DeleteUploadedImageIfOwned(course.ImageUrl);
         _db.Courses.Remove(course);
         await _db.SaveChangesAsync();
         TempData["Success"] = "Course deleted.";
@@ -175,5 +233,84 @@ public class CoursesController : Controller
             .ToListAsync();
 
         return model;
+    }
+
+    private void ValidateImageFile(CourseFormViewModel model)
+    {
+        if (model.ImageFile == null || model.ImageFile.Length == 0) return;
+
+        if (model.ImageFile.Length > MaxImageBytes)
+        {
+            ModelState.AddModelError(nameof(model.ImageFile), "Image must be 5 MB or smaller.");
+            return;
+        }
+
+        var ext = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
+        if (!AllowedImageExtensions.Contains(ext))
+        {
+            ModelState.AddModelError(nameof(model.ImageFile),
+                $"Unsupported image type. Allowed: {string.Join(", ", AllowedImageExtensions)}.");
+        }
+    }
+
+    private async Task<string?> ResolveImageUrlAsync(CourseFormViewModel model, string? currentImageUrl)
+    {
+        // 1) New file upload wins.
+        if (model.ImageFile != null && model.ImageFile.Length > 0)
+        {
+            return await SaveUploadedImageAsync(model.ImageFile);
+        }
+
+        // 2) Explicit URL provided (and different from existing) replaces.
+        if (!string.IsNullOrWhiteSpace(model.ImageUrl))
+        {
+            return model.ImageUrl.Trim();
+        }
+
+        // 3) Remove flag clears the image.
+        if (model.RemoveImage)
+        {
+            return null;
+        }
+
+        // 4) Otherwise keep what the course already has.
+        return currentImageUrl;
+    }
+
+    private async Task<string> SaveUploadedImageAsync(IFormFile file)
+    {
+        var webRoot = _env.WebRootPath;
+        var folder = Path.Combine(webRoot, UploadFolder);
+        Directory.CreateDirectory(folder);
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var fileName = $"{Guid.NewGuid():N}{ext}";
+        var fullPath = Path.Combine(folder, fileName);
+
+        await using (var stream = System.IO.File.Create(fullPath))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        return $"/{UploadFolder}/{fileName}";
+    }
+
+    private void DeleteUploadedImageIfOwned(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl)) return;
+
+        // Only remove files we manage in the upload folder; never touch external URLs
+        // or pre-seeded images that live elsewhere under /images.
+        var prefix = $"/{UploadFolder}/";
+        if (!imageUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return;
+
+        var relative = imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var fullPath = Path.Combine(_env.WebRootPath, relative);
+
+        if (System.IO.File.Exists(fullPath))
+        {
+            try { System.IO.File.Delete(fullPath); }
+            catch { /* best-effort cleanup */ }
+        }
     }
 }

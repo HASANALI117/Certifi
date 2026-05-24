@@ -17,6 +17,39 @@ public class DbSeeder
         await SeedUsersAsync(userManager, context);
         await SeedCatalogAsync(context);
         await SeedActivityAsync(context);
+        await BackfillCourseImagesAsync(context);
+    }
+
+    // Maps the seeded course titles to images shipped in wwwroot/images.
+    // Runs every startup so it also fixes databases that were seeded before
+    // the ImageUrl column existed. Only writes when the column is empty so
+    // it never overrides an image set through the UI.
+    private static async Task BackfillCourseImagesAsync(AppDbContext context)
+    {
+        var defaults = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Networking Fundamentals"] = "/images/Networking_Fundementals.jpg",
+            ["Advanced Networking"]     = "/images/Advanced_Networking.jpg",
+            ["Cloud Essentials"]        = "/images/Cloud_Essentials.jpg",
+            ["AWS Solutions Architect"] = "/images/AwsSolutionsArchitect.png",
+            ["Security Fundamentals"]   = "/images/Security_Fundementals.jpg"
+        };
+
+        var courses = await context.Courses
+            .Where(c => c.ImageUrl == null || c.ImageUrl == "")
+            .ToListAsync();
+
+        var changed = false;
+        foreach (var course in courses)
+        {
+            if (defaults.TryGetValue(course.Title, out var url))
+            {
+                course.ImageUrl = url;
+                changed = true;
+            }
+        }
+
+        if (changed) await context.SaveChangesAsync();
     }
 
     // ── Roles ─────────────────────────────────────────────────────────────────
@@ -94,7 +127,8 @@ public class DbSeeder
             Description = "Core concepts of networking including TCP/IP and subnetting.",
             DurationHours = 20,
             Capacity = 20,
-            EnrollmentFee = 150.00m
+            EnrollmentFee = 150.00m,
+            ImageUrl = "/images/Networking_Fundementals.jpg"
         };
         context.Courses.Add(fundamentals);
         await context.SaveChangesAsync();
@@ -107,7 +141,8 @@ public class DbSeeder
             Description = "Advanced routing, switching, and network security.",
             DurationHours = 30,
             Capacity = 15,
-            EnrollmentFee = 250.00m
+            EnrollmentFee = 250.00m,
+            ImageUrl = "/images/Advanced_Networking.jpg"
         };
         var cloudEssentials = new Course
         {
@@ -116,7 +151,8 @@ public class DbSeeder
             Description = "Introduction to cloud computing concepts and AWS basics.",
             DurationHours = 25,
             Capacity = 20,
-            EnrollmentFee = 200.00m
+            EnrollmentFee = 200.00m,
+            ImageUrl = "/images/Cloud_Essentials.jpg"
         };
         var awsArchitect = new Course
         {
@@ -126,7 +162,8 @@ public class DbSeeder
             Description = "Design and deploy scalable systems on AWS.",
             DurationHours = 40,
             Capacity = 15,
-            EnrollmentFee = 400.00m
+            EnrollmentFee = 400.00m,
+            ImageUrl = "/images/AwsSolutionsArchitect.png"
         };
         var secFundamentals = new Course
         {
@@ -135,7 +172,8 @@ public class DbSeeder
             Description = "Threat modelling, OWASP top 10, and defensive coding.",
             DurationHours = 24,
             Capacity = 18,
-            EnrollmentFee = 180.00m
+            EnrollmentFee = 180.00m,
+            ImageUrl = "/images/Security_Fundementals.jpg"
         };
         context.Courses.AddRange(advanced, cloudEssentials, awsArchitect, secFundamentals);
         await context.SaveChangesAsync();

@@ -11,7 +11,7 @@
 <div class="row">
     <div class="col-xl-8">
         <div class="tp-form-card">
-            <form asp-action="Create" method="post" novalidate>
+            <form asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
                     <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
                 </div>
@@ -59,6 +59,26 @@
                         <select asp-for="PrerequisiteCourseId" asp-items="Model.Courses" class="form-select">
                             <option value="">-- None --</option>
                         </select>
+                    </div>
+                </div>
+
+                <hr class="tp-divider" />
+                <h2 style="font-size: 1.05rem; margin-bottom: .25rem;">Course image</h2>
+                <p class="tp-text-muted" style="font-size: .88rem; margin-bottom: 1rem;">
+                    Upload a file or paste an image URL. The image is displayed above the course on the catalog.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="ImageFile" class="form-label"></label>
+                        <input asp-for="ImageFile" type="file" accept="image/*" class="form-control" />
+                        <div class="form-text">Max 5 MB. JPG, PNG, GIF, or WEBP.</div>
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ImageUrl" class="form-label"></label>
+                        <input asp-for="ImageUrl" class="form-control" placeholder="https://... or /images/your-image.jpg" />
+                        <div class="form-text">Used only if no file is uploaded.</div>
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
                     </div>
                 </div>
 

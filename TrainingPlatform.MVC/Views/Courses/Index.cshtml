@@ -1,100 +1,251 @@
 @model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.CourseListItemViewModel>
-@{ ViewData["Title"] = "Course Catalog"; }
+@{
+    ViewData["Title"] = "Course Catalog";
+    var categoryStats = (IEnumerable<TrainingPlatform.MVC.Models.ViewModels.CategoryWidgetViewModel>)
+                        (ViewBag.CategoryStats ?? Enumerable.Empty<TrainingPlatform.MVC.Models.ViewModels.CategoryWidgetViewModel>());
+}
 
-<div class="tp-page-header">
-    <div>
-        <h1 class="tp-page-title">Course Catalog</h1>
-        <p class="tp-page-subtitle">Discover courses by category, prerequisite, or fee. Filter to find what fits your learning path.</p>
+<div class="tp-courses-header">
+    <div class="tp-courses-header-titles">
+        <h1 class="tp-page-title">Courses</h1>
+        <p class="tp-page-subtitle">Discover courses by category, prerequisite, or fee.</p>
     </div>
-    @if (User.IsInRole("TrainingCoordinator"))
-    {
-        <div class="tp-page-actions">
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="bi bi-plus-lg"></i> New Course
-            </a>
-        </div>
-    }
-</div>
-
-<div class="tp-surface tp-surface-pad mb-4" style="padding: 1.25rem 1.5rem;">
-    <form method="get" class="row g-2 align-items-end">
-        <div class="col-md-6">
-            <label class="form-label" for="searchInput">Search</label>
-            <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input id="searchInput" type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search course titles..." />
-            </div>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label" for="categorySelect">Category</label>
-            <select id="categorySelect" name="categoryId" class="form-select">
-                <option value="">All Categories</option>
-                @foreach (var cat in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Categories)
-                {
-                    <option value="@cat.Value" selected="@(cat.Value == ViewBag.SelectedCategoryId?.ToString())">@cat.Text</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-funnel"></i> Filter
+    <form method="get" class="tp-search-form">
+        <div class="tp-search-input">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search" />
+            @if (ViewBag.SelectedCategoryId != null)
+            {
+                <input type="hidden" name="categoryId" value="@ViewBag.SelectedCategoryId" />
+            }
+            <button type="submit" class="tp-search-submit" title="Search">
+                <i class="bi bi-arrow-right"></i>
             </button>
         </div>
+        @if (User.IsInRole("TrainingCoordinator"))
+        {
+            <a asp-action="Create" class="btn btn-primary tp-search-cta">
+                <i class="bi bi-plus-lg"></i> New Course
+            </a>
+        }
     </form>
 </div>
 
-@if (!Model.Any())
-{
-    <div class="tp-empty">
-        <i class="bi bi-collection"></i>
-        <h4>No courses found</h4>
-        <p>Try adjusting your filters or check back later for new courses.</p>
-    </div>
-}
-else
-{
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-        @foreach (var course in Model)
+<div class="tp-courses-layout" id="tp-courses-layout">
+    <section class="tp-courses-main">
+        <nav class="tp-category-tabs" aria-label="Filter by category">
+            <a asp-action="Index" asp-route-search="@ViewBag.Search"
+               class="tp-category-tab @(ViewBag.SelectedCategoryId == null ? "active" : null)">
+                All
+                <span class="tp-tab-count">@Model.Count()</span>
+            </a>
+            @foreach (var cat in categoryStats)
+            {
+                <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-search="@ViewBag.Search"
+                   class="tp-category-tab @(ViewBag.SelectedCategoryId?.ToString() == cat.Id.ToString() ? "active" : null)">
+                    @cat.Name
+                    <span class="tp-tab-count">@cat.CourseCount</span>
+                </a>
+            }
+        </nav>
+
+        @if (!Model.Any())
         {
-            <div class="col">
-                <div class="tp-course-card">
-                    <div class="tp-course-banner">
-                        <i class="bi bi-mortarboard-fill"></i>
-                    </div>
-                    <div class="card-body">
-                        <span class="tp-tag"><i class="bi bi-tag-fill"></i> @course.CategoryName</span>
-                        <h3>@course.Title</h3>
-                        <div class="tp-course-meta">
-                            <span><i class="bi bi-clock"></i> @course.DurationHours hrs</span>
-                            <span><i class="bi bi-people"></i> Cap. @course.Capacity</span>
-                        </div>
-                        @if (course.PrerequisiteTitle != null)
-                        {
-                            <div class="tp-prereq">
-                                <i class="bi bi-info-circle-fill"></i> Prerequisite: @course.PrerequisiteTitle
-                            </div>
-                        }
-                        <div class="tp-fee">@course.Fee.ToString("C")</div>
-                    </div>
-                    <div class="card-footer">
-                        <a asp-action="Details" asp-route-id="@course.Id" class="btn btn-sm btn-outline-primary flex-grow-1">
-                            <i class="bi bi-eye"></i> Details
-                        </a>
-                        @if (User.IsInRole("Training Coordinator"))
-                        {
-                            <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form asp-action="Delete" asp-route-id="@course.Id" method="post"
-                                  onsubmit="return confirm('Delete this course?');" class="m-0">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        }
-                    </div>
-                </div>
+            <div class="tp-empty">
+                <i class="bi bi-collection"></i>
+                <h4>No courses found</h4>
+                <p>Try adjusting your filters or check back later for new courses.</p>
             </div>
         }
-    </div>
+        else
+        {
+            <div class="tp-course-list" id="tp-course-list">
+                @foreach (var course in Model)
+                {
+                    <article class="tp-course-row"
+                             data-course-id="@course.Id"
+                             data-course-title="@course.Title"
+                             data-course-description="@course.Description"
+                             data-course-category="@course.CategoryName"
+                             data-course-hours="@course.DurationHours"
+                             data-course-capacity="@course.Capacity"
+                             data-course-fee="@course.Fee.ToString("C")"
+                             data-course-sessions="@course.SessionCount"
+                             data-course-prereq="@(course.PrerequisiteTitle ?? "")"
+                             data-course-image="@(course.ImageUrl ?? "")">
+                        <div class="tp-course-row-image">
+                            @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                            {
+                                <img src="@course.ImageUrl" alt="@course.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="tp-course-image-placeholder">
+                                    <i class="bi bi-mortarboard-fill"></i>
+                                </div>
+                            }
+                            <span class="tp-course-row-price">@course.Fee.ToString("C")</span>
+                        </div>
+                        <div class="tp-course-row-body">
+                            <span class="tp-tag"><i class="bi bi-tag-fill"></i> @course.CategoryName</span>
+                            <h3>@course.Title</h3>
+                            @if (!string.IsNullOrWhiteSpace(course.Description))
+                            {
+                                <p class="tp-course-row-desc">@course.Description</p>
+                            }
+                            <div class="tp-course-widgets">
+                                <span class="tp-widget"><i class="bi bi-clock"></i> @course.DurationHours hrs</span>
+                                <span class="tp-widget"><i class="bi bi-people"></i> @course.Capacity seats</span>
+                                <span class="tp-widget"><i class="bi bi-folder2-open"></i> @course.CategoryName</span>
+                                @if (course.PrerequisiteTitle != null)
+                                {
+                                    <span class="tp-widget tp-widget-warn" title="Prerequisite: @course.PrerequisiteTitle">
+                                        <i class="bi bi-info-circle-fill"></i> @course.PrerequisiteTitle
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <div class="tp-course-row-actions">
+                            <a asp-action="Details" asp-route-id="@course.Id"
+                               class="btn btn-primary"
+                               data-open-details
+                               title="View details">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                            @if (User.IsInRole("TrainingCoordinator"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-outline-secondary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@course.Id" method="post"
+                                      onsubmit="return confirm('Delete this course?');" class="m-0">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    <aside class="tp-courses-sidebar" id="tp-courses-sidebar">
+        <div class="tp-sidebar-widget tp-selected-course" id="tp-selected-course">
+            <div class="tp-selected-course-image">
+                <img id="tp-selected-image" src="" alt="" hidden />
+                <div id="tp-selected-placeholder" class="tp-course-image-placeholder">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <span class="tp-course-row-price" id="tp-selected-price"></span>
+            </div>
+            <div class="tp-selected-course-body">
+                <span class="tp-tag"><i class="bi bi-tag-fill"></i> <span id="tp-selected-category"></span></span>
+                <h3 id="tp-selected-title"></h3>
+                <p class="tp-selected-description" id="tp-selected-description"></p>
+                <dl class="tp-selected-list">
+                    <div class="tp-selected-list-row">
+                        <dt><i class="bi bi-clock"></i> Duration</dt>
+                        <dd><span id="tp-selected-hours"></span> hours</dd>
+                    </div>
+                    <div class="tp-selected-list-row">
+                        <dt><i class="bi bi-people"></i> Capacity</dt>
+                        <dd><span id="tp-selected-capacity"></span> students</dd>
+                    </div>
+                    <div class="tp-selected-list-row">
+                        <dt><i class="bi bi-cash-coin"></i> Fee</dt>
+                        <dd><span id="tp-selected-fee"></span></dd>
+                    </div>
+                    <div class="tp-selected-list-row">
+                        <dt><i class="bi bi-calendar-event"></i> Sessions</dt>
+                        <dd><span id="tp-selected-sessions"></span></dd>
+                    </div>
+                    <div class="tp-selected-list-row tp-selected-list-row-warn" id="tp-selected-prereq-row" hidden>
+                        <dt><i class="bi bi-info-circle-fill"></i> Prerequisite</dt>
+                        <dd><span id="tp-selected-prereq"></span></dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </aside>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const layout = document.getElementById('tp-courses-layout');
+            const sidebar = document.getElementById('tp-courses-sidebar');
+            const list = document.getElementById('tp-course-list');
+            if (!layout || !sidebar) return;
+
+            const els = {
+                image: document.getElementById('tp-selected-image'),
+                placeholder: document.getElementById('tp-selected-placeholder'),
+                price: document.getElementById('tp-selected-price'),
+                category: document.getElementById('tp-selected-category'),
+                title: document.getElementById('tp-selected-title'),
+                description: document.getElementById('tp-selected-description'),
+                hours: document.getElementById('tp-selected-hours'),
+                capacity: document.getElementById('tp-selected-capacity'),
+                fee: document.getElementById('tp-selected-fee'),
+                sessions: document.getElementById('tp-selected-sessions'),
+                prereqRow: document.getElementById('tp-selected-prereq-row'),
+                prereq: document.getElementById('tp-selected-prereq')
+            };
+
+            function selectCourse(row) {
+                if (!row || !list) return;
+
+                list.querySelectorAll('.tp-course-row.is-selected').forEach(r => {
+                    r.classList.remove('is-selected');
+                });
+                row.classList.add('is-selected');
+
+                const d = row.dataset;
+
+                if (d.courseImage) {
+                    els.image.src = d.courseImage;
+                    els.image.alt = d.courseTitle || '';
+                    els.image.hidden = false;
+                    els.placeholder.hidden = true;
+                } else {
+                    els.image.hidden = true;
+                    els.image.removeAttribute('src');
+                    els.placeholder.hidden = false;
+                }
+
+                els.price.textContent = d.courseFee || '';
+                els.category.textContent = d.courseCategory || '';
+                els.title.textContent = d.courseTitle || '';
+                els.description.textContent = d.courseDescription
+                    ? d.courseDescription
+                    : 'No description provided.';
+                els.hours.textContent = d.courseHours || '0';
+                els.capacity.textContent = d.courseCapacity || '0';
+                els.fee.textContent = d.courseFee || '';
+                els.sessions.textContent = d.courseSessions || '0';
+
+                if (d.coursePrereq) {
+                    els.prereq.textContent = d.coursePrereq;
+                    els.prereqRow.hidden = false;
+                } else {
+                    els.prereqRow.hidden = true;
+                }
+            }
+
+            if (list) {
+                list.addEventListener('click', e => {
+                    const btn = e.target.closest('[data-open-details]');
+                    if (!btn) return;
+                    const row = btn.closest('.tp-course-row');
+                    if (!row) return;
+                    e.preventDefault();
+                    selectCourse(row);
+                });
+
+                selectCourse(list.querySelector('.tp-course-row'));
+            }
+        })();
+    </script>
 }
