@@ -769,3 +769,70 @@ label {
   background: #2a8e8b;
   color: #fff;
 }
+
+/* ---- Auth (Login/Register) — carrd cta-wrapper .style2 look ---- */
+.tp-auth-shell {
+  min-height: calc(100vh - 160px);
+}
+.tp-auth-card {
+  background: transparent;
+  border: 0;
+  box-shadow: inset 0 0 0 2px var(--divider-color);
+  border-radius: 6px;
+  max-width: 32em;
+  width: calc(100% - 3em);
+  padding: 3.25em 3em 2.5em;
+  text-align: left;
+  color: var(--text-color);
+}
+.tp-auth-logo {
+  display: block;
+  height: 56px;
+  width: auto;
+  margin: 0 auto 1.1rem;
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+  mix-blend-mode: screen;
+}
+.tp-auth-title {
+  color: var(--text-color);
+}
+.tp-auth-sub {
+  color: var(--text-color-soft);
+}
+.tp-auth-mark {
+  background: var(--accent-color) !important;
+  box-shadow: none !important;
+}
+.tp-auth-card .form-label {
+  display: block;
+  text-align: left;
+  color: var(--text-color-soft);
+  font-weight: 600;
+}
+.tp-auth-card .form-control,
+.tp-auth-card .form-select {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--divider-color);
+  color: var(--text-color);
+}
+.tp-auth-card .form-control:focus,
+.tp-auth-card .form-select:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(51, 173, 169, 0.25);
+  color: var(--text-color);
+}
+.tp-auth-card .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+/* Submit uses the landing .button.special — just make it span the card. */
+.tp-auth-card .button {
+  width: 100%;
+}
+.tp-auth-footer {
+  color: var(--text-color-soft);
+}
+.tp-auth-footer a {
+  color: var(--accent-color);
+}
