@@ -453,7 +453,16 @@ public class DbSeeder
         string email, string first, string last, string bio, string expertise,
         AvailabilitySlot[] availability)
     {
-        if (await userManager.FindByEmailAsync(email) != null) return;
+        var existingUser = await userManager.FindByEmailAsync(email);
+        if (existingUser != null)
+        {
+            // Backfill ExpertiseAreas that was accidentally omitted in a prior seed run.
+            var existing = await context.Instructors.FirstOrDefaultAsync(i => i.UserId == existingUser.Id);
+            if (existing != null && string.IsNullOrEmpty(existing.ExpertiseAreas))
+                existing.ExpertiseAreas = expertise;
+            return;
+        }
+
         var user = new AppUser { UserName = email, Email = email, FirstName = first, LastName = last, EmailConfirmed = true };
         await userManager.CreateAsync(user, "Password1!");
         await userManager.AddToRoleAsync(user, "Instructor");
@@ -462,7 +471,7 @@ public class DbSeeder
         {
             UserId = user.Id,
             Bio = bio,
-            // ExpertiseAreas = expertise,
+            ExpertiseAreas = expertise,
             Availability = availability
                 .Select(a => new InstructorAvailability { DayOfWeek = a.DayOfWeek, StartTime = a.StartTime, EndTime = a.EndTime })
                 .ToList()

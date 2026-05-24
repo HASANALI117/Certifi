@@ -4,7 +4,7 @@
 <div class="tp-page-header">
     <div>
         <h1 class="tp-page-title">Edit Trainee</h1>
-        <p class="tp-page-subtitle">Update phone and date of birth.</p>
+        <p class="tp-page-subtitle">Update name, contact details, and date of birth.</p>
     </div>
 </div>
 
@@ -13,25 +13,40 @@
         <div class="tp-form-card">
             <form asp-action="Edit" method="post" novalidate>
                 <input type="hidden" asp-for="Id" />
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
-                </div>
 
-                <div class="row mb-3">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label asp-for="Phone" class="form-label"></label>
-                        <input asp-for="Phone" class="form-control" />
+                        <input asp-for="Phone" class="form-control" placeholder="e.g. +973 3000 0000" />
                         <span asp-validation-for="Phone" class="text-danger"></span>
                     </div>
                     <div class="col-md-6">
                         <label asp-for="DateOfBirth" class="form-label"></label>
-                        <input asp-for="DateOfBirth" class="form-control" type="date" />
+                        <input asp-for="DateOfBirth" class="form-control" type="date"
+                               value="@(Model.DateOfBirth == default ? string.Empty : Model.DateOfBirth.ToString("yyyy-MM-dd"))" />
                         <span asp-validation-for="DateOfBirth" class="text-danger"></span>
                     </div>
                 </div>
 
                 <div class="tp-form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save Changes</button>
                     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
