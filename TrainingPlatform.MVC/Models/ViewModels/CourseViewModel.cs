@@ -35,7 +35,9 @@ public class CourseFormViewModel
     [Required, Range(1, 500)]
     public int Capacity { get; set; }
 
-    [Required, Range(0, 100000), DataType(DataType.Currency)]
+    [Required]
+    [Range(1.000, 100000.000, ErrorMessage = "Fee must be at least BD 1.000.")]
+    [DataType(DataType.Currency)]
     public decimal Fee { get; set; }
 
     [Required, Display(Name = "Category")]
