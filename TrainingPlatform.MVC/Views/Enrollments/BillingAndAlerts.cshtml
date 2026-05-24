@@ -272,3 +272,48 @@
         </table>
     </div>
 </section>
+
+<div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-hidden="true" aria-labelledby="paymentSuccessTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="text-align:center; padding:1.5rem;">
+            <div style="font-size:3.25rem; line-height:1; color:#33ada9; margin-bottom:.5rem;">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h5 class="modal-title" id="paymentSuccessTitle" style="font-weight:700;">Payment received</h5>
+            <p class="dash-panel-sub mt-2 mb-4">
+                Thanks! Your payment is being confirmed. Your balance and enrollment status
+                update automatically within a few seconds.
+            </p>
+            <button type="button" class="dash-btn dash-btn-primary" data-bs-dismiss="modal" style="align-self:center;">
+                <i class="bi bi-check2"></i><span>Done</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var params = new URLSearchParams(window.location.search);
+    var payment = params.get('payment');
+    if (!payment) return;
+    // Strip the flag so a manual refresh doesn't re-trigger.
+    params.delete('payment');
+    var clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState({}, '', clean);
+
+    function run() {
+        if (payment === 'success') {
+            var el = document.getElementById('paymentSuccessModal');
+            if (el && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(el).show();
+            } else {
+                setTimeout(run, 150);
+            }
+        } else if (payment === 'cancelled') {
+            if (!window.TpToast) { setTimeout(run, 150); return; }
+            window.TpToast.show({ type: 'Error', message: 'Payment cancelled. No charge was made.' });
+        }
+    }
+    run();
+})();
+</script>
