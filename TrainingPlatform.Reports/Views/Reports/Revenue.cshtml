@@ -1,0 +1,150 @@
+@using System.Text.Json
+@model RevenueReportViewModel
+@{
+    ViewData["Title"] = "Revenue";
+    var courses = Model.Courses.OrderByDescending(c => c.TotalCollected).ToList();
+    var totalExpected = courses.Sum(c => c.TotalFeesExpected);
+    var totalCollected = courses.Sum(c => c.TotalCollected);
+    var totalOutstanding = courses.Sum(c => c.TotalOutstanding);
+    var overallRate = totalExpected == 0 ? 0m : totalCollected * 100 / totalExpected;
+
+    var months = Model.Timeline.Select(t => t.Month).ToList();
+    var collected = Model.Timeline.Select(t => t.TotalCollected).ToList();
+    var counts = Model.Timeline.Select(t => t.PaymentCount).ToList();
+}
+
+<div class="page-header d-flex justify-content-between align-items-end">
+    <div>
+        <h1 class="h3 mb-0">Revenue</h1>
+        <div class="text-muted small">Collected vs outstanding by course, and a 12-month timeline</div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Expected</div>
+            <div class="kpi-value">@totalExpected.ToString("C0")</div>
+        </div></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-success h-100"><div class="card-body">
+            <div class="kpi-label">Collected</div>
+            <div class="kpi-value">@totalCollected.ToString("C0")</div>
+        </div></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-danger h-100"><div class="card-body">
+            <div class="kpi-label">Outstanding</div>
+            <div class="kpi-value">@totalOutstanding.ToString("C0")</div>
+        </div></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-info h-100"><div class="card-body">
+            <div class="kpi-label">Overall Collection Rate</div>
+            <div class="kpi-value">@overallRate.ToString("F1")%</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white"><strong>Collections over the last 12 months</strong></div>
+    <div class="card-body">
+        <div class="chart-wrap-lg">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <strong>Per-course revenue</strong>
+        <span class="badge text-bg-secondary">@courses.Count</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover table-report mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Course</th>
+                    <th>Category</th>
+                    <th class="text-end">Enrollments</th>
+                    <th class="text-end">Expected</th>
+                    <th class="text-end">Collected</th>
+                    <th class="text-end">Outstanding</th>
+                    <th style="min-width:160px;">Collection Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!courses.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-3">No revenue data available.</td></tr>
+                }
+                @foreach (var c in courses)
+                {
+                    var rate = (double)c.CollectionRate;
+                    var cls = rate >= 90 ? "bg-success" : rate >= 60 ? "bg-info" : rate >= 30 ? "bg-warning" : "bg-danger";
+                    <tr>
+                        <td>@c.CourseTitle</td>
+                        <td><span class="badge text-bg-light border">@c.CategoryName</span></td>
+                        <td class="text-end">@c.TotalEnrollments.ToString("N0")</td>
+                        <td class="text-end">@c.TotalFeesExpected.ToString("C0")</td>
+                        <td class="text-end text-success fw-semibold">@c.TotalCollected.ToString("C0")</td>
+                        <td class="text-end text-danger">@c.TotalOutstanding.ToString("C0")</td>
+                        <td>
+                            <div class="progress" style="height:14px;" role="progressbar"
+                                 aria-valuenow="@rate.ToString("F0")" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar @cls" style="width:@rate.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)%;">
+                                    @rate.ToString("F0")%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(JsonSerializer.Serialize(months)),
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Collected',
+                            data: @Html.Raw(JsonSerializer.Serialize(collected)),
+                            backgroundColor: 'rgba(25,135,84,0.6)',
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'line',
+                            label: 'Payments',
+                            data: @Html.Raw(JsonSerializer.Serialize(counts)),
+                            borderColor: 'rgba(13,110,253,1)',
+                            backgroundColor: 'rgba(13,110,253,0.2)',
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y:  { beginAtZero: true, position: 'left',  title: { display: true, text: 'Collected' },
+                              ticks: { callback: v => '$' + Number(v).toLocaleString() } },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false },
+                              title: { display: true, text: 'Payments' }, ticks: { precision: 0 } }
+                    }
+                }
+            });
+        })();
+    </script>
+}

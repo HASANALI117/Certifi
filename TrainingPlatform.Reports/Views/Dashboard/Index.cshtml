@@ -1,0 +1,167 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var o = Model.Overview;
+}
+
+<div class="page-header d-flex justify-content-between align-items-end">
+    <div>
+        <h1 class="h3 mb-0">Dashboard</h1>
+        <div class="text-muted small">Operational snapshot for Training Coordinators</div>
+    </div>
+    <div class="text-muted small">@DateTime.Now.ToString("dddd, MMM d, yyyy")</div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card h-100">
+            <div class="card-body">
+                <div class="kpi-label">Total Courses</div>
+                <div class="kpi-value">@o.TotalCourses.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-info h-100">
+            <div class="card-body">
+                <div class="kpi-label">Total Sessions</div>
+                <div class="kpi-value">@o.TotalSessions.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-success h-100">
+            <div class="card-body">
+                <div class="kpi-label">Trainees</div>
+                <div class="kpi-value">@o.TotalTrainees.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-warning h-100">
+            <div class="card-body">
+                <div class="kpi-label">Instructors</div>
+                <div class="kpi-value">@o.TotalInstructors.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-info h-100">
+            <div class="card-body">
+                <div class="kpi-label">Active Enrollments</div>
+                <div class="kpi-value">@o.ActiveEnrollments.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-success h-100">
+            <div class="card-body">
+                <div class="kpi-label">Completed Enrollments</div>
+                <div class="kpi-value">@o.CompletedEnrollments.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card kpi-success h-100">
+            <div class="card-body">
+                <div class="kpi-label">Certificates Issued</div>
+                <div class="kpi-value">@o.CertificatesIssued.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card h-100">
+            <div class="card-body">
+                <div class="kpi-label">Total Revenue</div>
+                <div class="kpi-value">@o.TotalRevenue.ToString("C0")</div>
+                <div class="small text-danger">
+                    Outstanding: @o.OutstandingRevenue.ToString("C0")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Recent Enrollments</strong>
+                <span class="badge text-bg-secondary">@Model.RecentEnrollments.Count</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-report mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Trainee</th>
+                            <th>Course</th>
+                            <th>Session</th>
+                            <th>Status</th>
+                            <th class="text-end">Enrolled</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.RecentEnrollments.Any())
+                        {
+                            <tr><td colspan="5" class="text-center text-muted py-3">No recent enrollments.</td></tr>
+                        }
+                        @foreach (var r in Model.RecentEnrollments)
+                        {
+                            <tr>
+                                <td>@r.TraineeName</td>
+                                <td>@r.CourseTitle</td>
+                                <td>@(r.SessionDate?.ToString("MMM d, yyyy") ?? "—")</td>
+                                <td><span class="badge text-bg-info">@r.Status</span></td>
+                                <td class="text-end text-muted small">@r.EnrolledAt.ToLocalTime().ToString("MMM d, h:mm tt")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Upcoming Sessions</strong>
+                <span class="badge text-bg-secondary">@Model.UpcomingSessions.Count</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-report mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Course</th>
+                            <th>Instructor</th>
+                            <th>Classroom</th>
+                            <th>When</th>
+                            <th class="text-end">Spots</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.UpcomingSessions.Any())
+                        {
+                            <tr><td colspan="5" class="text-center text-muted py-3">No upcoming sessions.</td></tr>
+                        }
+                        @foreach (var s in Model.UpcomingSessions)
+                        {
+                            var fill = s.Capacity == 0 ? 0 : (s.Capacity - s.SpotsRemaining) * 100 / s.Capacity;
+                            <tr>
+                                <td>@s.CourseTitle</td>
+                                <td>@s.InstructorName</td>
+                                <td>@s.ClassroomName</td>
+                                <td>@s.StartDateTime.ToLocalTime().ToString("MMM d, h:mm tt")</td>
+                                <td class="text-end">
+                                    <span class="@(s.SpotsRemaining == 0 ? "text-danger" : "text-success") fw-semibold">
+                                        @s.SpotsRemaining
+                                    </span>
+                                    <div class="small text-muted">@fill% full</div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
