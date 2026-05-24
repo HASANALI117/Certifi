@@ -1,0 +1,42 @@
+@model TrainingPlatform.MVC.Models.ViewModels.TraineeFormViewModel
+@{ ViewData["Title"] = "Edit Trainee"; }
+
+<div class="tp-page-header">
+    <div>
+        <h1 class="tp-page-title">Edit Trainee</h1>
+        <p class="tp-page-subtitle">Update phone and date of birth.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="tp-form-card">
+            <form asp-action="Edit" method="post" novalidate>
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" class="form-control" type="date" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="tp-form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

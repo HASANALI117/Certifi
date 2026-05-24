@@ -1,0 +1,66 @@
+@model TrainingPlatform.MVC.Models.ViewModels.TraineeFormViewModel
+@{ ViewData["Title"] = "Add Trainee"; }
+
+<div class="tp-page-header">
+    <div>
+        <h1 class="tp-page-title">Add Trainee</h1>
+        <p class="tp-page-subtitle">Create a trainee account and profile. Share the temporary password with the trainee.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="tp-form-card">
+            <form asp-action="Create" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="TempPassword" class="form-label"></label>
+                        <input asp-for="TempPassword" class="form-control" autocomplete="new-password" placeholder="Min 8 characters" />
+                        <span asp-validation-for="TempPassword" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" placeholder="e.g. +973 3300 0000" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" class="form-control" type="date"
+                               value="@(Model.DateOfBirth == default ? string.Empty : Model.DateOfBirth.ToString("yyyy-MM-dd"))" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="tp-form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
