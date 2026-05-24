@@ -82,6 +82,9 @@ body.dash-body::after {
   position: sticky;
   top: 0;
   height: 100vh;
+  /* Lift the sidebar's stacking context so its dropup user menu floats above
+     main-content panels (backdrop-filter above traps child z-index otherwise). */
+  z-index: 1031;
 }
 
 .dash-brand {
@@ -1067,12 +1070,30 @@ body.dash-body::after {
   border-radius: 999px;
   padding: 0.3rem 0.6rem;
 }
-.dash-content-area .badge.bg-success   { background: rgba(16, 185, 129, 0.16) !important; color: #34d399 !important; }
-.dash-content-area .badge.bg-danger    { background: rgba(239, 68, 68, 0.16) !important; color: #fca5a5 !important; }
-.dash-content-area .badge.bg-info      { background: rgba(96, 165, 250, 0.16) !important; color: #93c5fd !important; }
-.dash-content-area .badge.bg-primary   { background: rgba(51, 173, 169, 0.16) !important; color: #5fd1cd !important; }
-.dash-content-area .badge.bg-warning   { background: rgba(245, 158, 11, 0.16) !important; color: #fbbf24 !important; }
-.dash-content-area .badge.bg-secondary { background: rgba(255, 255, 255, 0.06) !important; color: var(--text-color-soft) !important; }
+.dash-content-area .badge.bg-success {
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #34d399 !important;
+}
+.dash-content-area .badge.bg-danger {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #fca5a5 !important;
+}
+.dash-content-area .badge.bg-info {
+  background: rgba(96, 165, 250, 0.16) !important;
+  color: #93c5fd !important;
+}
+.dash-content-area .badge.bg-primary {
+  background: rgba(51, 173, 169, 0.16) !important;
+  color: #5fd1cd !important;
+}
+.dash-content-area .badge.bg-warning {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #fbbf24 !important;
+}
+.dash-content-area .badge.bg-secondary {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text-color-soft) !important;
+}
 
 .dash-content-area .breadcrumb-item,
 .dash-content-area .breadcrumb-item a {
@@ -1179,26 +1200,34 @@ body.dash-body::after {
 }
 
 /* ---------- Realtime notifications ---------- */
-.tp-notif-wrap .dash-logout-btn { justify-content: flex-start; }
+.tp-notif-wrap .dash-logout-btn {
+  justify-content: flex-start;
+}
 .tp-notif-menu {
   width: 340px;
   max-height: 420px;
   overflow: hidden;
   border-radius: 14px;
   box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
-  border: 1px solid var(--dash-border, rgba(15,23,42,0.08));
+  border: 1px solid var(--dash-border, rgba(15, 23, 42, 0.08));
 }
 .tp-notif-list {
   max-height: 360px;
   overflow-y: auto;
 }
-.tp-notif-list .list-group-item { border-radius: 0; }
+.tp-notif-list .list-group-item {
+  border-radius: 0;
+}
 .tp-notif-unread {
-  background: linear-gradient(0deg, rgba(59,130,246,0.06), rgba(59,130,246,0.06)), #fff;
+  background:
+    linear-gradient(0deg, rgba(59, 130, 246, 0.06), rgba(59, 130, 246, 0.06)),
+    #fff;
   border-left: 3px solid #3b82f6;
 }
 [data-bs-theme="dark"] .tp-notif-unread {
-  background: linear-gradient(0deg, rgba(96,165,250,0.10), rgba(96,165,250,0.10)), transparent;
+  background:
+    linear-gradient(0deg, rgba(96, 165, 250, 0.1), rgba(96, 165, 250, 0.1)),
+    transparent;
   border-left-color: #60a5fa;
 }
 .tp-notif-icon {
@@ -1210,8 +1239,15 @@ body.dash-body::after {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.tp-toast-container .toast { min-width: 280px; background: #fff; box-shadow: 0 10px 30px rgba(15,23,42,0.18); }
-[data-bs-theme="dark"] .tp-toast-container .toast { background: #1f2937; color: #f3f4f6; }
+.tp-toast-container .toast {
+  min-width: 280px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+[data-bs-theme="dark"] .tp-toast-container .toast {
+  background: #1f2937;
+  color: #f3f4f6;
+}
 
 /* ---------- Sidebar user menu (notifications + logout submenu) ---------- */
 .dash-user-btn {
@@ -1226,9 +1262,14 @@ body.dash-body::after {
   color: var(--text-color);
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
-.dash-user-btn:hover { background: var(--panel-bg); border-color: var(--border-color-strong); }
+.dash-user-btn:hover {
+  background: var(--panel-bg);
+  border-color: var(--border-color-strong);
+}
 .dash-user-avatar {
   width: 34px;
   height: 34px;
@@ -1242,7 +1283,12 @@ body.dash-body::after {
   font-weight: 700;
   font-size: 0.82rem;
 }
-.dash-user-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.dash-user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
 .dash-user-name {
   font-size: 0.9rem;
   font-weight: 600;
@@ -1257,20 +1303,92 @@ body.dash-body::after {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-.dash-user-caret { font-size: 0.8rem; color: var(--text-color-muted); flex-shrink: 0; }
-.tp-user-badge { top: -4px; right: -4px; }
-.tp-user-menu {
+.dash-user-caret {
+  font-size: 0.8rem;
+  color: var(--text-color-muted);
+  flex-shrink: 0;
+}
+.tp-user-badge {
+  top: -4px;
+  right: -4px;
+}
+.dropdown-menu.tp-user-menu {
   width: 320px;
   max-width: calc(100vw - 2rem);
   max-height: 460px;
   overflow: hidden;
   border-radius: 14px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.28);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color-strong);
+  /* Translucent carrd glass — !important beats Bootstrap's --bs-dropdown-bg.
+     Blur keeps text readable over page content; high z-index floats it above panels. */
+  background-color: rgba(36, 37, 45, 0.9) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--text-color);
+  padding: 0;
+  z-index: 3000;
 }
-.tp-user-menu .tp-notif-list { max-height: 300px; overflow-y: auto; }
-.tp-user-logout { width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; font-size: 0.9rem; }
-.tp-user-logout:hover { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+/* Re-theme the Bootstrap utility classes used inside the menu. */
+.tp-user-menu .border-bottom,
+.tp-user-menu .border-top {
+  border-color: var(--border-color) !important;
+}
+.tp-user-menu .text-muted {
+  color: var(--text-color-muted) !important;
+}
+.tp-user-menu-head .fw-semibold {
+  color: var(--text-color);
+}
+
+.tp-user-menu .tp-notif-list {
+  max-height: 300px;
+  overflow-y: auto;
+  background: transparent;
+}
+.tp-user-menu .tp-notif-list .list-group-item {
+  background: transparent;
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+.tp-user-menu .tp-notif-list .list-group-item:hover {
+  background: var(--panel-bg-soft);
+}
+
+/* "Mark all read" — real button so the whole control is the hover/click target. */
+.tp-notif-clear-btn {
+  border: 1px solid var(--border-color);
+  background: var(--accent-color-soft);
+  color: var(--accent-color);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.tp-notif-clear-btn:hover {
+  background: var(--accent-color);
+  color: #0b1a1a;
+  border-color: var(--accent-color);
+}
+
+.tp-user-logout {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #fca5a5;
+}
+.tp-user-logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fecaca;
+}
 
 /* ---------- Live activity pill + feed ---------- */
 .tp-live-pill {
@@ -1279,7 +1397,7 @@ body.dash-body::after {
   gap: 0.5rem;
   width: 100%;
   padding: 0.55rem 0.75rem;
-  border: 1px solid var(--dash-border, rgba(15,23,42,0.08));
+  border: 1px solid var(--dash-border, rgba(15, 23, 42, 0.08));
   border-radius: 10px;
   background: transparent;
   color: inherit;
@@ -1288,8 +1406,12 @@ body.dash-body::after {
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.tp-live-pill:hover { background: rgba(15, 23, 42, 0.04); }
-[data-bs-theme="dark"] .tp-live-pill:hover { background: rgba(255,255,255,0.05); }
+.tp-live-pill:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+[data-bs-theme="dark"] .tp-live-pill:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
 
 .tp-live-dot {
   width: 8px;
@@ -1298,21 +1420,47 @@ body.dash-body::after {
   display: inline-block;
   flex-shrink: 0;
   background: #94a3b8;
-  box-shadow: 0 0 0 0 rgba(148,163,184,0.6);
+  box-shadow: 0 0 0 0 rgba(148, 163, 184, 0.6);
 }
-.tp-live-connected { background: #10b981; animation: tpLivePulse 2s infinite; }
-.tp-live-connecting { background: #f59e0b; }
-.tp-live-reconnecting { background: #f59e0b; animation: tpLivePulse 1s infinite; }
-.tp-live-offline { background: #ef4444; }
+.tp-live-connected {
+  background: #10b981;
+  animation: tpLivePulse 2s infinite;
+}
+.tp-live-connecting {
+  background: #f59e0b;
+}
+.tp-live-reconnecting {
+  background: #f59e0b;
+  animation: tpLivePulse 1s infinite;
+}
+.tp-live-offline {
+  background: #ef4444;
+}
 
 @keyframes tpLivePulse {
-  0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); }
-  70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
-  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
 
-.tp-live-label { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tp-live-time { font-variant-numeric: tabular-nums; opacity: 0.7; font-size: 0.72rem; }
+.tp-live-label {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tp-live-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  font-size: 0.72rem;
+}
 
 .tp-live-menu {
   width: 340px;
@@ -1320,9 +1468,13 @@ body.dash-body::after {
   overflow: hidden;
   border-radius: 14px;
   box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
-  border: 1px solid var(--dash-border, rgba(15,23,42,0.08));
+  border: 1px solid var(--dash-border, rgba(15, 23, 42, 0.08));
 }
-.tp-live-feed { max-height: 320px; overflow-y: auto; padding: 0.25rem 0; }
+.tp-live-feed {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
 .tp-live-feed-row {
   display: grid;
   grid-template-columns: auto auto 1fr;
@@ -1330,13 +1482,24 @@ body.dash-body::after {
   align-items: center;
   padding: 0.4rem 0.75rem;
   font-size: 0.78rem;
-  border-bottom: 1px dashed rgba(15,23,42,0.05);
+  border-bottom: 1px dashed rgba(15, 23, 42, 0.05);
 }
-.tp-live-feed-row:last-child { border-bottom: 0; }
-.tp-live-feed-time { font-variant-numeric: tabular-nums; color: #6b7280; font-size: 0.72rem; }
-.tp-live-feed-type { font-size: 0.65rem; }
-.tp-live-feed-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
+.tp-live-feed-row:last-child {
+  border-bottom: 0;
+}
+.tp-live-feed-time {
+  font-variant-numeric: tabular-nums;
+  color: #6b7280;
+  font-size: 0.72rem;
+}
+.tp-live-feed-type {
+  font-size: 0.65rem;
+}
+.tp-live-feed-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ============================================================
    Enrollments / Manage styles (merged from dashboard-manage.css).
@@ -1416,9 +1579,18 @@ body.dash-body::after {
   font-size: 1.05rem;
   flex-shrink: 0;
 }
-.dash-summary-icon.is-warn { background: rgba(245, 158, 11, 0.18); color: #f59e0b; }
-.dash-summary-icon.is-info { background: rgba(96, 165, 250, 0.18); color: #60a5fa; }
-.dash-summary-icon.is-pink { background: rgba(244, 114, 182, 0.18); color: #f472b6; }
+.dash-summary-icon.is-warn {
+  background: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
+}
+.dash-summary-icon.is-info {
+  background: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
+}
+.dash-summary-icon.is-pink {
+  background: rgba(244, 114, 182, 0.18);
+  color: #f472b6;
+}
 .dash-summary-val {
   font-family: "Plus Jakarta Sans", sans-serif;
   font-weight: 700;
@@ -1442,7 +1614,9 @@ body.dash-body::after {
   -webkit-backdrop-filter: blur(10px);
   overflow: hidden;
 }
-.dash-panel + .dash-panel { margin-top: 1.25rem; }
+.dash-panel + .dash-panel {
+  margin-top: 1.25rem;
+}
 .dash-panel-head {
   display: flex;
   align-items: center;
@@ -1487,12 +1661,18 @@ body.dash-body::after {
   vertical-align: middle;
   color: var(--text-color);
 }
-.dash-data-table tbody tr:last-child td { border-bottom: 0; }
-.dash-data-table tbody tr { transition: background 0.15s ease; }
+.dash-data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.dash-data-table tbody tr {
+  transition: background 0.15s ease;
+}
 .dash-data-table tbody tr:hover {
   background: rgba(51, 173, 169, 0.06);
 }
-.dash-data-table .dash-td-actions { text-align: right; }
+.dash-data-table .dash-td-actions {
+  text-align: right;
+}
 .dash-data-table .dash-td-empty {
   text-align: center;
   color: var(--text-color-muted);
@@ -1552,17 +1732,51 @@ body.dash-body::after {
   display: inline-block;
   flex-shrink: 0;
 }
-.dash-pill-success { background: rgba(16, 185, 129, 0.14); color: #34d399; border-color: rgba(16, 185, 129, 0.28); }
-.dash-pill-primary { background: rgba(51, 173, 169, 0.16); color: #5fd1cd; border-color: rgba(51, 173, 169, 0.3); }
-.dash-pill-info    { background: rgba(96, 165, 250, 0.16); color: #93c5fd; border-color: rgba(96, 165, 250, 0.3); }
-.dash-pill-warning { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
-.dash-pill-danger  { background: rgba(239, 68, 68, 0.16);  color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
-.dash-pill-muted   { background: rgba(255, 255, 255, 0.06); color: var(--text-color-soft); border-color: var(--border-color); }
-.dash-pill-plain   { padding: 0; border: 0; background: transparent; color: var(--text-color-muted); font-weight: 500; }
-.dash-pill-plain::before { display: none; }
+.dash-pill-success {
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.28);
+}
+.dash-pill-primary {
+  background: rgba(51, 173, 169, 0.16);
+  color: #5fd1cd;
+  border-color: rgba(51, 173, 169, 0.3);
+}
+.dash-pill-info {
+  background: rgba(96, 165, 250, 0.16);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.3);
+}
+.dash-pill-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.dash-pill-danger {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.dash-pill-muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-color-soft);
+  border-color: var(--border-color);
+}
+.dash-pill-plain {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-color-muted);
+  font-weight: 500;
+}
+.dash-pill-plain::before {
+  display: none;
+}
 
 /* Inline payment progress ---------------------------------- */
-.dash-pay { min-width: 140px; }
+.dash-pay {
+  min-width: 140px;
+}
 .dash-pay-line {
   font-size: 0.82rem;
   color: var(--text-color);
@@ -1571,8 +1785,13 @@ body.dash-body::after {
   gap: 0.5rem;
   font-variant-numeric: tabular-nums;
 }
-.dash-pay-balance { color: #fbbf24; font-weight: 600; }
-.dash-pay-balance.is-paid { color: #34d399; }
+.dash-pay-balance {
+  color: #fbbf24;
+  font-weight: 600;
+}
+.dash-pay-balance.is-paid {
+  color: #34d399;
+}
 .dash-pay-bar {
   height: 4px;
   border-radius: 999px;
@@ -1611,7 +1830,11 @@ body.dash-body::after {
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
   text-decoration: none;
   min-height: 36px;
   white-space: nowrap;
@@ -1621,12 +1844,15 @@ body.dash-body::after {
   border-color: var(--border-color-strong);
   color: var(--text-color);
 }
-.dash-btn:active { transform: scale(0.97); }
+.dash-btn:active {
+  transform: scale(0.97);
+}
 .dash-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-color-soft);
 }
-.dash-btn:disabled, .dash-btn[disabled] {
+.dash-btn:disabled,
+.dash-btn[disabled] {
   opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
@@ -1647,14 +1873,24 @@ body.dash-body::after {
   border-color: rgba(16, 185, 129, 0.4);
   color: #34d399;
 }
-.dash-btn-success:hover { background: rgba(16, 185, 129, 0.24); color: #34d399; }
+.dash-btn-success:hover {
+  background: rgba(16, 185, 129, 0.24);
+  color: #34d399;
+}
 .dash-btn-danger {
   background: rgba(239, 68, 68, 0.14);
   border-color: rgba(239, 68, 68, 0.35);
   color: #fca5a5;
 }
-.dash-btn-danger:hover { background: rgba(239, 68, 68, 0.22); color: #fca5a5; }
-.dash-btn-sm { padding: 0.3rem 0.7rem; font-size: 0.74rem; min-height: 30px; }
+.dash-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+}
+.dash-btn-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.74rem;
+  min-height: 30px;
+}
 
 /* Status select inline ------------------------------------- */
 .dash-status-form {
@@ -1689,11 +1925,25 @@ body.dash-body::after {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
-.modal .modal-header { border-bottom: 1px solid var(--border-color); }
-.modal .modal-footer { border-top: 1px solid var(--border-color); }
-.modal .modal-title { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; }
-.modal .btn-close { filter: invert(1) opacity(0.7); }
-.modal label { color: var(--text-color-soft); font-size: 0.82rem; font-weight: 500; margin-bottom: 0.35rem; }
+.modal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+}
+.modal .modal-footer {
+  border-top: 1px solid var(--border-color);
+}
+.modal .modal-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+}
+.modal .btn-close {
+  filter: invert(1) opacity(0.7);
+}
+.modal label {
+  color: var(--text-color-soft);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+}
 .modal .form-control,
 .modal .form-select,
 .modal textarea.form-control {
@@ -1710,7 +1960,9 @@ body.dash-body::after {
 
 /* Mobile responsive ---------------------------------------- */
 @media (max-width: 768px) {
-  .dash-data-table thead { display: none; }
+  .dash-data-table thead {
+    display: none;
+  }
   .dash-data-table tbody tr {
     display: grid;
     grid-template-columns: 1fr;
@@ -1734,6 +1986,11 @@ body.dash-body::after {
     letter-spacing: 0.08em;
     font-weight: 600;
   }
-  .dash-data-table .dash-td-actions { justify-content: flex-end; }
-  .dash-action-group { justify-content: flex-end; flex: 1; }
+  .dash-data-table .dash-td-actions {
+    justify-content: flex-end;
+  }
+  .dash-action-group {
+    justify-content: flex-end;
+    flex: 1;
+  }
 }

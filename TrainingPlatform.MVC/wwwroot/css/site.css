@@ -1228,7 +1228,9 @@ thead.table-dark,
   background:
     linear-gradient(var(--surface-color), var(--surface-color)) padding-box,
     var(--primary-color) border-box;
-  box-shadow: 0 0 0 2px var(--primary-color-soft), var(--shadow-2);
+  box-shadow:
+    0 0 0 2px var(--primary-color-soft),
+    var(--shadow-2);
 }
 
 .tp-course-row-image {
@@ -1713,7 +1715,9 @@ thead.table-dark,
   padding: 0.65rem 0;
   border-bottom: 1px solid var(--border-color);
 }
-.tp-sidebar-list > li:first-child { padding-top: 0; }
+.tp-sidebar-list > li:first-child {
+  padding-top: 0;
+}
 .tp-sidebar-list > li:last-child {
   border-bottom: none;
   padding-bottom: 0;
@@ -1830,7 +1834,9 @@ thead.table-dark,
   border-radius: 12px;
   min-height: 0;
 }
-.tp-course-row-actions form { display: block; }
+.tp-course-row-actions form {
+  display: block;
+}
 
 /* Tablet — keep image left but shrink it. */
 @media (max-width: 991px) {
@@ -1846,7 +1852,9 @@ thead.table-dark,
     min-height: 160px;
     grid-area: image;
   }
-  .tp-course-row-body { grid-area: body; }
+  .tp-course-row-body {
+    grid-area: body;
+  }
   .tp-course-row-actions {
     grid-area: actions;
     flex-direction: row;
@@ -3303,7 +3311,9 @@ body.dash-body .tp-course-row:hover {
 body.dash-body .tp-course-row.is-selected {
   background: var(--panel-bg);
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 1px var(--accent-color), 0 12px 28px -16px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    0 0 0 1px var(--accent-color),
+    0 12px 28px -16px rgba(0, 0, 0, 0.55);
 }
 body.dash-body .tp-course-row-body h3 {
   color: var(--text-color);
