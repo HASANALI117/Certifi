@@ -778,8 +778,11 @@ a {
   border: 1px solid var(--border-color-strong);
   padding: 0.6rem 0.9rem;
   font-size: 0.95rem;
-  background: var(--surface-color);
-  color: var(--text-color);
+  /* !important beats Bootstrap's [data-bs-theme="dark"] .form-control rule which
+     has higher specificity and would otherwise override our CSS-variable theming
+     on devices/incognito sessions that detect dark mode on first load. */
+  background-color: var(--surface-color) !important;
+  color: var(--text-color) !important;
   transition:
     border-color var(--transition-base),
     box-shadow var(--transition-base);
@@ -789,6 +792,17 @@ a {
 .form-control::placeholder {
   color: var(--text-color-muted);
   opacity: 1;
+}
+
+/* Override browser autofill background — the large inset box-shadow covers the
+   grey/blue overlay browsers apply in incognito or when credentials are saved. */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-color) inset !important;
+  -webkit-text-fill-color: var(--text-color) !important;
+  caret-color: var(--text-color);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .form-control:focus,
@@ -2397,11 +2411,12 @@ code {
   background: var(--bg-color);
 }
 
-/* Form controls placeholder readability */
+/* Form controls in dark mode: slightly darker than the card surface (#111729)
+   so inputs are visually distinct. Both !important to beat the base rule. */
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
-  background-color: #0b1224;
-  color: var(--text-color);
+  background-color: #0b1224 !important;
+  color: var(--text-color) !important;
 }
 [data-theme="dark"] .form-control::placeholder {
   color: var(--text-color-muted);

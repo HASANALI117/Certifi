@@ -130,13 +130,18 @@ public class TraineesController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var trainee = await _db.Trainees.FindAsync(id);
+        var trainee = await _db.Trainees
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == id);
         if (trainee == null) return NotFound();
 
         return View(new TraineeFormViewModel
         {
-            Id = trainee.Id,
-            Phone = trainee.Phone,
+            Id          = trainee.Id,
+            FirstName   = trainee.User.FirstName,
+            LastName    = trainee.User.LastName,
+            Email       = trainee.User.Email ?? string.Empty,
+            Phone       = trainee.Phone,
             DateOfBirth = trainee.DateOfBirth
         });
     }
@@ -144,6 +149,12 @@ public class TraineesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(TraineeFormViewModel model)
     {
+        if (string.IsNullOrWhiteSpace(model.FirstName))
+            ModelState.AddModelError(nameof(model.FirstName), "First name is required.");
+        if (string.IsNullOrWhiteSpace(model.LastName))
+            ModelState.AddModelError(nameof(model.LastName), "Last name is required.");
+        if (string.IsNullOrWhiteSpace(model.Email))
+            ModelState.AddModelError(nameof(model.Email), "Email is required.");
         if (string.IsNullOrWhiteSpace(model.Phone))
             ModelState.AddModelError(nameof(model.Phone), "Phone is required.");
         if (model.DateOfBirth == default)
@@ -152,11 +163,24 @@ public class TraineesController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var trainee = await _db.Trainees.FindAsync(model.Id);
+        var trainee = await _db.Trainees
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == model.Id);
         if (trainee == null) return NotFound();
 
-        trainee.Phone = model.Phone;
-        trainee.DateOfBirth = model.DateOfBirth;
+        trainee.User.FirstName = model.FirstName.Trim();
+        trainee.User.LastName  = model.LastName.Trim();
+        trainee.Phone          = model.Phone;
+        trainee.DateOfBirth    = model.DateOfBirth;
+
+        var newEmail = model.Email.Trim();
+        if (!string.Equals(trainee.User.Email, newEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            var token = await _userManager.GenerateChangeEmailTokenAsync(trainee.User, newEmail);
+            await _userManager.ChangeEmailAsync(trainee.User, newEmail, token);
+            await _userManager.SetUserNameAsync(trainee.User, newEmail);
+        }
+
         await _db.SaveChangesAsync();
         TempData["Success"] = "Trainee profile updated.";
         return RedirectToAction(nameof(Index));

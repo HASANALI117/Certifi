@@ -133,6 +133,13 @@ public class CourseSessionsController : Controller
 
         var (startUtc, endUtc) = ResolveSessionWindow(model, course);
 
+        if (!await InstructorIsAvailableAsync(model.InstructorId, startUtc, endUtc))
+        {
+            ModelState.AddModelError(nameof(model.InstructorId),
+                "This instructor is not available on the selected day and time. Check their availability schedule.");
+            return View(await BuildFormAsync(model));
+        }
+
         if (await HasInstructorOverlapAsync(model.InstructorId, startUtc, endUtc, excludingSessionId: null))
         {
             ModelState.AddModelError(nameof(model.InstructorId),
@@ -211,6 +218,13 @@ public class CourseSessionsController : Controller
         }
 
         var (startUtc, endUtc) = ResolveSessionWindow(model, course);
+
+        if (!await InstructorIsAvailableAsync(model.InstructorId, startUtc, endUtc))
+        {
+            ModelState.AddModelError(nameof(model.InstructorId),
+                "This instructor is not available on the selected day and time. Check their availability schedule.");
+            return View(await BuildFormAsync(model));
+        }
 
         if (await HasInstructorOverlapAsync(model.InstructorId, startUtc, endUtc, excludingSessionId: session.Id))
         {
@@ -332,6 +346,28 @@ public class CourseSessionsController : Controller
             ? utc
             : DateTime.SpecifyKind(utc, DateTimeKind.Utc);
         return asUtc.ToLocalTime();
+    }
+
+    // Returns false when the instructor has declared availability windows that don't
+    // cover the requested session slot. Instructors with no records are unrestricted.
+    private async Task<bool> InstructorIsAvailableAsync(int instructorId, DateTime startUtc, DateTime endUtc)
+    {
+        var slots = await _db.InstructorAvailability
+            .Where(a => a.InstructorId == instructorId)
+            .ToListAsync();
+
+        if (slots.Count == 0) return true; // no restrictions defined
+
+        var localStart = AsLocal(startUtc);
+        var localEnd   = AsLocal(endUtc);
+        var day        = localStart.DayOfWeek;
+        var startTime  = TimeOnly.FromDateTime(localStart);
+        var endTime    = TimeOnly.FromDateTime(localEnd);
+
+        return slots.Any(a =>
+            a.DayOfWeek == day &&
+            a.StartTime <= startTime &&
+            a.EndTime   >= endTime);
     }
 
     // Two sessions overlap when neither one finishes before the other starts.

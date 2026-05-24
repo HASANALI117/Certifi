@@ -123,28 +123,53 @@ public class InstructorsController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var instructor = await _db.Instructors.FindAsync(id);
+        var instructor = await _db.Instructors
+            .Include(i => i.User)
+            .FirstOrDefaultAsync(i => i.Id == id);
         if (instructor == null) return NotFound();
 
         return View(new InstructorFormViewModel
         {
-            Id = instructor.Id,
+            Id            = instructor.Id,
+            FirstName     = instructor.User.FirstName,
+            LastName      = instructor.User.LastName,
+            Email         = instructor.User.Email ?? string.Empty,
             ExpertiseAreas = instructor.ExpertiseAreas,
-            Bio = instructor.Bio
+            Bio           = instructor.Bio
         });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(InstructorFormViewModel model)
     {
+        if (string.IsNullOrWhiteSpace(model.FirstName))
+            ModelState.AddModelError(nameof(model.FirstName), "First name is required.");
+        if (string.IsNullOrWhiteSpace(model.LastName))
+            ModelState.AddModelError(nameof(model.LastName), "Last name is required.");
+        if (string.IsNullOrWhiteSpace(model.Email))
+            ModelState.AddModelError(nameof(model.Email), "Email is required.");
+
         if (!ModelState.IsValid)
             return View(model);
 
-        var instructor = await _db.Instructors.FindAsync(model.Id);
+        var instructor = await _db.Instructors
+            .Include(i => i.User)
+            .FirstOrDefaultAsync(i => i.Id == model.Id);
         if (instructor == null) return NotFound();
 
-        instructor.ExpertiseAreas = model.ExpertiseAreas;
-        instructor.Bio = model.Bio;
+        instructor.User.FirstName  = model.FirstName.Trim();
+        instructor.User.LastName   = model.LastName.Trim();
+        instructor.ExpertiseAreas  = model.ExpertiseAreas;
+        instructor.Bio             = model.Bio;
+
+        var newEmail = model.Email.Trim();
+        if (!string.Equals(instructor.User.Email, newEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            var token = await _userManager.GenerateChangeEmailTokenAsync(instructor.User, newEmail);
+            await _userManager.ChangeEmailAsync(instructor.User, newEmail, token);
+            await _userManager.SetUserNameAsync(instructor.User, newEmail);
+        }
+
         await _db.SaveChangesAsync();
         TempData["Success"] = "Instructor profile updated.";
         return RedirectToAction(nameof(Index));
