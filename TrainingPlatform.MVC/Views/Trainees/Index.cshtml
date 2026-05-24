@@ -1,0 +1,67 @@
+@model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.TraineeListItemViewModel>
+@{ ViewData["Title"] = "Trainees"; }
+
+<div class="tp-page-header">
+    <div>
+        <h1 class="tp-page-title">Trainees</h1>
+        <p class="tp-page-subtitle">Manage trainee accounts, contact details, and enrollment activity.</p>
+    </div>
+    <div class="tp-page-actions">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Add Trainee
+        </a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="tp-empty">
+        <i class="bi bi-person"></i>
+        <h4>No trainees yet</h4>
+        <p>Create a trainee profile so they can enroll in sessions.</p>
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Trainee</a>
+    </div>
+}
+else
+{
+    <div class="tp-table-card">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Trainee ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th style="width: 120px;">Enrollments</th>
+                    <th class="text-end" style="width: 230px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    var initial = !string.IsNullOrWhiteSpace(t.FullName) ? t.FullName.Substring(0, 1).ToUpperInvariant() : "?";
+                    <tr>
+                        <td class="tp-text-soft">@t.TraineePublicId</td>
+                        <td>
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <span class="tp-avatar" style="width: 32px; height: 32px; font-size: .82rem;">@initial</span>
+                                <span class="fw-semibold">@t.FullName</span>
+                            </div>
+                        </td>
+                        <td class="tp-text-soft">@t.Email</td>
+                        <td class="tp-text-soft">@(string.IsNullOrWhiteSpace(t.Phone) ? "—" : t.Phone)</td>
+                        <td><span class="badge bg-primary">@t.EnrollmentCount</span></td>
+                        <td class="text-end">
+                            <a asp-action="Details" asp-route-id="@t.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Details
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@t.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

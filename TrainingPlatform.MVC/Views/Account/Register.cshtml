@@ -47,7 +47,8 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="DateOfBirth" class="form-label"></label>
-                    <input asp-for="DateOfBirth" class="form-control" type="date" autocomplete="bday" />
+                    <input asp-for="DateOfBirth" class="form-control" type="date" autocomplete="bday"
+                           value="@(Model.DateOfBirth == default ? string.Empty : Model.DateOfBirth.ToString("yyyy-MM-dd"))" />
                     <span asp-validation-for="DateOfBirth" class="text-danger"></span>
                 </div>
             </div>
