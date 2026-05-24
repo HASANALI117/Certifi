@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Access denied";
+    Layout = "_AuthLayout";
+}
+
+<div class="card shadow-sm">
+    <div class="card-body p-4 text-center">
+        <h1 class="h4 text-danger">Access denied</h1>
+        <p class="text-muted">Reporting is restricted to Training Coordinators.</p>
+        <a asp-controller="Auth" asp-action="Login" class="btn btn-outline-primary">Back to sign in</a>
+    </div>
+</div>

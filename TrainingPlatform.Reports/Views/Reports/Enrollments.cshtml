@@ -1,0 +1,128 @@
+@using System.Text.Json
+@model List<EnrollmentReportRow>
+@{
+    ViewData["Title"] = "Enrollments";
+    var categories = Model.Select(r => r.CategoryName).Where(c => !string.IsNullOrEmpty(c)).Distinct().OrderBy(c => c).ToList();
+    var totalEnrollments = Model.Sum(r => r.TotalEnrollments);
+    var chartLabels = Model.OrderByDescending(r => r.TotalEnrollments).Take(15).Select(r => r.CourseTitle).ToList();
+    var chartValues = Model.OrderByDescending(r => r.TotalEnrollments).Take(15).Select(r => r.TotalEnrollments).ToList();
+    var serializeOptions = new JsonSerializerOptions();
+}
+
+<div class="page-header d-flex justify-content-between align-items-end">
+    <div>
+        <h1 class="h3 mb-0">Enrollments</h1>
+        <div class="text-muted small">Enrollment breakdown by course (@Model.Count courses, @totalEnrollments.ToString("N0") enrollments)</div>
+    </div>
+    <div>
+        <label class="form-label small text-muted mb-0">Filter by category</label>
+        <select id="categoryFilter" class="form-select form-select-sm" style="min-width:220px;">
+            <option value="">All categories</option>
+            @foreach (var c in categories)
+            {
+                <option value="@c">@c</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <strong>Top 15 courses by total enrollments</strong>
+    </div>
+    <div class="card-body">
+        <div class="chart-wrap-lg">
+            <canvas id="enrollmentsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <strong>Course enrollments</strong>
+        <span class="badge text-bg-secondary" id="rowCount">@Model.Count</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover table-report mb-0 align-middle" id="enrollmentsTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Course</th>
+                    <th>Category</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-end">Enrolled</th>
+                    <th class="text-end">Confirmed</th>
+                    <th class="text-end">Attending</th>
+                    <th class="text-end">Completed</th>
+                    <th class="text-end">Dropped</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-3">No enrollment data available.</td></tr>
+                }
+                @foreach (var r in Model.OrderByDescending(x => x.TotalEnrollments))
+                {
+                    <tr data-category="@r.CategoryName">
+                        <td>@r.CourseTitle</td>
+                        <td><span class="badge text-bg-light border">@r.CategoryName</span></td>
+                        <td class="text-end fw-semibold">@r.TotalEnrollments.ToString("N0")</td>
+                        <td class="text-end">@r.EnrolledCount.ToString("N0")</td>
+                        <td class="text-end">@r.ConfirmedCount.ToString("N0")</td>
+                        <td class="text-end">@r.AttendingCount.ToString("N0")</td>
+                        <td class="text-end text-success">@r.CompletedCount.ToString("N0")</td>
+                        <td class="text-end text-danger">@r.DroppedCount.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const labels = @Html.Raw(JsonSerializer.Serialize(chartLabels, serializeOptions));
+            const values = @Html.Raw(JsonSerializer.Serialize(chartValues, serializeOptions));
+            const ctx = document.getElementById('enrollmentsChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Total Enrollments',
+                            data: values,
+                            backgroundColor: 'rgba(13,110,253,0.6)',
+                            borderColor: 'rgba(13,110,253,1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } },
+                            x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 30 } }
+                        }
+                    }
+                });
+            }
+
+            const filter = document.getElementById('categoryFilter');
+            const rows = document.querySelectorAll('#enrollmentsTable tbody tr[data-category]');
+            const rowCount = document.getElementById('rowCount');
+            filter.addEventListener('change', function () {
+                const val = this.value;
+                let visible = 0;
+                rows.forEach(r => {
+                    const show = !val || r.getAttribute('data-category') === val;
+                    r.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+                rowCount.textContent = visible;
+            });
+        })();
+    </script>
+}

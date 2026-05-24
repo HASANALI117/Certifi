@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Reporting service unavailable";
+    Layout = "_AuthLayout";
+}
+
+<div class="card shadow-sm">
+    <div class="card-body p-4 text-center">
+        <div class="display-6 text-warning mb-2">!</div>
+        <h1 class="h4">Reporting service unavailable</h1>
+        <p class="text-muted">
+            We could not reach the TrainingPlatform API. Please try again in a moment.
+        </p>
+        <div class="d-flex gap-2 justify-content-center mt-3">
+            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary">Retry</a>
+            <a asp-controller="Auth" asp-action="Login" class="btn btn-outline-secondary">Sign in</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,95 @@
+@using System.Text.Json
+@model List<InstructorReportRow>
+@{
+    ViewData["Title"] = "Instructor Workload";
+    var ordered = Model.OrderByDescending(i => i.TotalHours).ToList();
+    var labels = ordered.Select(i => i.InstructorName).ToList();
+    var hours = ordered.Select(i => i.TotalHours).ToList();
+    var sessions = ordered.Select(i => i.SessionCount).ToList();
+}
+
+<div class="page-header">
+    <h1 class="h3 mb-0">Instructor Workload</h1>
+    <div class="text-muted small">Sessions, teaching hours and reach by instructor (@Model.Count instructors)</div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white"><strong>Workload comparison</strong></div>
+    <div class="card-body">
+        <div class="chart-wrap-lg">
+            <canvas id="instructorChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <strong>Instructors</strong>
+        <span class="badge text-bg-secondary">@Model.Count</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover table-report mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Instructor</th>
+                    <th class="text-end">Sessions</th>
+                    <th class="text-end">Total Hours</th>
+                    <th class="text-end">Trainees Reached</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="4" class="text-center text-muted py-3">No instructor data available.</td></tr>
+                }
+                @foreach (var i in ordered)
+                {
+                    <tr>
+                        <td>@i.InstructorName</td>
+                        <td class="text-end">@i.SessionCount.ToString("N0")</td>
+                        <td class="text-end fw-semibold">@i.TotalHours.ToString("N1")</td>
+                        <td class="text-end">@i.TraineeCount.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const ctx = document.getElementById('instructorChart');
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(JsonSerializer.Serialize(labels)),
+                    datasets: [
+                        {
+                            label: 'Total Hours',
+                            data: @Html.Raw(JsonSerializer.Serialize(hours)),
+                            backgroundColor: 'rgba(13,110,253,0.7)',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Sessions',
+                            data: @Html.Raw(JsonSerializer.Serialize(sessions)),
+                            backgroundColor: 'rgba(25,135,84,0.7)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y:  { beginAtZero: true, position: 'left',  title: { display: true, text: 'Hours' } },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Sessions' }, ticks: { precision: 0 } },
+                        x:  { ticks: { autoSkip: false, maxRotation: 50, minRotation: 30 } }
+                    }
+                }
+            });
+        })();
+    </script>
+}
