@@ -1186,6 +1186,7 @@ thead.table-dark,
 }
 
 .tp-course-row {
+  cursor: pointer;
   background:
     linear-gradient(var(--surface-color), var(--surface-color)) padding-box,
     var(--border-color) border-box;

@@ -39,6 +39,7 @@ public class DashboardCourseCard
     public DateTime? NextSessionStart { get; set; }
     public DateTime? NextSessionEnd { get; set; }
     public string AccentSeed { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
 }
 
 public class DashboardSession

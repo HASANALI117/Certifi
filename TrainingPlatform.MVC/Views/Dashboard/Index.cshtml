@@ -111,8 +111,14 @@
                     {
                         <article class="dash-course-card @AccentClass(course.AccentSeed)">
                             <div class="dash-course-hero">
-                                <div class="dash-course-glyph"><i class="bi bi-mortarboard-fill"></i></div>
-                                <span class="dash-course-price">@course.Fee.ToString("C0")</span>
+                                @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                                {
+                                    <img src="@course.ImageUrl" alt="@course.Title" class="dash-course-img" />
+                                }
+                                else
+                                {
+                                    <div class="dash-course-glyph"><i class="bi bi-mortarboard-fill"></i></div>
+                                }
                             </div>
                             <div class="dash-course-body">
                                 <span class="dash-course-cat">@course.CategoryName</span>
@@ -130,10 +136,6 @@
                                     <div class="dash-course-tags">
                                         <span class="dash-chip">@course.CategoryName</span>
                                     </div>
-                                    <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id"
-                                       class="dash-course-cta" aria-label="Open @course.Title">
-                                        <i class="bi bi-arrow-right"></i>
-                                    </a>
                                 </div>
                             </div>
                         </article>

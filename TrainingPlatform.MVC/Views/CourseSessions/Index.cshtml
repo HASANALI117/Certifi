@@ -59,7 +59,6 @@ else
                     <th>Classroom</th>
                     <th>Date</th>
                     <th>Time</th>
-                    <th>Fee</th>
                     <th>Spots</th>
                     <th class="text-end" style="width: 240px;">Actions</th>
                 </tr>
@@ -83,7 +82,6 @@ else
                         </td>
                         <td class="tp-text-soft tp-mono" style="font-size: .9rem;">@s.SessionDate.ToString("dd MMM yyyy")</td>
                         <td class="tp-text-soft tp-mono" style="font-size: .9rem;">@s.StartTime.ToString("hh\\:mm tt")</td>
-                        <td class="tp-text-soft">@s.Fee.ToString("C")</td>
                         <td>
                             <span id="enrollment-counter-@s.Id">
                                 <span class="badge @badgeClass"><i class="bi @badgeIcon"></i> @badgeText</span>

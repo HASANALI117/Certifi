@@ -106,12 +106,6 @@
                             </div>
                         </div>
                         <div class="tp-course-row-actions">
-                            <a asp-action="Details" asp-route-id="@course.Id"
-                               class="btn btn-primary"
-                               data-open-details
-                               title="View details">
-                                <i class="bi bi-arrow-right"></i>
-                            </a>
                             @if (User.IsInRole("TrainingCoordinator"))
                             {
                                 <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-outline-secondary" title="Edit">
@@ -236,11 +230,10 @@
 
             if (list) {
                 list.addEventListener('click', e => {
-                    const btn = e.target.closest('[data-open-details]');
-                    if (!btn) return;
-                    const row = btn.closest('.tp-course-row');
+                    // Clicks on action buttons (edit, delete, enroll) should not select the row.
+                    if (e.target.closest('a, button, form')) return;
+                    const row = e.target.closest('.tp-course-row');
                     if (!row) return;
-                    e.preventDefault();
                     selectCourse(row);
                 });
 

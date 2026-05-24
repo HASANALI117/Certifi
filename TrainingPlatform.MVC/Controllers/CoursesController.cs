@@ -79,31 +79,6 @@ public class CoursesController : Controller
         return View(courses);
     }
 
-    public async Task<IActionResult> Details(int id)
-    {
-        var course = await _db.Courses
-            .Include(c => c.Category)
-            .Include(c => c.PrerequisiteCourse)
-            .Include(c => c.Sessions)
-            .FirstOrDefaultAsync(c => c.Id == id);
-
-        if (course == null) return NotFound();
-
-        return View(new CourseDetailsViewModel
-        {
-            Id = course.Id,
-            Title = course.Title,
-            Description = course.Description,
-            CategoryName = course.Category.Name,
-            DurationHours = course.DurationHours,
-            Capacity = course.Capacity,
-            Fee = course.EnrollmentFee,
-            PrerequisiteTitle = course.PrerequisiteCourse?.Title,
-            SessionCount = course.Sessions.Count,
-            ImageUrl = course.ImageUrl
-        });
-    }
-
     [Authorize(Roles = "TrainingCoordinator")]
     [HttpGet]
     public async Task<IActionResult> Create()
@@ -214,6 +189,11 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Edit), new { id });
     }
 
+    // Defensive GET fallback — bounce direct hits back to the Edit page.
+    [Authorize(Roles = "TrainingCoordinator")]
+    [HttpGet]
+    public IActionResult DeleteImage() => RedirectToAction(nameof(Index));
+
     [Authorize(Roles = "TrainingCoordinator")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
@@ -227,6 +207,10 @@ public class CoursesController : Controller
         TempData["Success"] = "Course deleted.";
         return RedirectToAction(nameof(Index));
     }
+
+    // No GET Delete page — bounce direct hits (refresh, back button, AJAX fallback) to the list.
+    [HttpGet]
+    public IActionResult Delete() => RedirectToAction(nameof(Index));
 
     private async Task<CourseFormViewModel> BuildFormViewModelAsync(CourseFormViewModel? existing)
     {
@@ -276,13 +260,7 @@ public class CoursesController : Controller
             return model.ImageUrl.Trim();
         }
 
-        // 3) Remove flag clears the image.
-        if (model.RemoveImage)
-        {
-            return null;
-        }
-
-        // 4) Otherwise keep what the course already has.
+        // 3) Otherwise keep what the course already has — image removal goes through DeleteImage.
         return currentImageUrl;
     }
 
