@@ -144,7 +144,6 @@
                         var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
                         var balance = Math.Max(0m, fee - paid);
                         var paidPct = fee <= 0 ? 100 : (int)Math.Min(100, Math.Round(100m * paid / fee));
-                        var canRecordPayment = balance > 0 && e.Status != EnrollmentStatus.Dropped;
                         var payStatus = paymentStatuses.GetValueOrDefault(e.Id, balance == 0 ? "Paid" : "Unpaid");
                         var isOverdue = payStatus == "Overdue";
 
@@ -211,12 +210,6 @@
                                                 <i class="bi bi-arrow-clockwise"></i>
                                             </button>
                                         </form>
-
-                                        <button type="button" class="dash-btn dash-btn-sm dash-btn-success"
-                                                data-tp-modal data-tp-modal-url="@Url.Action("PaymentForm", new { id = e.Id })"
-                                                disabled="@(!canRecordPayment)" aria-label="Record payment for @traineeName">
-                                            <i class="bi bi-cash-coin"></i><span>Pay</span>
-                                        </button>
                                     }
 
                                     <button type="button" class="dash-btn dash-btn-sm"
