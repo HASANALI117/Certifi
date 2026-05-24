@@ -35,18 +35,23 @@ public class CourseSessionsController : Controller
 
         var sessions = await scopedQuery.OrderBy(s => s.StartDateTime).ToListAsync();
 
-        // Sessions the current trainee is actively enrolled in (drives Enroll vs Enrolled state).
+        // Sessions the current trainee is actively enrolled in (drives Enroll vs Enrolled state),
+        // and sessions they were dropped from (a dropped session is not re-joinable — they must
+        // pick a different upcoming session of the course).
         var enrolledSessionIds = new HashSet<int>();
+        var droppedSessionIds = new HashSet<int>();
         if (User.IsInRole("Trainee"))
         {
             var user = await _userManager.GetUserAsync(User);
             var trainee = user is null ? null : await _db.Trainees.FirstOrDefaultAsync(t => t.UserId == user.Id);
             if (trainee != null)
             {
-                enrolledSessionIds = (await _db.Enrollments
-                    .Where(e => e.TraineeId == trainee.Id && e.Status != EnrollmentStatus.Dropped)
-                    .Select(e => e.CourseSessionId)
-                    .ToListAsync()).ToHashSet();
+                var rows = await _db.Enrollments
+                    .Where(e => e.TraineeId == trainee.Id)
+                    .Select(e => new { e.CourseSessionId, e.Status })
+                    .ToListAsync();
+                enrolledSessionIds = rows.Where(r => r.Status != EnrollmentStatus.Dropped).Select(r => r.CourseSessionId).ToHashSet();
+                droppedSessionIds = rows.Where(r => r.Status == EnrollmentStatus.Dropped).Select(r => r.CourseSessionId).ToHashSet();
             }
         }
 
@@ -65,7 +70,8 @@ public class CourseSessionsController : Controller
                 AvailableSpots = s.Capacity,
                 EnrollmentCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
                 Fee = s.Course.EnrollmentFee,
-                IsEnrolledByCurrentUser = enrolledSessionIds.Contains(s.Id)
+                IsEnrolledByCurrentUser = enrolledSessionIds.Contains(s.Id),
+                WasDroppedByCurrentUser = droppedSessionIds.Contains(s.Id)
             };
         }).ToList();
 

@@ -37,6 +37,10 @@ builder.Services.AddHttpClient<ICertificationLookupService, CertificationLookupS
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddSignalR();
 
+// Stripe: global API key from config (real keys live in User Secrets / Azure App
+// Settings, never committed). Payments are taken via Stripe Checkout.
+Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
 var app = builder.Build();
 
 // Seed roles + reference data + sample activity. Shared with the API host so a
