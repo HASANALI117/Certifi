@@ -16,16 +16,28 @@ public class InstructorFormViewModel
 {
     public int Id { get; set; }
 
-    [Required, Display(Name = "User Account")]
-    public string UserId { get; set; } = string.Empty;
+    // True on edit — account fields are hidden and not validated.
+    public bool IsEdit => Id != 0;
+
+    // Account fields (Create only). Validated manually in the controller so Edit
+    // can reuse the same view model without tripping [Required].
+    [Display(Name = "First Name")]
+    public string FirstName { get; set; } = string.Empty;
+
+    [Display(Name = "Last Name")]
+    public string LastName { get; set; } = string.Empty;
+
+    [EmailAddress, Display(Name = "Email")]
+    public string Email { get; set; } = string.Empty;
+
+    [DataType(DataType.Password), Display(Name = "Temporary Password")]
+    public string TempPassword { get; set; } = string.Empty;
 
     [Required, StringLength(500), Display(Name = "Expertise Areas")]
     public string ExpertiseAreas { get; set; } = string.Empty;
 
     [StringLength(1000)]
     public string Bio { get; set; } = string.Empty;
-
-    public IEnumerable<SelectListItem> AvailableUsers { get; set; } = Enumerable.Empty<SelectListItem>();
 }
 
 public class InstructorDetailsViewModel
