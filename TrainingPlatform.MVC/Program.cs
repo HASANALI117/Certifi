@@ -1,9 +1,22 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
 using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Hubs;
 using TrainingPlatform.MVC.Services;
+
+// Use Bahraini Dinar (BHD) as the app-wide currency so every ToString("C") call
+// automatically formats as "BD 1.000" (3 decimal places, symbol prefix).
+var bhdCulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+bhdCulture.NumberFormat.CurrencySymbol = "BD";
+bhdCulture.NumberFormat.CurrencyDecimalDigits = 3;
+bhdCulture.NumberFormat.CurrencyDecimalSeparator = ".";
+bhdCulture.NumberFormat.CurrencyGroupSeparator = ",";
+bhdCulture.NumberFormat.CurrencyPositivePattern = 2; // "$ n" → "BD 1.000"
+bhdCulture.NumberFormat.CurrencyNegativePattern = 12; // "$ -n"
+CultureInfo.DefaultThreadCurrentCulture = bhdCulture;
+CultureInfo.DefaultThreadCurrentUICulture = bhdCulture;
 
 var builder = WebApplication.CreateBuilder(args);
 

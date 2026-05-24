@@ -76,16 +76,16 @@
                     <div class="tp-course-image-preview mb-3">
                         <img src="@Model.ExistingImageUrl" alt="Current course image" />
                         <div class="tp-course-image-actions">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" asp-for="RemoveImage" />
-                                <label class="form-check-label" asp-for="RemoveImage"></label>
-                            </div>
-                            <form asp-action="DeleteImage" asp-route-id="@Model.Id" method="post"
-                                  onsubmit="return confirm('Delete the current image now?');" class="m-0">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-trash"></i> Delete image
-                                </button>
-                            </form>
+                            @* formaction overrides the outer form's action so this button posts to DeleteImage
+                               directly. A nested <form> would be silently dropped by the browser. *@
+                            <button type="submit"
+                                    formaction="@Url.Action("DeleteImage", new { id = Model.Id })"
+                                    formmethod="post"
+                                    formnovalidate
+                                    onclick="return confirm('Delete the current image now?');"
+                                    class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Delete image
+                            </button>
                         </div>
                     </div>
                 }

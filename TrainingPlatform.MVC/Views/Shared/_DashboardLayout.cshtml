@@ -253,15 +253,22 @@
                 return loadInto(current, 'replace');
             };
 
-            function submitForm(form) {
-                var method = (form.method || 'GET').toUpperCase();
-                var action = form.getAttribute('action') || window.location.pathname;
+            function submitForm(form, submitter) {
+                // A submit button can override the form's action/method via the
+                // formaction/formmethod attributes — honor them when present.
+                var rawAction = (submitter && submitter.getAttribute('formaction'))
+                    || form.getAttribute('action')
+                    || window.location.pathname;
+                var rawMethod = (submitter && submitter.getAttribute('formmethod'))
+                    || form.getAttribute('method')
+                    || 'GET';
+                var method = rawMethod.toUpperCase();
                 if (method === 'GET') {
                     var params = new URLSearchParams(new FormData(form)).toString();
-                    var glue = action.indexOf('?') === -1 ? '?' : '&';
-                    return loadInto(params ? action + glue + params : action, 'push');
+                    var glue = rawAction.indexOf('?') === -1 ? '?' : '&';
+                    return loadInto(params ? rawAction + glue + params : rawAction, 'push');
                 }
-                return doFetch(action, { method: method, body: new FormData(form) }, 'push');
+                return doFetch(rawAction, { method: method, body: new FormData(form, submitter) }, 'push');
             }
 
             // Intercept all in-dashboard link clicks (sidebar + content area)
@@ -289,10 +296,13 @@
                 // Only intercept forms inside the content area (skip sidebar logout)
                 if (!target.contains(form)) return;
                 if (form.dataset.dashNavSkip === 'true') return;
-                var action = form.getAttribute('action') || window.location.pathname;
+                var submitter = e.submitter || null;
+                var action = (submitter && submitter.getAttribute('formaction'))
+                    || form.getAttribute('action')
+                    || window.location.pathname;
                 if (!isSafeUrl(action)) return;
                 e.preventDefault();
-                submitForm(form);
+                submitForm(form, submitter);
             });
 
             window.addEventListener('popstate', function (e) {

@@ -52,9 +52,6 @@ public class CourseFormViewModel
     [Display(Name = "Upload Image")]
     public IFormFile? ImageFile { get; set; }
 
-    [Display(Name = "Remove current image")]
-    public bool RemoveImage { get; set; }
-
     public string? ExistingImageUrl { get; set; }
 
     public IEnumerable<SelectListItem> Categories { get; set; } = Enumerable.Empty<SelectListItem>();
@@ -81,18 +78,4 @@ public class CategoryWidgetViewModel
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public int CourseCount { get; set; }
-}
-
-public class CourseDetailsViewModel
-{
-    public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string CategoryName { get; set; } = string.Empty;
-    public int DurationHours { get; set; }
-    public int Capacity { get; set; }
-    public decimal Fee { get; set; }
-    public string? PrerequisiteTitle { get; set; }
-    public int SessionCount { get; set; }
-    public string? ImageUrl { get; set; }
 }

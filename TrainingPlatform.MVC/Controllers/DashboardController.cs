@@ -100,7 +100,8 @@ public class DashboardController : Controller
                     .OrderBy(s => s.StartDateTime)
                     .Select(s => (DateTime?)s.EndDateTime)
                     .FirstOrDefault(),
-                AccentSeed = c.Title
+                AccentSeed = c.Title,
+                ImageUrl = c.ImageUrl
             })
             .ToListAsync();
 
