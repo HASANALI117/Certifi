@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -6,19 +8,33 @@ using TrainingPlatform.API.Data;
 using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Infrastructure;
 using TrainingPlatform.MVC.Models.ViewModels;
+using TrainingPlatform.MVC.Services;
 
 namespace TrainingPlatform.MVC.Controllers;
 
 public class AccountController : Controller
 {
+    // Claim key the Reports app reads to call the API as the signed-in user.
+    // Must match TrainingPlatform.Reports.Auth.SharedCookie.TokenClaimType.
+    private const string ApiAccessTokenClaim = "ApiAccessToken";
+
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly IUserClaimsPrincipalFactory<AppUser> _claimsFactory;
+    private readonly IAuthApiClient _authApi;
     private readonly AppDbContext _db;
 
-    public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, AppDbContext db)
+    public AccountController(
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        IUserClaimsPrincipalFactory<AppUser> claimsFactory,
+        IAuthApiClient authApi,
+        AppDbContext db)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _claimsFactory = claimsFactory;
+        _authApi = authApi;
         _db = db;
     }
 
@@ -61,7 +77,7 @@ public class AccountController : Controller
         });
         await _db.SaveChangesAsync();
 
-        await _signInManager.SignInAsync(user, isPersistent: false);
+        await IssueCookieWithApiTokenAsync(user, model.Email, model.Password, isPersistent: false);
         return RedirectToAction("Index", "Dashboard");
     }
 
@@ -92,14 +108,52 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var result = await _signInManager.PasswordSignInAsync(
-            model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user is null)
+        {
+            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            return View(model);
+        }
 
-        if (result.Succeeded)
-            return this.SafeLocalRedirect(returnUrl, "Index", "Dashboard");
+        var pwCheck = await _signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
+        if (!pwCheck.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            return View(model);
+        }
 
-        ModelState.AddModelError(string.Empty, "Invalid email or password.");
-        return View(model);
+        await IssueCookieWithApiTokenAsync(user, model.Email, model.Password, model.RememberMe);
+        return this.SafeLocalRedirect(returnUrl, "Index", "Dashboard");
+    }
+
+    // One sign-in flow: build the Identity principal, attach the API JWT as a
+    // claim, then issue the shared auth cookie. The Reports app reads that
+    // claim to call the API on behalf of the same user without a second login.
+    private async Task IssueCookieWithApiTokenAsync(AppUser user, string email, string password, bool isPersistent)
+    {
+        var jwt = await _authApi.LoginAsync(email, password);
+
+        var principal = await _claimsFactory.CreateAsync(user);
+        var identity = (ClaimsIdentity)principal.Identity!;
+
+        if (!string.IsNullOrEmpty(jwt))
+        {
+            identity.AddClaim(new Claim(ApiAccessTokenClaim, jwt));
+        }
+        else
+        {
+            // Cookie still issued so MVC features keep working; Reports app will
+            // bounce the user to its own login if they try to open it.
+            TempData["DashWarning"] = "Reporting features are temporarily unavailable.";
+        }
+
+        var props = new AuthenticationProperties
+        {
+            IsPersistent = isPersistent,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+        };
+
+        await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal, props);
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize]

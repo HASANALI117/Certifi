@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using TrainingPlatform.Reports.Auth;
 using TrainingPlatform.Reports.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,19 +9,30 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpContextAccessor();
 
+// Scheme name MUST match the MVC app's Identity cookie scheme so that the
+// data-protection purpose strings line up and the shared cookie decrypts here.
 builder.Services
-    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+    .AddAuthentication(SharedCookie.Scheme)
+    .AddCookie(SharedCookie.Scheme, options =>
     {
         options.LoginPath = "/Auth/Login";
         options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Auth/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
-        options.Cookie.Name = "TrainingPlatform.Reports.Auth";
+        options.Cookie.Name = SharedCookie.Name;
         options.Cookie.HttpOnly = true;
+        options.Cookie.Path = "/";
         options.Cookie.SameSite = SameSiteMode.Lax;
     });
+
+var keyRingPath = builder.Configuration["DataProtection:KeyRingPath"]
+    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "TrainingPlatform", "keys");
+Directory.CreateDirectory(keyRingPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
+    .SetApplicationName("TrainingPlatform");
 
 builder.Services.AddAuthorization(options =>
 {
@@ -41,6 +53,8 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+
+builder.Services.AddSingleton<INavLinks, NavLinks>();
 
 var app = builder.Build();
 

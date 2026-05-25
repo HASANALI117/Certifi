@@ -8,59 +8,69 @@
     var sessions = ordered.Select(i => i.SessionCount).ToList();
 }
 
-<div class="page-header">
-    <h1 class="h3 mb-0">Instructor Workload</h1>
-    <div class="text-muted small">Sessions, teaching hours and reach by instructor (@Model.Count instructors)</div>
-</div>
-
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white"><strong>Workload comparison</strong></div>
-    <div class="card-body">
-        <div class="chart-wrap-lg">
-            <canvas id="instructorChart"></canvas>
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Instructor Workload</h1>
+            <p class="dash-page-lede">Sessions, teaching hours and reach per instructor — @Model.Count.ToString("N0") instructors.</p>
         </div>
     </div>
-</div>
+</header>
 
-<div class="card shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <strong>Instructors</strong>
-        <span class="badge text-bg-secondary">@Model.Count</span>
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Workload comparison</h2>
+        </div>
+    </div>
+    <div class="dash-chart-wrap-lg">
+        <canvas id="instructorChart"></canvas>
+    </div>
+</section>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Instructors</h2>
+            <div class="dash-panel-sub">@Model.Count.ToString("N0") total</div>
+        </div>
     </div>
     <div class="table-responsive">
-        <table class="table table-sm table-hover table-report mb-0 align-middle">
-            <thead class="table-light">
+        <table class="dash-data-table">
+            <thead>
                 <tr>
                     <th>Instructor</th>
                     <th class="text-end">Sessions</th>
-                    <th class="text-end">Total Hours</th>
-                    <th class="text-end">Trainees Reached</th>
+                    <th class="text-end">Total hours</th>
+                    <th class="text-end">Trainees reached</th>
                 </tr>
             </thead>
             <tbody>
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="4" class="text-center text-muted py-3">No instructor data available.</td></tr>
+                    <tr><td colspan="4" class="dash-td-empty">No instructor data available.</td></tr>
                 }
                 @foreach (var i in ordered)
                 {
                     <tr>
-                        <td>@i.InstructorName</td>
-                        <td class="text-end">@i.SessionCount.ToString("N0")</td>
-                        <td class="text-end fw-semibold">@i.TotalHours.ToString("N1")</td>
-                        <td class="text-end">@i.TraineeCount.ToString("N0")</td>
+                        <td data-label="Instructor">@i.InstructorName</td>
+                        <td data-label="Sessions" class="text-end">@i.SessionCount.ToString("N0")</td>
+                        <td data-label="Total hours" class="text-end fw-semibold">@i.TotalHours.ToString("N1")</td>
+                        <td data-label="Trainees reached" class="text-end">@i.TraineeCount.ToString("N0")</td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <script>
         (function () {
             const ctx = document.getElementById('instructorChart');
             if (!ctx) return;
+            Chart.defaults.color = 'rgba(255,255,255,0.7)';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
             new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -69,13 +79,15 @@
                         {
                             label: 'Total Hours',
                             data: @Html.Raw(JsonSerializer.Serialize(hours)),
-                            backgroundColor: 'rgba(13,110,253,0.7)',
+                            backgroundColor: 'rgba(51,173,169,0.65)',
+                            borderRadius: 6,
                             yAxisID: 'y'
                         },
                         {
                             label: 'Sessions',
                             data: @Html.Raw(JsonSerializer.Serialize(sessions)),
-                            backgroundColor: 'rgba(25,135,84,0.7)',
+                            backgroundColor: 'rgba(78,163,255,0.65)',
+                            borderRadius: 6,
                             yAxisID: 'y1'
                         }
                     ]

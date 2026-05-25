@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using TrainingPlatform.Reports.Auth;
 using TrainingPlatform.Reports.Services;
 
 namespace TrainingPlatform.Reports.Controllers;
@@ -18,7 +18,7 @@ public abstract class ReportControllerBase : Controller
         }
         catch (ApiUnauthorizedException)
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync(SharedCookie.Scheme);
             context.Result = RedirectToAction("Login", "Auth");
         }
         catch (ApiUnavailableException)
