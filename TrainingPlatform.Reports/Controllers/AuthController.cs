@@ -1,26 +1,20 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TrainingPlatform.Reports.Auth;
 using TrainingPlatform.Reports.Models;
 using TrainingPlatform.Reports.Services;
 
 namespace TrainingPlatform.Reports.Controllers;
 
 [AllowAnonymous]
-public class AuthController : Controller
+public class AuthController(IApiClient api, ILogger<AuthController> logger) : Controller
 {
     private const string CoordinatorRole = "TrainingCoordinator";
 
-    private readonly IApiClient _api;
-    private readonly ILogger<AuthController> _logger;
-
-    public AuthController(IApiClient api, ILogger<AuthController> logger)
-    {
-        _api = api;
-        _logger = logger;
-    }
+    private readonly IApiClient _api = api;
+    private readonly ILogger<AuthController> _logger = logger;
 
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
@@ -70,14 +64,14 @@ public class AuthController : Controller
             new(ClaimTypes.Name, response.FullName),
             new(ClaimTypes.Email, response.Email),
             new(ClaimTypes.Role, response.Role),
-            new(ApiClient.AuthTokenClaimType, response.Token)
+            new(SharedCookie.TokenClaimType, response.Token)
         };
 
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var identity = new ClaimsIdentity(claims, SharedCookie.Scheme);
         var principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
+            SharedCookie.Scheme,
             principal,
             new AuthenticationProperties
             {
@@ -95,7 +89,7 @@ public class AuthController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignOutAsync(SharedCookie.Scheme);
         return RedirectToAction(nameof(Login));
     }
 

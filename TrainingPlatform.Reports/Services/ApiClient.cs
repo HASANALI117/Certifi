@@ -2,13 +2,14 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using TrainingPlatform.Reports.Auth;
 using TrainingPlatform.Reports.Models;
 
 namespace TrainingPlatform.Reports.Services;
 
 public class ApiClient : IApiClient
 {
-    public const string AuthTokenClaimType = "ApiAccessToken";
+    public const string AuthTokenClaimType = SharedCookie.TokenClaimType;
 
     private readonly HttpClient _http;
     private readonly IHttpContextAccessor _httpContextAccessor;

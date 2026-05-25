@@ -1,167 +1,154 @@
 @model DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Reports Overview";
     var o = Model.Overview;
 }
 
-<div class="page-header d-flex justify-content-between align-items-end">
-    <div>
-        <h1 class="h3 mb-0">Dashboard</h1>
-        <div class="text-muted small">Operational snapshot for Training Coordinators</div>
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Reports Overview</h1>
+            <p class="dash-page-lede">Operational snapshot across courses, sessions, enrollments and revenue.</p>
+        </div>
+        <div class="text-color-soft small">@DateTime.Now.ToString("dddd, MMM d, yyyy")</div>
     </div>
-    <div class="text-muted small">@DateTime.Now.ToString("dddd, MMM d, yyyy")</div>
-</div>
+</header>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card h-100">
-            <div class="card-body">
-                <div class="kpi-label">Total Courses</div>
-                <div class="kpi-value">@o.TotalCourses.ToString("N0")</div>
-            </div>
+<section class="dash-chip-row" aria-label="At a glance">
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-collection"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.TotalCourses.ToString("N0")</div>
+            <div class="dash-summary-lbl">Total courses</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card kpi-info h-100">
-            <div class="card-body">
-                <div class="kpi-label">Total Sessions</div>
-                <div class="kpi-value">@o.TotalSessions.ToString("N0")</div>
-            </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-info"><i class="bi bi-calendar-event"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.TotalSessions.ToString("N0")</div>
+            <div class="dash-summary-lbl">Total sessions</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card kpi-success h-100">
-            <div class="card-body">
-                <div class="kpi-label">Trainees</div>
-                <div class="kpi-value">@o.TotalTrainees.ToString("N0")</div>
-            </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-people"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.TotalTrainees.ToString("N0")</div>
+            <div class="dash-summary-lbl">Trainees</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card kpi-warning h-100">
-            <div class="card-body">
-                <div class="kpi-label">Instructors</div>
-                <div class="kpi-value">@o.TotalInstructors.ToString("N0")</div>
-            </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-warn"><i class="bi bi-easel"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.TotalInstructors.ToString("N0")</div>
+            <div class="dash-summary-lbl">Instructors</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card kpi-info h-100">
-            <div class="card-body">
-                <div class="kpi-label">Active Enrollments</div>
-                <div class="kpi-value">@o.ActiveEnrollments.ToString("N0")</div>
-            </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-info"><i class="bi bi-clipboard-data"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.ActiveEnrollments.ToString("N0")</div>
+            <div class="dash-summary-lbl">Active enrollments</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card kpi-success h-100">
-            <div class="card-body">
-                <div class="kpi-label">Completed Enrollments</div>
-                <div class="kpi-value">@o.CompletedEnrollments.ToString("N0")</div>
-            </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-check2-circle"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.CompletedEnrollments.ToString("N0")</div>
+            <div class="dash-summary-lbl">Completed enrollments</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card kpi-success h-100">
-            <div class="card-body">
-                <div class="kpi-label">Certificates Issued</div>
-                <div class="kpi-value">@o.CertificatesIssued.ToString("N0")</div>
-            </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-pink"><i class="bi bi-patch-check-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.CertificatesIssued.ToString("N0")</div>
+            <div class="dash-summary-lbl">Certificates issued</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card kpi-card h-100">
-            <div class="card-body">
-                <div class="kpi-label">Total Revenue</div>
-                <div class="kpi-value">@o.TotalRevenue.ToString("C0")</div>
-                <div class="small text-danger">
-                    Outstanding: @o.OutstandingRevenue.ToString("C0")
-                </div>
-            </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-danger"><i class="bi bi-cash-coin"></i></span>
+        <div>
+            <div class="dash-summary-val">@o.TotalRevenue.ToString("C0")</div>
+            <div class="dash-summary-lbl">Revenue · @o.OutstandingRevenue.ToString("C0") outstanding</div>
         </div>
     </div>
-</div>
+</section>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <strong>Recent Enrollments</strong>
-                <span class="badge text-bg-secondary">@Model.RecentEnrollments.Count</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm table-report mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Trainee</th>
-                            <th>Course</th>
-                            <th>Session</th>
-                            <th>Status</th>
-                            <th class="text-end">Enrolled</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!Model.RecentEnrollments.Any())
-                        {
-                            <tr><td colspan="5" class="text-center text-muted py-3">No recent enrollments.</td></tr>
-                        }
-                        @foreach (var r in Model.RecentEnrollments)
-                        {
-                            <tr>
-                                <td>@r.TraineeName</td>
-                                <td>@r.CourseTitle</td>
-                                <td>@(r.SessionDate?.ToString("MMM d, yyyy") ?? "—")</td>
-                                <td><span class="badge text-bg-info">@r.Status</span></td>
-                                <td class="text-end text-muted small">@r.EnrolledAt.ToLocalTime().ToString("MMM d, h:mm tt")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+<section class="dash-panel" aria-labelledby="recent-enrolls-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="recent-enrolls-title">Recent enrollments</h2>
+            <div class="dash-panel-sub">@Model.RecentEnrollments.Count latest</div>
         </div>
     </div>
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th>Trainee</th>
+                    <th>Course</th>
+                    <th>Session</th>
+                    <th>Status</th>
+                    <th class="text-end">Enrolled</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentEnrollments.Any())
+                {
+                    <tr><td colspan="5" class="dash-td-empty">No recent enrollments.</td></tr>
+                }
+                @foreach (var r in Model.RecentEnrollments)
+                {
+                    <tr>
+                        <td data-label="Trainee">@r.TraineeName</td>
+                        <td data-label="Course">@r.CourseTitle</td>
+                        <td data-label="Session">@(r.SessionDate?.ToString("MMM d, yyyy") ?? "—")</td>
+                        <td data-label="Status"><span class="dash-pill dash-pill-info">@r.Status</span></td>
+                        <td data-label="Enrolled" class="text-end">@r.EnrolledAt.ToLocalTime().ToString("MMM d, h:mm tt")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
 
-    <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <strong>Upcoming Sessions</strong>
-                <span class="badge text-bg-secondary">@Model.UpcomingSessions.Count</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm table-report mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Course</th>
-                            <th>Instructor</th>
-                            <th>Classroom</th>
-                            <th>When</th>
-                            <th class="text-end">Spots</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!Model.UpcomingSessions.Any())
-                        {
-                            <tr><td colspan="5" class="text-center text-muted py-3">No upcoming sessions.</td></tr>
-                        }
-                        @foreach (var s in Model.UpcomingSessions)
-                        {
-                            var fill = s.Capacity == 0 ? 0 : (s.Capacity - s.SpotsRemaining) * 100 / s.Capacity;
-                            <tr>
-                                <td>@s.CourseTitle</td>
-                                <td>@s.InstructorName</td>
-                                <td>@s.ClassroomName</td>
-                                <td>@s.StartDateTime.ToLocalTime().ToString("MMM d, h:mm tt")</td>
-                                <td class="text-end">
-                                    <span class="@(s.SpotsRemaining == 0 ? "text-danger" : "text-success") fw-semibold">
-                                        @s.SpotsRemaining
-                                    </span>
-                                    <div class="small text-muted">@fill% full</div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+<section class="dash-panel" aria-labelledby="upcoming-sessions-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="upcoming-sessions-title">Upcoming sessions</h2>
+            <div class="dash-panel-sub">@Model.UpcomingSessions.Count scheduled</div>
         </div>
     </div>
-</div>
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Instructor</th>
+                    <th>Classroom</th>
+                    <th>When</th>
+                    <th class="text-end">Spots</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.UpcomingSessions.Any())
+                {
+                    <tr><td colspan="5" class="dash-td-empty">No upcoming sessions.</td></tr>
+                }
+                @foreach (var s in Model.UpcomingSessions)
+                {
+                    var fill = s.Capacity == 0 ? 0 : (s.Capacity - s.SpotsRemaining) * 100 / s.Capacity;
+                    <tr>
+                        <td data-label="Course">@s.CourseTitle</td>
+                        <td data-label="Instructor">@s.InstructorName</td>
+                        <td data-label="Classroom">@s.ClassroomName</td>
+                        <td data-label="When">@s.StartDateTime.ToLocalTime().ToString("MMM d, h:mm tt")</td>
+                        <td data-label="Spots" class="text-end">
+                            <span class="@(s.SpotsRemaining == 0 ? "text-danger" : "text-success") fw-semibold">@s.SpotsRemaining</span>
+                            <div class="small text-color-soft">@fill% full</div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
