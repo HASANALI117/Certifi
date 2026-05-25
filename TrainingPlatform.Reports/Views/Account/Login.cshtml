@@ -1,0 +1,34 @@
+﻿@* This tells the view to expect our LoginViewModel *@
+@model TrainingPlatform.Reports.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="container mt-5">
+    <h2>Reports Portal Login</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+
+            @* The form will POST its data back to the AccountController's Login method *@
+            <form asp-controller="Account" asp-action="Login" method="post">
+
+                <div class="form-group mb-3">
+                    <label asp-for="Email" class="control-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Password" class="control-label"></label>
+                    <input asp-for="Password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Log In</button>
+            </form>
+
+        </div>
+    </div>
+</div>
