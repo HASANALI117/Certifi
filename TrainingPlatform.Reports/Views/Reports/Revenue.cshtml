@@ -102,8 +102,11 @@
                         <td data-label="Collected" class="text-end text-success fw-semibold">@c.TotalCollected.ToString("C0")</td>
                         <td data-label="Outstanding" class="text-end text-danger">@c.TotalOutstanding.ToString("C0")</td>
                         <td data-label="Collection rate">
-                            <div class="dash-progress">
-                                <div class="dash-progress-fill @cls" style="width:@(widthCss)%;">@rate.ToString("F0")%</div>
+                            <div class="dash-progress-wrap">
+                                <div class="dash-progress">
+                                    <div class="dash-progress-fill @cls" style="width:@(widthCss)%;"></div>
+                                </div>
+                                <span class="dash-progress-value">@rate.ToString("F0")%</span>
                             </div>
                         </td>
                     </tr>

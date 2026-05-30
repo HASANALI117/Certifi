@@ -28,15 +28,15 @@
         .DateTimeFormat.GetAbbreviatedMonthName(m).ToUpperInvariant();
 }
 
+<header class="dash-topbar">
+    <div>
+        <h1 class="dash-page-title">Hello, @(string.IsNullOrWhiteSpace(Model.FirstName) ? "there" : Model.FirstName) 👋</h1>
+        <p class="dash-page-sub">Your @Model.Role.ToLowerInvariant() workspace — courses, schedule, and progress at a glance.</p>
+    </div>
+</header>
+
 <div class="dash-content">
     <div class="dash-content-main">
-        <header class="dash-topbar">
-            <div>
-                <h1 class="dash-page-title">Hello, @(string.IsNullOrWhiteSpace(Model.FirstName) ? "there" : Model.FirstName) 👋</h1>
-                <p class="dash-page-sub">Your @Model.Role.ToLowerInvariant() workspace — courses, schedule, and progress at a glance.</p>
-            </div>
-        </header>
-
         <section class="dash-stats">
             <div class="dash-stat">
                 <span class="dash-stat-icon dash-stat-icon-blue"><i class="bi bi-collection"></i></span>
@@ -74,19 +74,24 @@
                 <a class="dash-link" asp-controller="Courses" asp-action="Index">@(Model.Role == "Trainee" ? "Browse catalog" : "See all") <i class="bi bi-arrow-right"></i></a>
             </div>
 
-            <div class="dash-tabs">
-                <a class="dash-tab @(Model.SelectedCategoryId == null ? "active" : "")"
+            <nav class="tp-category-tabs" aria-label="Filter by category">
+                <a class="tp-category-tab @(Model.SelectedCategoryId == null ? "active" : null)"
                    asp-action="Index"
-                   asp-route-search="@Model.Search">All</a>
+                   asp-route-search="@Model.Search">
+                    All
+                    <span class="tp-tab-count">@Model.Categories.Sum(c => c.CourseCount)</span>
+                </a>
                 @foreach (var cat in Model.Categories)
                 {
-                    var active = Model.SelectedCategoryId == cat.Id ? "active" : "";
-                    <a class="dash-tab @active"
+                    <a class="tp-category-tab @(Model.SelectedCategoryId == cat.Id ? "active" : null)"
                        asp-action="Index"
                        asp-route-categoryId="@cat.Id"
-                       asp-route-search="@Model.Search">@cat.Name</a>
+                       asp-route-search="@Model.Search">
+                        @cat.Name
+                        <span class="tp-tab-count">@cat.CourseCount</span>
+                    </a>
                 }
-            </div>
+            </nav>
 
             @if (!Model.Courses.Any())
             {

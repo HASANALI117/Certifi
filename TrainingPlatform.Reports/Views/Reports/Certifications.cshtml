@@ -40,17 +40,19 @@
                 @foreach (var c in ordered)
                 {
                     var rate = (double)c.CompletionRate;
-                    var cls = rate >= 75 ? "" : rate >= 40 ? "is-info" : rate >= 15 ? "is-warn" : "is-danger";
                     var widthCss = rate.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
                     <tr>
                         <td data-label="Track"><strong>@c.TrackName</strong></td>
                         <td data-label="Trainees" class="text-end">@c.TotalTrainees.ToString("N0")</td>
                         <td data-label="In progress" class="text-end">@c.InProgressCount.ToString("N0")</td>
                         <td data-label="Eligible" class="text-end">@c.EligibleCount.ToString("N0")</td>
-                        <td data-label="Issued" class="text-end text-success fw-semibold">@c.IssuedCount.ToString("N0")</td>
+                        <td data-label="Issued" class="text-end fw-semibold">@c.IssuedCount.ToString("N0")</td>
                         <td data-label="Completion rate">
-                            <div class="dash-progress">
-                                <div class="dash-progress-fill @cls" style="width:@(widthCss)%;">@rate.ToString("F1")%</div>
+                            <div class="dash-progress-wrap">
+                                <div class="dash-progress">
+                                    <div class="dash-progress-fill" style="width:@(widthCss)%;"></div>
+                                </div>
+                                <span class="dash-progress-value">@rate.ToString("F1")%</span>
                             </div>
                         </td>
                     </tr>

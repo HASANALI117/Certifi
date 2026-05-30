@@ -59,7 +59,7 @@
         </div>
         @if (User.IsInRole("TrainingCoordinator"))
         {
-            <button type="button" class="dash-btn dash-btn-primary" data-tp-modal data-tp-modal-url="@Url.Action("Create")">
+            <button type="button" class="tp-cta" data-tp-modal data-tp-modal-url="@Url.Action("Create")">
                 <i class="bi bi-plus-lg"></i><span>New Enrollment</span>
             </button>
         }

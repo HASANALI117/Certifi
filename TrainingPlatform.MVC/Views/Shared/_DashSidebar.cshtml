@@ -19,35 +19,6 @@
     <nav class="dash-nav" data-dash-nav>
         @if (isCoordinator)
         {
-            <div class="dash-nav-section">Manage</div>
-            <a class="dash-nav-item @NavActive("Dashboard")" asp-controller="Dashboard" asp-action="Index">
-                <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
-            </a>
-            <a class="dash-nav-item @NavActive("Courses")" asp-controller="Courses" asp-action="Index">
-                <i class="bi bi-collection"></i><span>Courses</span>
-            </a>
-            <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
-                <i class="bi bi-calendar-event"></i><span>Sessions</span>
-            </a>
-            <a class="dash-nav-item @NavActive("Certification")" asp-controller="Certification" asp-action="Lookup">
-                <i class="bi bi-patch-check"></i><span>Certifications</span>
-            </a>
-            <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="Manage">
-                <i class="bi bi-people-fill"></i><span>Enrollments</span>
-            </a>
-            <a class="dash-nav-item @NavActive("Categories")" asp-controller="Categories" asp-action="Index">
-                <i class="bi bi-tags"></i><span>Categories</span>
-            </a>
-            <a class="dash-nav-item @NavActive("Classrooms")" asp-controller="Classrooms" asp-action="Index">
-                <i class="bi bi-building"></i><span>Classrooms</span>
-            </a>
-            <a class="dash-nav-item @NavActive("Instructors")" asp-controller="Instructors" asp-action="Index">
-                <i class="bi bi-person-video3"></i><span>Instructors</span>
-            </a>
-            <a class="dash-nav-item @NavActive("Trainees")" asp-controller="Trainees" asp-action="Index">
-                <i class="bi bi-person"></i><span>Trainees</span>
-            </a>
-
             <div class="dash-nav-section dash-nav-section--readonly">
                 <span>Reports</span>
                 <span class="dash-readonly-badge">Read-only</span>
@@ -72,6 +43,32 @@
             </a>
             <a class="dash-nav-item dash-nav-item--external" data-dash-nav-skip="true" href="@NavLinks.Reports("/Reports/Trainees")">
                 <i class="bi bi-people"></i><span>Trainees</span>
+            </a>
+
+            <div class="dash-nav-section">Manage</div>
+            <a class="dash-nav-item @NavActive("Courses")" asp-controller="Courses" asp-action="Index">
+                <i class="bi bi-collection"></i><span>Courses</span>
+            </a>
+            <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
+                <i class="bi bi-calendar-event"></i><span>Sessions</span>
+            </a>
+            <a class="dash-nav-item @NavActive("Certification")" asp-controller="Certification" asp-action="Lookup">
+                <i class="bi bi-patch-check"></i><span>Certifications</span>
+            </a>
+            <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="Manage">
+                <i class="bi bi-people-fill"></i><span>Enrollments</span>
+            </a>
+            <a class="dash-nav-item @NavActive("Categories")" asp-controller="Categories" asp-action="Index">
+                <i class="bi bi-tags"></i><span>Categories</span>
+            </a>
+            <a class="dash-nav-item @NavActive("Classrooms")" asp-controller="Classrooms" asp-action="Index">
+                <i class="bi bi-building"></i><span>Classrooms</span>
+            </a>
+            <a class="dash-nav-item @NavActive("Instructors")" asp-controller="Instructors" asp-action="Index">
+                <i class="bi bi-person-video3"></i><span>Instructors</span>
+            </a>
+            <a class="dash-nav-item @NavActive("Trainees")" asp-controller="Trainees" asp-action="Index">
+                <i class="bi bi-person"></i><span>Trainees</span>
             </a>
         }
         else

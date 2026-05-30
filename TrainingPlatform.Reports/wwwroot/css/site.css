@@ -1323,11 +1323,6 @@ thead.table-dark,
 .tp-widget-warn i {
   color: var(--warning-color);
 }
-[data-theme="dark"] .tp-widget-warn {
-  background: #261603;
-  border-color: #78350f;
-  color: #fcd34d;
-}
 
 /* ==========================================================================
    Courses page — two-column layout with right sidebar
@@ -2194,234 +2189,35 @@ code {
 }
 
 /* ==========================================================================
-   Theme toggle button
+   Base color scheme
    ========================================================================== */
 :root {
   color-scheme: light;
 }
-
-.tp-theme-toggle {
-  width: 40px;
-  height: 40px;
-  border-radius: 9px;
-  border: 1px solid var(--border-color-strong);
-  background: var(--surface-color);
-  color: var(--text-color-soft);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.05rem;
-  cursor: pointer;
-  transition:
-    background-color var(--transition-base),
-    color var(--transition-base),
-    border-color var(--transition-base),
-    transform var(--transition-base);
-  padding: 0;
-  line-height: 1;
-}
-.tp-theme-toggle:hover {
-  background: var(--bg-color);
-  color: var(--text-color);
-  border-color: var(--text-color-muted);
-}
-.tp-theme-toggle:focus-visible {
-  box-shadow: var(--focus-ring);
-  outline: none;
-}
-.tp-theme-toggle:active {
-  transform: scale(0.94);
-}
-.tp-theme-icon {
-  transition: transform var(--transition-base);
-}
-
-/* ==========================================================================
-   Dark theme
-   ========================================================================== */
-[data-theme="dark"] {
+/* Every dashboard (dash-body) and marketing/auth (cd-body) page is a dark
+   surface, so the document itself must use a dark color-scheme. Native
+   <select> option popups follow the ROOT element's color-scheme (not the
+   control's), so without this they render as a white panel on the dark UI. */
+html:has(body.dash-body),
+html:has(body.cd-body) {
   color-scheme: dark;
-
-  /* Brand — lifted indigo for legibility on dark surfaces */
-  --primary-color: #818cf8; /* indigo-400 */
-  --primary-color-hover: #6366f1;
-  --primary-color-active: #c7d2fe; /* used as fg on tinted bg */
-  --primary-color-soft: #1e1b4b; /* deep indigo "soft" surface */
-  --primary-color-tint: #312e81;
-  --accent-violet: #a78bfa;
-  --accent-amber: #fbbf24;
-
-  /* Neutrals */
-  --bg-color: #0b1020;
-  --surface-color: #111729;
-  --border-color: #1f2a44;
-  --border-color-strong: #334155;
-  --text-color: #f1f5f9;
-  --text-color-soft: #cbd5e1;
-  --text-color-muted: #94a3b8;
-
-  /* Semantic — desaturated for dark BG, matching contrast pair */
-  --success-color: #4ade80;
-  --success-color-bg: #14532d;
-  --success-color-fg: #bbf7d0;
-  --warning-color: #fbbf24;
-  --warning-color-bg: #78350f;
-  --warning-color-fg: #fde68a;
-  --danger-color: #f87171;
-  --danger-color-bg: #7f1d1d;
-  --danger-color-fg: #fecaca;
-  --info-color-bg: #1e3a8a;
-  --info-color-fg: #bfdbfe;
-
-  /* Shadows — softer in dark */
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
-  --shadow-2: 0 4px 6px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.25);
-  --shadow-3:
-    0 12px 24px -10px rgba(0, 0, 0, 0.55), 0 6px 12px -6px rgba(0, 0, 0, 0.35);
-  --shadow-4:
-    0 24px 48px -16px rgba(0, 0, 0, 0.65), 0 12px 24px -8px rgba(0, 0, 0, 0.4);
-
-  --focus-ring: 0 0 0 3px rgba(129, 140, 248, 0.3);
-
-  --bs-link-color: var(--primary-color);
-  --bs-link-hover-color: #a5b4fc;
-  --bs-body-color: var(--text-color);
-  --bs-body-bg: var(--bg-color);
 }
 
-/* Glass navbar — dark variant */
-[data-theme="dark"] .tp-navbar {
-  background: rgba(11, 16, 32, 0.75);
-  border-bottom-color: var(--border-color);
+/* Unified dark <select> dropdown look across the whole site — content areas,
+   modals, the marketing/landing pages and the reports app. Scoped to the dark
+   body classes so the only genuinely light page (the reports login) is left
+   alone. color-scheme darkens the popup chrome; the option rules color the
+   list itself for browsers that don't fully theme it from color-scheme. */
+body.dash-body select,
+body.cd-body select {
+  color-scheme: dark;
 }
-
-/* Bootstrap dropdown surface in dark */
-[data-theme="dark"] .dropdown-menu {
-  background: var(--surface-color);
+body.dash-body option,
+body.dash-body optgroup,
+body.cd-body option,
+body.cd-body optgroup {
+  background-color: #2a2c36;
   color: var(--text-color);
-}
-
-/* Alerts — dark variants */
-[data-theme="dark"] .alert-success {
-  background: #052e16;
-  border-color: #14532d;
-  color: #86efac;
-}
-[data-theme="dark"] .alert-danger {
-  background: #2c0a0a;
-  border-color: #7f1d1d;
-  color: #fca5a5;
-}
-[data-theme="dark"] .alert-warning {
-  background: #261603;
-  border-color: #78350f;
-  color: #fcd34d;
-}
-[data-theme="dark"] .alert-info {
-  background: #0b1f3a;
-  border-color: #1e3a8a;
-  color: #93c5fd;
-}
-
-/* Validation summary (inherits .alert-danger above) */
-
-/* Stat icon colour variants — desaturate for dark */
-[data-theme="dark"] .tp-stat-icon {
-  background: #1e1b4b;
-  color: #c7d2fe;
-}
-[data-theme="dark"] .tp-stat-icon.amber {
-  background: #2a1a06;
-  color: #fcd34d;
-}
-[data-theme="dark"] .tp-stat-icon.green {
-  background: #052e16;
-  color: #86efac;
-}
-[data-theme="dark"] .tp-stat-icon.violet {
-  background: #2e1065;
-  color: #c4b5fd;
-}
-
-/* Prerequisite chip on course cards */
-[data-theme="dark"] .tp-prereq {
-  background: #261603;
-  border-color: #78350f;
-  color: #fcd34d;
-}
-
-/* Code chip */
-[data-theme="dark"] code {
-  background: #0b1224;
-  color: #c7d2fe;
-  border-color: var(--border-color);
-}
-
-/* Buttons that hardcoded shadows tone down in dark */
-[data-theme="dark"] .btn-primary {
-  color: #0b1020;
-  box-shadow: 0 6px 14px -8px rgba(129, 140, 248, 0.55);
-}
-[data-theme="dark"] .btn-primary:hover,
-[data-theme="dark"] .btn-primary:focus-visible {
-  color: #0b1020;
-}
-
-/* Outline-primary readability */
-[data-theme="dark"] .btn-outline-primary {
-  color: var(--primary-color);
-  border-color: #3730a3;
-}
-[data-theme="dark"] .btn-outline-primary:hover,
-[data-theme="dark"] .btn-outline-primary:focus-visible {
-  background: var(--primary-color);
-  color: #0b1020;
-  border-color: var(--primary-color);
-}
-
-/* Outline-danger border */
-[data-theme="dark"] .btn-outline-danger {
-  border-color: #7f1d1d;
-}
-
-/* Hero looks the same (already dark by design) */
-
-/* Auth shell mark shadow softer in dark */
-[data-theme="dark"] .tp-auth-mark {
-  box-shadow: 0 10px 22px -8px rgba(0, 0, 0, 0.6);
-}
-
-/* Brand mark shadow softer in dark */
-[data-theme="dark"] .tp-brand-mark {
-  box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
-}
-
-/* Empty state dashed border */
-[data-theme="dark"] .tp-empty {
-  background: var(--surface-color);
-  border-color: var(--border-color-strong);
-}
-[data-theme="dark"] .tp-empty i {
-  background: var(--bg-color);
-}
-
-/* Form controls placeholder readability */
-[data-theme="dark"] .form-control,
-[data-theme="dark"] .form-select {
-  background-color: #0b1224;
-  color: var(--text-color);
-}
-[data-theme="dark"] .form-control::placeholder {
-  color: var(--text-color-muted);
-}
-[data-theme="dark"] .input-group .input-group-text {
-  background: #0b1224;
-  color: var(--text-color-muted);
-}
-
-/* Theme toggle visual: rotate icon on theme change */
-[data-theme="dark"] .tp-theme-icon {
-  transform: rotate(-12deg);
 }
 
 /* ==========================================================================
@@ -2514,17 +2310,6 @@ code {
   color: transparent;
 }
 
-[data-theme="dark"] .tp-bento-feature {
-  background:
-    radial-gradient(
-      circle at 80% 0%,
-      rgba(124, 58, 237, 0.25),
-      transparent 55%
-    ),
-    linear-gradient(var(--surface-color), var(--surface-color)) padding-box,
-    linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%) border-box;
-}
-
 .tp-bento-cell .tp-stat-icon {
   margin-bottom: 0.65rem;
 }
@@ -2614,20 +2399,6 @@ code {
     radial-gradient(
       ellipse 50% 70% at 10% 90%,
       rgba(236, 72, 153, 0.1),
-      transparent 65%
-    ),
-    linear-gradient(180deg, var(--bg-color) 0%, var(--surface-color) 100%);
-}
-[data-theme="dark"] .tp-spy-hero {
-  background:
-    radial-gradient(
-      ellipse 60% 80% at 90% 30%,
-      rgba(99, 102, 241, 0.28),
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 50% 70% at 10% 90%,
-      rgba(236, 72, 153, 0.15),
       transparent 65%
     ),
     linear-gradient(180deg, var(--bg-color) 0%, var(--surface-color) 100%);

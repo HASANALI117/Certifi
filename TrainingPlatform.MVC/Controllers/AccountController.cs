@@ -23,19 +23,22 @@ public class AccountController : Controller
     private readonly IUserClaimsPrincipalFactory<AppUser> _claimsFactory;
     private readonly IAuthApiClient _authApi;
     private readonly AppDbContext _db;
+    private readonly INavLinks _navLinks;
 
     public AccountController(
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager,
         IUserClaimsPrincipalFactory<AppUser> claimsFactory,
         IAuthApiClient authApi,
-        AppDbContext db)
+        AppDbContext db,
+        INavLinks navLinks)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _claimsFactory = claimsFactory;
         _authApi = authApi;
         _db = db;
+        _navLinks = navLinks;
     }
 
     [HttpGet]
@@ -123,7 +126,16 @@ public class AccountController : Controller
         }
 
         await IssueCookieWithApiTokenAsync(user, model.Email, model.Password, model.RememberMe);
-        return this.SafeLocalRedirect(returnUrl, "Index", "Dashboard");
+
+        // A local return URL (e.g. a deep-link that bounced through login) wins.
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return LocalRedirect(returnUrl);
+
+        // Coordinators land on the Reports overview; other roles on the dashboard.
+        if (await _userManager.IsInRoleAsync(user, "TrainingCoordinator"))
+            return Redirect(_navLinks.Reports("/Dashboard"));
+
+        return RedirectToAction("Index", "Dashboard");
     }
 
     // One sign-in flow: build the Identity principal, attach the API JWT as a

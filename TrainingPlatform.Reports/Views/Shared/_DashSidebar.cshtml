@@ -21,37 +21,6 @@
 
     <nav class="dash-nav">
         <div class="dash-nav-section dash-nav-section--readonly">
-            <span>Manage</span>
-        </div>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Dashboard")">
-            <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Courses")">
-            <i class="bi bi-collection"></i><span>Courses</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/CourseSessions")">
-            <i class="bi bi-calendar-event"></i><span>Sessions</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Certification/Lookup")">
-            <i class="bi bi-patch-check"></i><span>Certifications</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Enrollments/Manage")">
-            <i class="bi bi-people-fill"></i><span>Enrollments</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Categories")">
-            <i class="bi bi-tags"></i><span>Categories</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Classrooms")">
-            <i class="bi bi-building"></i><span>Classrooms</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Instructors")">
-            <i class="bi bi-person-video3"></i><span>Instructors</span>
-        </a>
-        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Trainees")">
-            <i class="bi bi-person"></i><span>Trainees</span>
-        </a>
-
-        <div class="dash-nav-section dash-nav-section--readonly">
             <span>Reports</span>
             <span class="dash-readonly-badge">Read-only</span>
         </div>
@@ -76,6 +45,34 @@
         <a class="dash-nav-item @NavActive("Reports", "Trainees")" asp-controller="Reports" asp-action="Trainees">
             <i class="bi bi-people"></i><span>Trainees</span>
         </a>
+
+        <div class="dash-nav-section">
+            <span>Manage</span>
+        </div>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Courses")">
+            <i class="bi bi-collection"></i><span>Courses</span>
+        </a>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/CourseSessions")">
+            <i class="bi bi-calendar-event"></i><span>Sessions</span>
+        </a>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Certification/Lookup")">
+            <i class="bi bi-patch-check"></i><span>Certifications</span>
+        </a>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Enrollments/Manage")">
+            <i class="bi bi-people-fill"></i><span>Enrollments</span>
+        </a>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Categories")">
+            <i class="bi bi-tags"></i><span>Categories</span>
+        </a>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Classrooms")">
+            <i class="bi bi-building"></i><span>Classrooms</span>
+        </a>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Instructors")">
+            <i class="bi bi-person-video3"></i><span>Instructors</span>
+        </a>
+        <a class="dash-nav-item dash-nav-item--external" href="@NavLinks.Mvc("/Trainees")">
+            <i class="bi bi-person"></i><span>Trainees</span>
+        </a>
     </nav>
 
     <div class="dash-sidebar-footer">
@@ -93,9 +90,13 @@
                     <div class="small text-muted">Signed in as</div>
                     <div class="fw-semibold text-truncate">@userName</div>
                 </div>
-                <a class="dropdown-item py-2 px-3" href="@NavLinks.Mvc("/Dashboard")">
-                    <i class="bi bi-arrow-left me-2"></i>Back to management
-                </a>
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                    <strong class="small"><i class="bi bi-bell-fill me-1"></i>Notifications</strong>
+                    <button type="button" class="tp-notif-clear-btn" data-notif-clear>Mark all read</button>
+                </div>
+                <div class="list-group list-group-flush tp-notif-list" data-notif-list>
+                    <div class="list-group-item text-muted small text-center py-3">No notifications yet.</div>
+                </div>
                 <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0 border-top">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="dropdown-item tp-user-logout text-danger py-2 px-3">
