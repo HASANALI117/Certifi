@@ -66,8 +66,11 @@
                         <td data-label="Instructor">@s.InstructorName</td>
                         <td data-label="Classroom">@s.ClassroomName</td>
                         <td data-label="Fill rate">
-                            <div class="dash-progress">
-                                <div class="dash-progress-fill @fillClass" style="width:@(widthCss)%;">@fill.ToString("F0")%</div>
+                            <div class="dash-progress-wrap">
+                                <div class="dash-progress">
+                                    <div class="dash-progress-fill @fillClass" style="width:@(widthCss)%;"></div>
+                                </div>
+                                <span class="dash-progress-value">@fill.ToString("F0")%</span>
                             </div>
                         </td>
                         <td data-label="Enrolled / Cap" class="text-end">@s.EnrolledCount / @s.Capacity</td>

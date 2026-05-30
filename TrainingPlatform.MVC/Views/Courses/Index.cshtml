@@ -10,45 +10,35 @@
         <h1 class="tp-page-title">Courses</h1>
         <p class="tp-page-subtitle">Discover courses by category, prerequisite, or fee.</p>
     </div>
-    <form method="get" class="tp-search-form">
-        <div class="tp-search-input">
-            <i class="bi bi-search"></i>
-            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search" />
-            @if (ViewBag.SelectedCategoryId != null)
-            {
-                <input type="hidden" name="categoryId" value="@ViewBag.SelectedCategoryId" />
-            }
-            <button type="submit" class="tp-search-submit" title="Search">
-                <i class="bi bi-arrow-right"></i>
-            </button>
-        </div>
+    <div class="dash-page-toolbar">
+        <input type="text" id="courseSearch" class="dash-input" placeholder="Search courses…" />
         @if (User.IsInRole("TrainingCoordinator"))
         {
-            <a asp-action="Create" class="btn btn-primary tp-search-cta">
+            <a asp-action="Create" class="tp-cta">
                 <i class="bi bi-plus-lg"></i> New Course
             </a>
         }
-    </form>
+    </div>
 </div>
+
+<nav class="tp-category-tabs" aria-label="Filter by category">
+    <a asp-action="Index" asp-route-search="@ViewBag.Search"
+       class="tp-category-tab @(ViewBag.SelectedCategoryId == null ? "active" : null)">
+        All
+        <span class="tp-tab-count">@Model.Count()</span>
+    </a>
+    @foreach (var cat in categoryStats)
+    {
+        <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-search="@ViewBag.Search"
+           class="tp-category-tab @(ViewBag.SelectedCategoryId?.ToString() == cat.Id.ToString() ? "active" : null)">
+            @cat.Name
+            <span class="tp-tab-count">@cat.CourseCount</span>
+        </a>
+    }
+</nav>
 
 <div class="tp-courses-layout" id="tp-courses-layout">
     <section class="tp-courses-main">
-        <nav class="tp-category-tabs" aria-label="Filter by category">
-            <a asp-action="Index" asp-route-search="@ViewBag.Search"
-               class="tp-category-tab @(ViewBag.SelectedCategoryId == null ? "active" : null)">
-                All
-                <span class="tp-tab-count">@Model.Count()</span>
-            </a>
-            @foreach (var cat in categoryStats)
-            {
-                <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-search="@ViewBag.Search"
-                   class="tp-category-tab @(ViewBag.SelectedCategoryId?.ToString() == cat.Id.ToString() ? "active" : null)">
-                    @cat.Name
-                    <span class="tp-tab-count">@cat.CourseCount</span>
-                </a>
-            }
-        </nav>
-
         @if (!Model.Any())
         {
             <div class="tp-empty">
@@ -238,6 +228,27 @@
                 });
 
                 selectCourse(list.querySelector('.tp-course-row'));
+            }
+
+            // Live client-side search — mirrors the Reports/Trainees search:
+            // filters the rendered course rows as the user types, no reload.
+            const search = document.getElementById('courseSearch');
+            if (search && list) {
+                const rows = Array.prototype.slice.call(list.querySelectorAll('.tp-course-row'));
+                search.addEventListener('input', function () {
+                    const q = this.value.trim().toLowerCase();
+                    let firstVisible = null;
+                    rows.forEach(function (r) {
+                        const d = r.dataset;
+                        const hay = ((d.courseTitle || '') + ' ' +
+                                     (d.courseDescription || '') + ' ' +
+                                     (d.courseCategory || '')).toLowerCase();
+                        const show = !q || hay.indexOf(q) !== -1;
+                        r.style.display = show ? '' : 'none';
+                        if (show && !firstVisible) firstVisible = r;
+                    });
+                    if (firstVisible) selectCourse(firstVisible);
+                });
             }
         })();
     </script>

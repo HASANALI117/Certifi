@@ -1,6 +1,10 @@
 /* Theme tokens — scoped so they only override globals on dashboard pages.
    Without scoping they would repaint marketing/login. */
 body.dash-body {
+  /* The dashboard is permanently dark, so tell the browser to render native
+     controls (select popups, date/time picker indicators, spinners,
+     scrollbars) in their dark variants instead of the default light ones. */
+  color-scheme: dark;
   --bg-color: #24252d;
   --panel-bg: rgba(36, 37, 45, 0.6);
   --panel-bg-soft: rgba(36, 37, 45, 0.35);
@@ -1017,6 +1021,51 @@ body.dash-body::after {
 .dash-content-area label {
   color: var(--text-color-soft);
 }
+/* Native <select> popups + date/time picker indicators follow color-scheme. */
+.dash-content-area .form-control,
+.dash-content-area .form-select,
+.dash-input {
+  color-scheme: dark;
+}
+/* Explicit option row colors so the popup list is dark-on-light-text even on
+   browsers that don't fully theme the popup from color-scheme alone. */
+.dash-content-area .form-select option,
+.dash-content-area .form-control option,
+.dash-input option {
+  background-color: var(--panel-bg-solid);
+  color: var(--text-color);
+}
+/* File input "Choose file" button — Bootstrap defaults it to a light surface,
+   which reads as a white block on the dark form. Recolor to a glass panel. */
+.dash-content-area .form-control::file-selector-button {
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+/* Match Bootstrap's :hover:not(...)::file-selector-button specificity (and beat
+   it with the extra .dash-content-area class) so hover keeps dark bg + light
+   text instead of reverting to Bootstrap's light surface. */
+.dash-content-area .form-control:hover:not(:disabled):not([readonly])::file-selector-button {
+  background: var(--panel-bg);
+  color: var(--text-color);
+}
+/* Helper text — Bootstrap's .form-text is a dark grey unreadable on the
+   dark form. Lift to the dashboard's muted-light token. */
+.dash-content-area .form-text {
+  color: var(--text-color-muted);
+}
+/* Bootstrap .text-muted resolves to a dark grey (light-theme secondary
+   color) — unreadable on dark surfaces. */
+.dash-content-area .text-muted {
+  color: var(--text-color-muted) !important;
+}
+/* Inline code chips (e.g. trainee public IDs) — the base rule paints them
+   dark indigo on the dark background. Use a legible light-indigo chip. */
+.dash-content-area code {
+  background: rgba(255, 255, 255, 0.06);
+  color: #c7d2fe;
+  border-color: var(--border-color);
+}
 
 /* Buttons — pill shape + accent fill to match .dash-btn on the Manage page. */
 .dash-content-area .btn {
@@ -1220,15 +1269,9 @@ body.dash-body::after {
 }
 .tp-notif-unread {
   background:
-    linear-gradient(0deg, rgba(59, 130, 246, 0.06), rgba(59, 130, 246, 0.06)),
-    #fff;
-  border-left: 3px solid #3b82f6;
-}
-[data-bs-theme="dark"] .tp-notif-unread {
-  background:
     linear-gradient(0deg, rgba(96, 165, 250, 0.1), rgba(96, 165, 250, 0.1)),
     transparent;
-  border-left-color: #60a5fa;
+  border-left: 3px solid #60a5fa;
 }
 .tp-notif-icon {
   display: inline-flex;
@@ -1241,12 +1284,9 @@ body.dash-body::after {
 }
 .tp-toast-container .toast {
   min-width: 280px;
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
-}
-[data-bs-theme="dark"] .tp-toast-container .toast {
   background: #1f2937;
   color: #f3f4f6;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
 }
 
 /* ---------- Sidebar user menu (notifications + logout submenu) ---------- */
@@ -1407,9 +1447,6 @@ body.dash-body::after {
   transition: background 0.15s ease;
 }
 .tp-live-pill:hover {
-  background: rgba(15, 23, 42, 0.04);
-}
-[data-bs-theme="dark"] .tp-live-pill:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -2040,7 +2077,9 @@ body.dash-body::after {
 .dash-chart-wrap-sm { height: 220px; }
 .dash-chart-wrap-lg { height: 420px; }
 
-/* Progress bar inline inside a data-table cell. */
+/* Progress bar inline inside a data-table cell. The % value is rendered as a
+   separate label to the right of the bar (see .dash-progress-wrap), so the
+   bar itself is a pure visual fill at its true width. */
 .dash-progress {
   position: relative;
   height: 14px;
@@ -2053,17 +2092,30 @@ body.dash-body::after {
   inset: 0 auto 0 0;
   border-radius: 999px;
   background: var(--accent-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0f1014;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
 }
 .dash-progress-fill.is-warn   { background: #f5a524; }
-.dash-progress-fill.is-danger { background: #f15a5a; color: #fff; }
-.dash-progress-fill.is-info   { background: #4ea3ff; color: #fff; }
+.dash-progress-fill.is-danger { background: #f15a5a; }
+.dash-progress-fill.is-info   { background: #4ea3ff; }
+
+/* Bar + right-aligned white % label on one row. */
+.dash-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.dash-progress-wrap .dash-progress {
+  flex: 1;
+}
+.dash-progress-value {
+  flex-shrink: 0;
+  min-width: 3em;
+  text-align: right;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
 
 .dash-input {
   background: rgba(255, 255, 255, 0.04);
@@ -2073,6 +2125,8 @@ body.dash-body::after {
   padding: 8px 12px;
   font-size: 0.9rem;
   min-width: 220px;
+  /* Render the native <option> popup dark instead of white-on-white. */
+  color-scheme: dark;
 }
 .dash-input:focus {
   outline: none;

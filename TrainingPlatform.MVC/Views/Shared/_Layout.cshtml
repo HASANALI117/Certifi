@@ -10,17 +10,6 @@
     <title>@ViewData["Title"] - Certifi</title>
     <script type="importmap"></script>
 
-    <script>
-        (function () {
-            try {
-                var stored = localStorage.getItem('tp-theme');
-                var theme = stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                document.documentElement.setAttribute('data-theme', theme);
-                document.documentElement.setAttribute('data-bs-theme', theme);
-            } catch (e) { }
-        })();
-    </script>
-
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
@@ -82,27 +71,6 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        (function () {
-            var btn = document.getElementById('tpThemeToggle');
-            if (!btn) return;
-            var icon = btn.querySelector('.tp-theme-icon');
-            function apply(theme) {
-                document.documentElement.setAttribute('data-theme', theme);
-                document.documentElement.setAttribute('data-bs-theme', theme);
-                try { localStorage.setItem('tp-theme', theme); } catch (e) { }
-                if (icon) {
-                    icon.className = 'tp-theme-icon bi ' + (theme === 'dark' ? 'bi-sun-fill' : 'bi-moon-stars-fill');
-                }
-                btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-            }
-            apply(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
-            btn.addEventListener('click', function () {
-                var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-                apply(current === 'dark' ? 'light' : 'dark');
-            });
-        })();
-    </script>
     <script>
         (function () {
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

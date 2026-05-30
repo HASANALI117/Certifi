@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using TrainingPlatform.API.Data;
 using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
+using TrainingPlatform.MVC.Services;
 
 namespace TrainingPlatform.MVC.Controllers;
 
@@ -13,11 +15,30 @@ public class DashboardController : Controller
 {
     private readonly AppDbContext _db;
     private readonly UserManager<AppUser> _userManager;
+    private readonly INavLinks _navLinks;
 
-    public DashboardController(AppDbContext db, UserManager<AppUser> userManager)
+    public DashboardController(AppDbContext db, UserManager<AppUser> userManager, INavLinks navLinks)
     {
         _db = db;
         _userManager = userManager;
+        _navLinks = navLinks;
+    }
+
+    // The MVC dashboard is for Instructors and Trainees only. Coordinators were
+    // moved to the Reports overview as their landing page and the link was
+    // removed from their sidebar — this guard blocks the remaining direct-URL
+    // access path (e.g. typing /Dashboard) and bounces them to that overview.
+    // Runs after [Authorize], so User is always an authenticated principal here,
+    // and covers every action on this controller (not just Index).
+    public override void OnActionExecuting(ActionExecutingContext context)
+    {
+        if (User.IsInRole("TrainingCoordinator"))
+        {
+            context.Result = Redirect(_navLinks.Reports("/Dashboard"));
+            return;
+        }
+
+        base.OnActionExecuting(context);
     }
 
     private static string EscapeLike(string input) =>
