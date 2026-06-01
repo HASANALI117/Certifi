@@ -1989,6 +1989,12 @@ thead.table-dark,
   padding: 2rem 0;
 }
 
+/* Stack variant — card with content (e.g. lookup results) below it, still
+   centered. A single card behaves identically to the plain centered shell. */
+.tp-auth-shell--stack {
+  flex-direction: column;
+}
+
 .tp-auth-card {
   background: var(--surface-color);
   border: 1px solid var(--border-color);
