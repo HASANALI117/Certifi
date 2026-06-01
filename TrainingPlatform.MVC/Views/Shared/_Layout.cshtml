@@ -23,6 +23,19 @@
     @{
         var fullWidth = ViewData["FullWidth"] as bool? ?? false;
         var bodyWrapClass = fullWidth ? "cd-container" : "cd-container container py-4";
+        var routeVals = ViewContext.RouteData.Values;
+        // The corner brand only appears on the public Courses catalog (which has
+        // no logo of its own). Other home pages use their existing logo instead.
+        var showCornerBrand =
+            string.Equals(routeVals["controller"]?.ToString(), "Courses", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(routeVals["action"]?.ToString(), "Index", StringComparison.OrdinalIgnoreCase);
+    }
+    @if (showCornerBrand)
+    {
+        <a class="cd-brand" asp-controller="Home" asp-action="Index" aria-label="Certifi — back to home">
+            <img src="~/images/logo-3.png" alt="Certifi" class="cd-brand-logo" />
+            <span class="cd-brand-text">Certifi</span>
+        </a>
     }
     <div class="@bodyWrapClass">
         @if (TempData["Success"] != null)

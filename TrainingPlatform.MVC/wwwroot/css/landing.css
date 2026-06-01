@@ -37,6 +37,38 @@ body {
 .cd-footer {
   flex-shrink: 0;
 }
+
+/* Persistent brand in the top-left corner of every public/marketing page.
+   Links back to Home; sits above page content in normal flow so it never
+   overlaps. (Dashboard pages use a different layout and are unaffected.) */
+.cd-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  align-self: flex-start;
+  padding: 1.25rem 1.5rem 0;
+  text-decoration: none;
+  color: #fff;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.15rem;
+  position: relative;
+  z-index: 10;
+  transition: opacity 0.15s ease;
+}
+.cd-brand:hover,
+.cd-brand:focus-visible {
+  color: #fff;
+  opacity: 0.82;
+}
+.cd-brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
 body::before,
 body::after {
   content: "";
@@ -794,6 +826,15 @@ label {
     drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
   mix-blend-mode: screen;
 }
+/* The auth-card logo links back to Home; keep it centered, add a hover cue. */
+.tp-auth-logo-link {
+  display: block;
+  transition: opacity 0.15s ease;
+}
+.tp-auth-logo-link:hover,
+.tp-auth-logo-link:focus-visible {
+  opacity: 0.82;
+}
 .tp-auth-title {
   color: var(--text-color);
 }
@@ -829,6 +870,15 @@ label {
 /* Submit uses the landing .button.special — just make it span the card. */
 .tp-auth-card .button {
   width: 100%;
+}
+/* Certificate-lookup results sit below the auth card, matched to its width. */
+.tp-auth-result {
+  width: calc(100% - 3em);
+  max-width: 32em;
+  margin-inline: auto;
+}
+.tp-auth-result:empty {
+  display: none;
 }
 .tp-auth-footer {
   color: var(--text-color-soft);
