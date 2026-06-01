@@ -1166,6 +1166,85 @@ body.dash-body::after {
 }
 
 /* ============================================================
+   Mobile hamburger + off-canvas drawer (base — hidden on desktop)
+   ============================================================ */
+/* The top bar that holds the hamburger; only shown once the sidebar collapses. */
+.dash-mobile-bar {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0.5rem;
+  z-index: 1030;
+}
+.dash-hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.dash-hamburger:hover {
+  background: var(--panel-bg);
+  border-color: var(--border-color-strong);
+}
+.dash-hamburger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+.dash-mobile-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: var(--text-color);
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+}
+.dash-mobile-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
+/* Dimmed backdrop behind the open drawer. */
+.dash-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Lock page scroll while the drawer is open. */
+body.dash-body.dash-drawer-open {
+  overflow: hidden;
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 1200px) {
@@ -1183,21 +1262,38 @@ body.dash-body::after {
 }
 
 @media (max-width: 900px) {
+  /* Single column — the sidebar leaves the grid flow and becomes a drawer. */
   .dash-shell {
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: 1fr;
   }
-  .dash-brand-text,
-  .dash-nav-item span,
-  .dash-logout-btn span,
-  .dash-nav-section {
-    display: none;
+
+  /* Off-canvas drawer: full-height panel that slides in from the left. */
+  .dash-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 264px;
+    max-width: 82vw;
+    z-index: 1045;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .dash-nav-item {
-    justify-content: center;
+  .dash-sidebar.is-open {
+    transform: translateX(0);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   }
-  .dash-nav-item i {
-    width: auto;
+  .dash-sidebar-backdrop.is-open {
+    display: block;
   }
+
+  /* Reveal the hamburger bar that drives the drawer. */
+  .dash-mobile-bar {
+    display: flex;
+  }
+
   .dash-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1208,43 +1304,26 @@ body.dash-body::after {
   .dash-user-chip {
     justify-self: start;
   }
+  /* Reclaim horizontal space — the desktop 1.5rem gutter is too much on phones. */
+  .dash-main-wrap {
+    padding: 1rem;
+  }
 }
 
 @media (max-width: 640px) {
-  .dash-shell {
+  /* Stack the right-rail widgets in a single column on phones. */
+  .dash-rail {
     grid-template-columns: 1fr;
   }
-  .dash-sidebar {
-    position: static;
-    height: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 0.85rem 1rem;
-    gap: 0.5rem;
+}
+
+/* Very small screens — single-column stat strip and tighter gutters. */
+@media (max-width: 460px) {
+  .dash-stats {
+    grid-template-columns: 1fr;
   }
-  .dash-brand {
-    padding: 0;
-  }
-  .dash-nav {
-    flex: 1 1 auto;
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 0.35rem;
-  }
-  .dash-nav-item {
-    padding: 0.5rem 0.65rem;
-  }
-  .dash-sidebar-footer {
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  .dash-sidebar-footer .dash-logout-btn {
-    padding: 0.5rem 0.65rem;
-  }
-  .dash-rail {
-    display: flex;
+  .dash-main-wrap {
+    padding: 0.85rem;
   }
 }
 
