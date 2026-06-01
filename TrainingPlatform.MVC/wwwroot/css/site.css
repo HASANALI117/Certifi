@@ -885,7 +885,11 @@ textarea.form-control {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-1);
-  overflow: hidden;
+  /* Scroll wide tables horizontally inside the card instead of clipping or
+     crushing columns on narrow screens. The nowrap thead keeps each column a
+     readable min width, so the card scrolls cleanly on phones/tablets. */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tp-table-card .table {
@@ -2269,6 +2273,41 @@ code {
   transform: translateY(1px);
 }
 
+/* Ghost variant for secondary / cancel actions — mirrors the landing "Log In"
+   button (.button): transparent with a 2px inset outline, white uppercase
+   label, subtle fill on hover. Same size as .tp-cta so they pair on a row. */
+.tp-cta-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.75rem 1.6rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+.tp-cta-ghost:hover,
+.tp-cta-ghost:focus-visible {
+  background-color: rgba(255, 255, 255, 0.075);
+  color: #fff;
+}
+.tp-cta-ghost:active {
+  transform: translateY(1px);
+}
+
 /* ==========================================================================
    Toolbar search input (.dash-input)
    Shared definition of the reports-style search field so the Courses search
@@ -3304,4 +3343,56 @@ body.dash-body .tp-empty {
 }
 body.dash-body .tp-empty h4 {
   color: var(--text-color);
+}
+
+/* ==========================================================================
+   Responsive refinements (small screens)
+   Cross-cutting tweaks so dense desktop layouts stay usable on phones.
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Page-header rows: let title + actions stack and actions go full width. */
+  .tp-page-header,
+  .tp-courses-header {
+    align-items: stretch;
+  }
+  .tp-page-actions {
+    width: 100%;
+  }
+  .tp-page-actions > .tp-cta,
+  .tp-page-actions > .tp-cta-ghost,
+  .tp-page-actions > .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Tighten generous desktop padding on the main surfaces. */
+  .tp-surface-pad {
+    padding: 1.25rem;
+  }
+  .tp-form-card {
+    padding: 1.35rem;
+  }
+  .tp-hero {
+    padding: 2.5rem 1.5rem;
+    border-radius: 18px;
+  }
+  /* Auth card sits flush with comfortable side gutters on tiny screens. */
+  .tp-auth-card {
+    padding: 1.75rem 1.5rem;
+  }
+  /* Page title scales down so long titles don't wrap awkwardly. */
+  .tp-page-title {
+    font-size: 1.4rem;
+  }
+  /* Tables keep a readable min width and scroll inside the card. */
+  .tp-table-card .table {
+    min-width: 38rem;
+  }
+  /* Detail rows stack label over value (also covered above, kept explicit). */
+  .tp-detail-list .tp-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
 }

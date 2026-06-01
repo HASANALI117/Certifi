@@ -1,3 +1,4 @@
+@inject INavLinks NavLinks
 @{
     Layout = null;
 }
@@ -22,16 +23,66 @@
         <partial name="_DashSidebar" />
 
         <div class="dash-main-wrap">
+            <header class="dash-mobile-bar">
+                <button type="button" class="dash-hamburger" data-dash-toggle
+                        aria-label="Open navigation menu" aria-controls="dashSidebar" aria-expanded="false">
+                    <i class="bi bi-list"></i>
+                </button>
+                <a class="dash-mobile-brand" href="@NavLinks.Mvc("/Dashboard")">
+                    <img src="~/images/logo-3.png" alt="Certifi" class="dash-mobile-logo" />
+                    <span>Certifi</span>
+                </a>
+            </header>
             <main class="dash-content-area">
                 @RenderBody()
             </main>
         </div>
+
+        <div class="dash-sidebar-backdrop" data-dash-backdrop aria-hidden="true"></div>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Mobile off-canvas sidebar (hamburger) toggle.
+        (function () {
+            var sidebar = document.getElementById('dashSidebar');
+            var backdrop = document.querySelector('[data-dash-backdrop]');
+            var toggles = document.querySelectorAll('[data-dash-toggle]');
+            if (!sidebar || !backdrop) return;
+            var mq = window.matchMedia('(max-width: 900px)');
+
+            function setExpanded(open) {
+                toggles.forEach(function (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+            }
+            function open() {
+                sidebar.classList.add('is-open');
+                backdrop.classList.add('is-open');
+                document.body.classList.add('dash-drawer-open');
+                setExpanded(true);
+            }
+            function close() {
+                sidebar.classList.remove('is-open');
+                backdrop.classList.remove('is-open');
+                document.body.classList.remove('dash-drawer-open');
+                setExpanded(false);
+            }
+
+            toggles.forEach(function (b) {
+                b.addEventListener('click', function () {
+                    sidebar.classList.contains('is-open') ? close() : open();
+                });
+            });
+            backdrop.addEventListener('click', close);
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') close();
+            });
+            // Leaving mobile width resets the drawer so it can't get stuck open.
+            mq.addEventListener('change', function (e) { if (!e.matches) close(); });
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
