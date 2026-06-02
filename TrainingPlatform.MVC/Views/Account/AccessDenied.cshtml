@@ -1,13 +1,18 @@
-@{ ViewData["Title"] = "Access Denied"; }
+@{
+    ViewData["Title"] = "Access Denied";
+    // Force the landing/auth layout so this matches the login box. _ViewStart
+    // would otherwise pick _DashboardLayout for authenticated users (this page
+    // is reached while logged in), and that layout doesn't load landing.css —
+    // leaving the tp-auth-* card and .button styles unstyled.
+    Layout = "_Layout";
+}
 
 <div class="tp-auth-shell">
-    <div class="tp-auth-card text-center">
-        <div class="tp-auth-mark" style="background: linear-gradient(135deg, #dc2626 0%, #f97316 100%);">
-            <i class="bi bi-shield-lock-fill"></i>
-        </div>
+    <div class="tp-auth-card">
         <h1 class="tp-auth-title">Access denied</h1>
         <p class="tp-auth-sub">You don't have permission to view this page. If you believe this is a mistake, please contact a Training Coordinator.</p>
-        <a asp-controller="Home" asp-action="Index" class="btn btn-primary w-100">
+
+        <a asp-controller="Home" asp-action="Index" class="button special">
             <i class="bi bi-house"></i> Go Home
         </a>
     </div>

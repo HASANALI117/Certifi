@@ -2314,6 +2314,40 @@ code {
   transform: translateY(1px);
 }
 
+/* Danger variant — same shape/size as .tp-cta, red fill for destructive
+   actions (e.g. delete confirmations). */
+.tp-cta-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.75rem 1.6rem;
+  border: 0;
+  border-radius: 6px;
+  background-color: #dc3545;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+.tp-cta-danger:hover,
+.tp-cta-danger:focus-visible {
+  background-color: #bb2d3b;
+  color: #fff;
+}
+.tp-cta-danger:active {
+  transform: translateY(1px);
+}
+
 /* ==========================================================================
    Toolbar search input (.dash-input)
    Shared definition of the reports-style search field so the Courses search
