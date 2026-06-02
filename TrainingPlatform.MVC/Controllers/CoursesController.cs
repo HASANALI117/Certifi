@@ -61,13 +61,7 @@ public class CoursesController : Controller
             })
             .ToListAsync();
 
-        ViewBag.Categories = await _db.CourseCategories
-            .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
-            .ToListAsync();
-        ViewBag.SelectedCategoryId = categoryId;
-        ViewBag.Search = search;
-
-        ViewBag.CategoryStats = await _db.CourseCategories
+        var categoryStats = await _db.CourseCategories
             .Select(c => new CategoryWidgetViewModel
             {
                 Id = c.Id,
@@ -76,7 +70,13 @@ public class CoursesController : Controller
             })
             .ToListAsync();
 
-        return View(courses);
+        return View(new CourseCatalogViewModel
+        {
+            Courses = courses,
+            CategoryStats = categoryStats,
+            Search = search,
+            SelectedCategoryId = categoryId
+        });
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
