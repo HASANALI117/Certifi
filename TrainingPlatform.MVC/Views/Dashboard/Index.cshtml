@@ -144,6 +144,58 @@
                 </div>
             }
         </section>
+
+        @if (Model.Role == "Trainee")
+        {
+            <section class="dash-panel" aria-labelledby="dash-notif-title">
+                <div class="dash-panel-head">
+                    <div>
+                        <h2 class="dash-panel-title" id="dash-notif-title">Latest notifications</h2>
+                        <div class="dash-panel-sub">@Model.Notifications.Count recent</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="dash-data-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Type</th>
+                                <th scope="col">Message</th>
+                                <th scope="col">Received</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Notifications.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="dash-td-empty">
+                                        <i class="bi bi-bell-slash" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                                        No recent alerts.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var note in Model.Notifications)
+                                {
+                                    <tr>
+                                        <td data-label="Type">
+                                            <span class="dash-pill dash-pill-muted">@note.Type</span>
+                                        </td>
+                                        <td data-label="Message">
+                                            <div class="dash-cell-line1">@note.Message</div>
+                                        </td>
+                                        <td data-label="Received">
+                                            <span class="dash-pill-plain">@note.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
     </div>
 
     <aside class="dash-rail">

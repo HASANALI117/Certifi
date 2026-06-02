@@ -16,6 +16,7 @@ public class DashboardViewModel
     public IReadOnlyList<DashboardCourseCard> Courses { get; set; } = [];
     public IReadOnlyList<DashboardSession> UpcomingSessions { get; set; } = [];
     public IReadOnlyList<DashboardProgressItem> LearningProgress { get; set; } = [];
+    public IReadOnlyList<Notification> Notifications { get; set; } = [];
 
     public DashboardStats Stats { get; set; } = new();
 }

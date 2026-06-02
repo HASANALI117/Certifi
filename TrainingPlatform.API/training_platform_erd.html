@@ -368,13 +368,19 @@
 <script>
 const entities = [
   { name: 'AspNetUsers', x: 60, y: 70, fields: [
-    ['string', 'Id', 'PK'], ['string', 'Email', ''], ['string', 'FirstName', ''], ['string', 'LastName', ''], ['string', 'Role', ''],
+    ['string', 'Id', 'PK'], ['string', 'Email', ''], ['string', 'FirstName', ''], ['string', 'LastName', ''],
+  ] },
+  { name: 'AspNetUserRoles', x: 60, y: 1180, fields: [
+    ['string', 'UserId', 'PK,FK'], ['string', 'RoleId', 'PK,FK'],
+  ] },
+  { name: 'AspNetRoles', x: 380, y: 1180, fields: [
+    ['string', 'Id', 'PK'], ['string', 'Name', ''], ['string', 'NormalizedName', ''],
   ] },
   { name: 'Trainees', x: 60, y: 390, fields: [
     ['int', 'Id', 'PK'], ['string', 'UserId', 'FK'], ['string', 'TraineePublicId', ''], ['string', 'Phone', ''], ['date', 'DateOfBirth', ''],
   ] },
   { name: 'Instructors', x: 520, y: 70, fields: [
-    ['int', 'Id', 'PK'], ['string', 'UserId', 'FK'], ['string', 'Bio', ''],
+    ['int', 'Id', 'PK'], ['string', 'UserId', 'FK'], ['string', 'Bio', ''], ['string', 'ExpertiseAreas', ''],
   ] },
   { name: 'InstructorAvailability', x: 935, y: 60, fields: [
     ['int', 'Id', 'PK'], ['int', 'InstructorId', 'FK'], ['int', 'DayOfWeek', ''], ['time', 'StartTime', ''], ['time', 'EndTime', ''],
@@ -386,7 +392,7 @@ const entities = [
     ['int', 'Id', 'PK'], ['string', 'Name', ''], ['string', 'Description', ''],
   ] },
   { name: 'Courses', x: 935, y: 350, fields: [
-    ['int', 'Id', 'PK'], ['int', 'CategoryId', 'FK'], ['int', 'PrerequisiteCourseId', 'FK'], ['string', 'Title', ''], ['int', 'DurationHours', ''], ['int', 'Capacity', ''], ['decimal', 'EnrollmentFee', ''],
+    ['int', 'Id', 'PK'], ['int', 'CategoryId', 'FK'], ['int', 'PrerequisiteCourseId', 'FK'], ['string', 'Title', ''], ['string', 'Description', ''], ['int', 'DurationHours', ''], ['int', 'Capacity', ''], ['decimal', 'EnrollmentFee', ''], ['string', 'ImageUrl', ''],
   ] },
   { name: 'Classrooms', x: 1450, y: 70, fields: [
     ['int', 'Id', 'PK'], ['string', 'Name', ''], ['int', 'Capacity', ''],
@@ -404,13 +410,13 @@ const entities = [
     ['int', 'Id', 'PK'], ['int', 'EnrollmentId', 'FK'], ['string', 'Result', ''], ['string', 'Notes', ''], ['datetime', 'RecordedAt', ''], ['int', 'RecordedById', 'FK'],
   ] },
   { name: 'Payments', x: 1800, y: 1120, fields: [
-    ['int', 'Id', 'PK'], ['int', 'EnrollmentId', 'FK'], ['decimal', 'AmountPaid', ''], ['datetime', 'PaidAt', ''], ['decimal', 'OutstandingBalance', ''],
+    ['int', 'Id', 'PK'], ['int', 'EnrollmentId', 'FK'], ['decimal', 'AmountPaid', ''], ['datetime', 'PaidAt', ''], ['decimal', 'OutstandingBalance', ''], ['string', 'StripeSessionId', ''],
   ] },
   { name: 'CertificationTracks', x: 520, y: 850, fields: [
     ['int', 'Id', 'PK'], ['string', 'Name', ''], ['string', 'Description', ''], ['string', 'CertRefPrefix', ''],
   ] },
   { name: 'CertificationTrackCourses', x: 935, y: 850, fields: [
-    ['int', 'CertificationTrackId', 'FK'], ['int', 'CourseId', 'FK'], ['bool', 'IsRequired', ''],
+    ['int', 'CertificationTrackId', 'PK,FK'], ['int', 'CourseId', 'PK,FK'], ['bool', 'IsRequired', ''],
   ] },
   { name: 'TraineeCertifications', x: 935, y: 1160, fields: [
     ['int', 'Id', 'PK'], ['int', 'TraineeId', 'FK'], ['int', 'CertificationTrackId', 'FK'], ['string', 'Status', ''], ['string', 'CertRefNumber', ''], ['datetime', 'IssuedAt', ''],
@@ -421,6 +427,8 @@ const relationships = [
   ['AspNetUsers', 'Trainees', 'has profile', 'one', 'zero-one'],
   ['AspNetUsers', 'Instructors', 'has profile', 'one', 'zero-one'],
   ['AspNetUsers', 'Notifications', 'receives', 'one', 'zero-many'],
+  ['AspNetUsers', 'AspNetUserRoles', 'assigned', 'one', 'zero-many'],
+  ['AspNetRoles', 'AspNetUserRoles', 'mapped via', 'one', 'zero-many'],
   ['Instructors', 'InstructorAvailability', 'has', 'one', 'zero-many'],
   ['CourseCategories', 'Courses', 'categorizes', 'one', 'zero-many'],
   ['Courses', 'Courses', 'prerequisite for', 'one', 'zero-one'],
@@ -431,6 +439,7 @@ const relationships = [
   ['Trainees', 'Enrollments', 'enrolls in', 'one', 'zero-many'],
   ['CourseSessions', 'Enrollments', 'has', 'one', 'zero-many'],
   ['Enrollments', 'Assessments', 'results in', 'one', 'zero-one'],
+  ['Instructors', 'Assessments', 'records', 'one', 'zero-many'],
   ['Enrollments', 'Payments', 'paid via', 'one', 'zero-many'],
   ['CertificationTracks', 'CertificationTrackCourses', 'includes', 'one', 'zero-many'],
   ['Courses', 'CertificationTrackCourses', 'part of', 'one', 'zero-many'],
@@ -443,7 +452,7 @@ const svg = document.getElementById('relationships');
 const editModeToggle = document.getElementById('edit-mode-toggle');
 const entityMap = new Map();
 const savedPositions = JSON.parse(localStorage.getItem('training-platform-erd-positions') || '{}');
-const savedTables = JSON.parse(localStorage.getItem('training-platform-erd-tables') || '{}');
+const savedTables = JSON.parse(localStorage.getItem('training-platform-erd-tables-v2') || '{}');
 let editMode = false;
 
 renderEntities();
@@ -687,7 +696,7 @@ function saveTableEdits(table) {
       cleanEditableText(row.querySelector('[data-col="key"]').textContent),
     ]),
   };
-  localStorage.setItem('training-platform-erd-tables', JSON.stringify(savedTables));
+  localStorage.setItem('training-platform-erd-tables-v2', JSON.stringify(savedTables));
 }
 
 function cleanEditableText(value) {

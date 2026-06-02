@@ -1,0 +1,65 @@
+@using TrainingPlatform.API.Models
+@model TrainingPlatform.MVC.Models.ViewModels.TraineeCertificationFormViewModel
+@{ ViewData["Title"] = "Edit Certificate"; }
+
+<div class="tp-page-header">
+    <div>
+        <h1 class="tp-page-title">Edit Certificate</h1>
+        <p class="tp-page-subtitle">Update the trainee certificate record.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="tp-form-card">
+            <form asp-action="Edit" method="post" novalidate>
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="TraineeId" class="form-label"></label>
+                        <select asp-for="TraineeId" class="form-select" asp-items="ViewBag.TraineeId">
+                            <option value="">-- Select trainee --</option>
+                        </select>
+                        <span asp-validation-for="TraineeId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CertificationTrackId" class="form-label"></label>
+                        <select asp-for="CertificationTrackId" class="form-select" asp-items="ViewBag.CertificationTrackId">
+                            <option value="">-- Select track --</option>
+                        </select>
+                        <span asp-validation-for="CertificationTrackId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<CertificationStatus>()"></select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CertRefNumber" class="form-label"></label>
+                        <input asp-for="CertRefNumber" class="form-control tp-mono" placeholder="Auto-generated on issue if blank" />
+                        <span asp-validation-for="CertRefNumber" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="IssuedAt" class="form-label"></label>
+                        <input asp-for="IssuedAt" class="form-control" type="date"
+                               value="@(Model.IssuedAt?.ToString("yyyy-MM-dd"))" />
+                        <span asp-validation-for="IssuedAt" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="tp-form-actions">
+                    <button type="submit" class="tp-cta"><i class="bi bi-check2-circle"></i> Save Changes</button>
+                    <a asp-action="Index" class="tp-cta-ghost">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

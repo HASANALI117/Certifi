@@ -1,0 +1,53 @@
+@model TrainingPlatform.MVC.Models.ViewModels.CertificationTrackFormViewModel
+@{ ViewData["Title"] = "Edit Track"; }
+
+<div class="tp-page-header">
+    <div>
+        <h1 class="tp-page-title">Edit Certification Track</h1>
+        <p class="tp-page-subtitle">Update the template and its required courses.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="tp-form-card">
+            <form asp-action="Edit" method="post" novalidate>
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g. Cloud Practitioner" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CertRefPrefix" class="form-label"></label>
+                        <input asp-for="CertRefPrefix" class="form-control tp-mono" placeholder="e.g. CLD" />
+                        <span asp-validation-for="CertRefPrefix" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="SelectedCourseIds" class="form-label"></label>
+                    <select asp-for="SelectedCourseIds" asp-items="ViewBag.Courses" class="form-select" multiple size="8"></select>
+                    <div class="form-text">A trainee becomes eligible once every selected course is passed.</div>
+                    <span asp-validation-for="SelectedCourseIds" class="text-danger"></span>
+                </div>
+
+                <div class="tp-form-actions">
+                    <button type="submit" class="tp-cta"><i class="bi bi-check2-circle"></i> Save Changes</button>
+                    <a asp-action="Index" class="tp-cta-ghost">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
