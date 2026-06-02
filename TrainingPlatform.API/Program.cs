@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -13,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+// RFC 7807 ProblemDetails as the standard error shape. Backs the JWT 401 handler
+// below and any framework-generated error responses (400/404/500).
+builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -58,6 +62,28 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]!)
             )
+        };
+
+        // Replace the default empty 401 body with an RFC 7807 ProblemDetails payload
+        // so missing/invalid-token responses are structured and consistent with the
+        // rest of the API's error shape.
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                var problem = new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Unauthorized",
+                    Detail = "A valid bearer token is required to access this resource.",
+                    Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+                };
+                await context.Response.WriteAsJsonAsync(
+                    problem, options: (System.Text.Json.JsonSerializerOptions?)null,
+                    contentType: "application/problem+json");
+            }
         };
     });
 

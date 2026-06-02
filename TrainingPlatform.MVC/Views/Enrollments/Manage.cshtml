@@ -1,10 +1,10 @@
 @using TrainingPlatform.API.Models
 
-@model IEnumerable<Enrollment>
+@model ManageEnrollmentsViewModel
 
 @{
     ViewData["Title"] = "Manage Enrollments";
-    var certifications = ViewBag.Certifications as IEnumerable<TraineeCertification> ?? new List<TraineeCertification>();
+    var certifications = Model.Certifications;
 
     string Initials(AppUser? user)
     {
@@ -30,8 +30,8 @@
         _                            => "dash-pill-muted"
     };
 
-    var enrollments = Model?.ToList() ?? new List<Enrollment>();
-    var paymentStatuses = ViewBag.PaymentStatuses as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var enrollments = Model.Enrollments;
+    var paymentStatuses = Model.PaymentStatuses;
     var activeCount = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Status != EnrollmentStatus.Completed);
     var outstandingTotal = enrollments
         .Where(e => e.Status != EnrollmentStatus.Dropped)

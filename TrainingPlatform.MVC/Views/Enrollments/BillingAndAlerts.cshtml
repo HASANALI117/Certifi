@@ -1,12 +1,12 @@
 @using TrainingPlatform.API.Models
-@model IEnumerable<Enrollment>
+@model TraineeBillingViewModel
 
 @{
     ViewData["Title"] = "My Enrollment Dashboard";
-    var statuses = ViewBag.PaymentStatuses as Dictionary<int, string> ?? new Dictionary<int, string>();
-    var balances = ViewBag.OutstandingBalances as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
-    var notifications = ViewBag.Notifications as IEnumerable<Notification> ?? new List<Notification>();
-    var certifications = ViewBag.Certifications as IEnumerable<TraineeCertification> ?? new List<TraineeCertification>();
+    var statuses = Model.PaymentStatuses;
+    var balances = Model.OutstandingBalances;
+    var notifications = Model.Notifications;
+    var certifications = Model.Certifications;
 
     string StatusPill(EnrollmentStatus s) => s switch
     {
@@ -24,7 +24,7 @@
         _                            => "dash-pill-muted"
     };
 
-    var enrollments = Model?.ToList() ?? new List<Enrollment>();
+    var enrollments = Model.Enrollments;
     var activeCount = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Status != EnrollmentStatus.Completed);
     var outstandingTotal = enrollments
         .Where(e => e.Status != EnrollmentStatus.Dropped)

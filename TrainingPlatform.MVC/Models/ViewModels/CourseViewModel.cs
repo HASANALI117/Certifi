@@ -81,3 +81,14 @@ public class CategoryWidgetViewModel
     public string Name { get; set; } = string.Empty;
     public int CourseCount { get; set; }
 }
+
+// Backs the course catalog page (Courses/Index). Replaces the previous mix of a
+// bare IEnumerable model plus loose ViewBag entries (search term, selected
+// category, category stats) with a single typed shape.
+public class CourseCatalogViewModel
+{
+    public IReadOnlyList<CourseListItemViewModel> Courses { get; set; } = [];
+    public IReadOnlyList<CategoryWidgetViewModel> CategoryStats { get; set; } = [];
+    public string? Search { get; set; }
+    public int? SelectedCategoryId { get; set; }
+}

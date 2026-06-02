@@ -1,8 +1,8 @@
-@model IEnumerable<TrainingPlatform.MVC.Models.ViewModels.CourseListItemViewModel>
+@model CourseCatalogViewModel
 @{
     ViewData["Title"] = "Course Catalog";
-    var categoryStats = (IEnumerable<TrainingPlatform.MVC.Models.ViewModels.CategoryWidgetViewModel>)
-                        (ViewBag.CategoryStats ?? Enumerable.Empty<TrainingPlatform.MVC.Models.ViewModels.CategoryWidgetViewModel>());
+    var courses = Model.Courses;
+    var categoryStats = Model.CategoryStats;
 }
 
 <div class="tp-courses-header">
@@ -22,15 +22,15 @@
 </div>
 
 <nav class="tp-category-tabs" aria-label="Filter by category">
-    <a asp-action="Index" asp-route-search="@ViewBag.Search"
-       class="tp-category-tab @(ViewBag.SelectedCategoryId == null ? "active" : null)">
+    <a asp-action="Index" asp-route-search="@Model.Search"
+       class="tp-category-tab @(Model.SelectedCategoryId == null ? "active" : null)">
         All
-        <span class="tp-tab-count">@Model.Count()</span>
+        <span class="tp-tab-count">@courses.Count</span>
     </a>
     @foreach (var cat in categoryStats)
     {
-        <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-search="@ViewBag.Search"
-           class="tp-category-tab @(ViewBag.SelectedCategoryId?.ToString() == cat.Id.ToString() ? "active" : null)">
+        <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-search="@Model.Search"
+           class="tp-category-tab @(Model.SelectedCategoryId == cat.Id ? "active" : null)">
             @cat.Name
             <span class="tp-tab-count">@cat.CourseCount</span>
         </a>
@@ -39,7 +39,7 @@
 
 <div class="tp-courses-layout" id="tp-courses-layout">
     <section class="tp-courses-main">
-        @if (!Model.Any())
+        @if (!courses.Any())
         {
             <div class="tp-empty">
                 <i class="bi bi-collection"></i>
@@ -50,7 +50,7 @@
         else
         {
             <div class="tp-course-list" id="tp-course-list">
-                @foreach (var course in Model)
+                @foreach (var course in courses)
                 {
                     <article class="tp-course-row"
                              data-course-id="@course.Id"

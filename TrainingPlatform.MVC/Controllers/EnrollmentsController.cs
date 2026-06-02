@@ -50,10 +50,13 @@ public class EnrollmentsController : Controller
             .ToListAsync();
 
         await FlagOverduePaymentsAsync(enrollments);
-        ViewBag.PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus);
 
-        await LoadCertificationViewBagAsync();
-        return View(enrollments);
+        return View(new ManageEnrollmentsViewModel
+        {
+            Enrollments = enrollments,
+            PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus),
+            Certifications = await LoadCertificationsAsync()
+        });
     }
 
     [Authorize(Roles = "Trainee")]
@@ -67,11 +70,7 @@ public class EnrollmentsController : Controller
         if (trainee == null)
         {
             TempData["Error"] = "Trainee profile not found.";
-            ViewBag.PaymentStatuses = new Dictionary<int, string>();
-            ViewBag.OutstandingBalances = new Dictionary<int, decimal>();
-            ViewBag.Notifications = Enumerable.Empty<Notification>();
-            ViewBag.Certifications = Enumerable.Empty<TraineeCertification>();
-            return View(Enumerable.Empty<Enrollment>());
+            return View(new TraineeBillingViewModel());
         }
 
         var enrollments = await EnrollmentQuery()
@@ -81,20 +80,22 @@ public class EnrollmentsController : Controller
 
         await FlagOverduePaymentsAsync(enrollments);
 
-        ViewBag.PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus);
-        ViewBag.OutstandingBalances = enrollments.ToDictionary(e => e.Id, OutstandingBalance);
-        ViewBag.Notifications = await _context.Notifications
-            .Where(n => n.UserId == userId)
-            .OrderByDescending(n => n.CreatedAt)
-            .Take(10)
-            .ToListAsync();
-        ViewBag.Certifications = await _context.TraineeCertifications
-            .Include(c => c.CertificationTrack)
-            .Where(c => c.TraineeId == trainee.Id)
-            .OrderBy(c => c.CertificationTrack.Name)
-            .ToListAsync();
-
-        return View(enrollments);
+        return View(new TraineeBillingViewModel
+        {
+            Enrollments = enrollments,
+            PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus),
+            OutstandingBalances = enrollments.ToDictionary(e => e.Id, OutstandingBalance),
+            Notifications = await _context.Notifications
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(10)
+                .ToListAsync(),
+            Certifications = await _context.TraineeCertifications
+                .Include(c => c.CertificationTrack)
+                .Where(c => c.TraineeId == trainee.Id)
+                .OrderBy(c => c.CertificationTrack.Name)
+                .ToListAsync()
+        });
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
@@ -536,15 +537,13 @@ public class EnrollmentsController : Controller
             courseSessionId);
     }
 
-    private async Task LoadCertificationViewBagAsync()
-    {
-        ViewBag.Certifications = await _context.TraineeCertifications
+    private async Task<List<TraineeCertification>> LoadCertificationsAsync() =>
+        await _context.TraineeCertifications
             .Include(c => c.Trainee).ThenInclude(t => t.User)
             .Include(c => c.CertificationTrack)
             .OrderBy(c => c.Status)
             .ThenBy(c => c.CertificationTrack.Name)
             .ToListAsync();
-    }
 
     private void ClearEnrollmentNavigationValidation()
     {
