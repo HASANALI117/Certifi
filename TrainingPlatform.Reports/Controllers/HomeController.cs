@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TrainingPlatform.Reports.Models;
 
@@ -6,16 +7,13 @@ namespace TrainingPlatform.Reports.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
-    {
-        return View();
-    }
+    [Authorize(Policy = "TrainingCoordinator")]
+    public IActionResult Index() => RedirectToAction("Index", "Dashboard");
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
+    [AllowAnonymous]
+    public IActionResult ServiceUnavailable() => View();
 
+    [AllowAnonymous]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

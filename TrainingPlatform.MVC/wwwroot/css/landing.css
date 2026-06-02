@@ -1,0 +1,1091 @@
+/* Theme token overrides — last-load wins over site.css :root defaults */
+body {
+  --text-color: #fff;
+  --text-color-soft: rgba(255, 255, 255, 0.65);
+  --panel-bg: rgba(36, 37, 45, 0.6);
+  --panel-bg-soft: rgba(36, 37, 45, 0.175);
+  --border-color: rgba(255, 255, 255, 0.075);
+  --divider-color: rgba(255, 255, 255, 0.25);
+  --accent-color: #33ada9;
+
+  --bs-primary: #6e7fc1;
+  --bs-primary-rgb: 110, 127, 193;
+  --bs-body-color: var(--text-color);
+  --bs-body-bg: transparent;
+}
+
+body {
+  min-height: 100%;
+}
+
+/* === Layered background — hexagon overlay + diagonal gradient + animated twinkle SVG === */
+body {
+  color: var(--text-color);
+  background-color: #24252d;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.cd-container {
+  flex: 1 0 auto;
+}
+.cd-footer {
+  flex-shrink: 0;
+}
+
+/* Persistent brand in the top-left corner of every public/marketing page.
+   Links back to Home; sits above page content in normal flow so it never
+   overlaps. (Dashboard pages use a different layout and are unaffected.) */
+.cd-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  align-self: flex-start;
+  padding: 1.25rem 1.5rem 0;
+  text-decoration: none;
+  color: #fff;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.15rem;
+  position: relative;
+  z-index: 10;
+  transition: opacity 0.15s ease;
+}
+.cd-brand:hover,
+.cd-brand:focus-visible {
+  color: #fff;
+  opacity: 0.82;
+}
+.cd-brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  bottom: -5vh;
+  left: -5vw;
+  width: 110vw;
+  height: 110vh;
+  pointer-events: none;
+  z-index: -1;
+}
+body::before {
+  background-image:
+    url("/images/cd-overlay.png"),
+    linear-gradient(45deg, #6e436c 25%, #2a4584 75%);
+  /* background-image:
+    url("/images/cd-overlay.png"),
+    linear-gradient(
+      45deg,
+      rgba(69, 93, 217, 0.871) 25%,
+      rgba(48, 161, 120, 0.78) 75%
+    ); */
+
+  background-position: center, center;
+  background-repeat: repeat, no-repeat;
+  background-size: 256px, cover;
+}
+body::after {
+  background: url("/images/cd-bg.svg") top center / cover no-repeat;
+}
+
+/* === Typography (scoped to landing) === */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+p {
+  color: var(--text-color);
+  line-height: 1.65;
+}
+a {
+  color: var(--text-color);
+  text-decoration: none;
+}
+a:hover {
+  color: #fff;
+}
+
+/* === Page wrapper ===
+   Use :not(.container) so this full-bleed reset only applies when
+   .cd-container is standalone (SPYLT/Carrd-style pages). When combined
+   with Bootstrap's .container, let Bootstrap handle max-width + auto
+   margins so content stays horizontally centered. */
+.cd-container:not(.container) {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.cd-inner {
+  margin: 0 auto;
+  max-width: 64em;
+  width: calc(100% - 8em);
+}
+.cd-inner > section {
+  border-radius: 6px;
+  margin: 10em auto 0;
+  position: relative;
+  text-align: center;
+}
+.cd-inner > section:first-child {
+  margin-top: 0;
+}
+
+/* Vertical connector line below each section */
+.cd-inner > section::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: -10em;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 10em;
+  background: var(--divider-color);
+}
+.cd-inner > section:last-child::after {
+  display: none;
+}
+
+.cd-inner > section h1 {
+  font-size: 3.5em;
+  margin-bottom: 0.25em;
+}
+.cd-inner > section h2 {
+  font-size: 2.125em;
+  line-height: 1.25;
+  margin: 0 0 0.5em;
+}
+.cd-inner > section h3 {
+  font-size: 1.5em;
+  margin: 0 0 0.5em;
+}
+
+.cd-inner > section.style1 {
+  background-color: var(--panel-bg);
+}
+.cd-inner > section.style2 {
+  box-shadow: inset 0 0 0 2px var(--divider-color);
+}
+
+/* === Buttons (carrd .button) === */
+.cd-btn,
+.button {
+  display: inline-block;
+  height: 3.75em;
+  line-height: 3.75em;
+  padding: 0 2.25em;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1em;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  border: 0;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+.cd-btn:hover,
+.button:hover {
+  background-color: rgba(255, 255, 255, 0.075);
+  color: #fff;
+}
+.cd-btn.special,
+.button.special {
+  background-color: var(--accent-color);
+  box-shadow: none;
+  color: #fff;
+}
+.cd-btn.special:hover,
+.button.special:hover {
+  background-color: #2a8e8b;
+  color: #fff;
+}
+.cd-btn.wide,
+.button.wide {
+  min-width: 19em;
+}
+
+/* Action list — stacked centered buttons */
+.action-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+  align-items: center;
+}
+.action-list.stacked > li {
+  display: block;
+}
+
+/* === INTRO === */
+.intro-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 100vh;
+  padding: 4em 0;
+  margin-bottom: -4em !important;
+}
+.intro-wrapper::before {
+  content: "";
+  display: block;
+}
+.intro-wrapper::after {
+  display: none !important;
+} /* no connector below hero — anchor link handles it */
+.intro-wrapper .content {
+  margin-top: 2em;
+}
+.intro-wrapper .content > svg,
+.intro-wrapper .content > .cd-logo {
+  height: 18em;
+  width: 18em;
+  margin: 0 0 -2.5em;
+  object-fit: cover;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+}
+/* Force logo-2.png (grey strokes on white bg) to render as pure white on the page bg */
+.intro-wrapper .content > .cd-logo {
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+  mix-blend-mode: screen;
+}
+.intro-wrapper .content h1 {
+  font-size: 3.5em;
+  margin: 0.1em 0 0.25em;
+}
+.intro-wrapper .content p {
+  font-size: 1.05em;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 1.5em;
+}
+.intro-wrapper a[href="#about"] {
+  display: inline-block;
+  font-size: 0.8em;
+  font-weight: bold;
+  height: 3.3em;
+  line-height: 3.3em;
+  padding: 0 1.5em;
+  margin-top: 2em;
+  color: #fff;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+  position: relative;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.intro-wrapper a[href="#about"]:hover {
+  background-color: rgba(255, 255, 255, 0.075);
+}
+.intro-wrapper a[href="#about"]::after {
+  content: "";
+  position: absolute;
+  bottom: -12.5em;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 12.5em;
+  background: var(--divider-color);
+}
+
+/* === ABOUT (header + carousel) === */
+.about-wrapper {
+  overflow: hidden;
+}
+.about-wrapper header {
+  padding: 7em 4em 5em;
+}
+.about-wrapper header h2 {
+  font-size: 3.5em;
+  line-height: 1.25;
+  margin: 0.25em 0;
+}
+.about-wrapper header p {
+  margin: 2em 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.carousel {
+  background-color: var(--panel-bg);
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+}
+.carousel .reel {
+  display: flex;
+  width: 400em;
+  animation: cd-reel 45s linear infinite;
+}
+.carousel:hover .reel {
+  animation-play-state: paused;
+}
+@keyframes cd-reel {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-200em);
+  }
+}
+.carousel .reel > a {
+  flex: 0 0 40em;
+  display: block;
+  position: relative;
+  text-decoration: none;
+  color: #fff;
+}
+.carousel .reel > a::before {
+  content: "";
+  display: block;
+  padding-top: 75%;
+  width: 100%;
+}
+.carousel .reel .card-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(
+    135deg,
+    rgba(110, 67, 108, 0.85),
+    rgba(42, 69, 132, 0.85)
+  );
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 2em;
+}
+.carousel .reel .card-inner i {
+  font-size: 4em;
+  margin-bottom: 0.35em;
+  color: #fff;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.4));
+}
+.carousel .reel .card-inner h3 {
+  font-size: 1.5em;
+  margin: 0 0 0.25em;
+}
+.carousel .reel .card-inner p {
+  font-size: 1em;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+  max-width: 22em;
+}
+
+/* === HIGHLIGHTS — 3 alternating 2-col rows === */
+.highlights-wrapper {
+  background: none !important;
+  padding: 0;
+}
+.highlights-wrapper > section {
+  display: flex;
+  margin: 0 !important;
+  text-align: left;
+}
+.highlights-wrapper > section::after {
+  display: none;
+} /* parent handles line */
+.highlights-wrapper > section > * {
+  flex: 0 0 50%;
+  width: 50%;
+}
+.highlights-wrapper > section:first-child {
+  border-radius: 6px 6px 0 0;
+}
+.highlights-wrapper > section:first-child > :first-child {
+  border-radius: 6px 0 0 0;
+}
+.highlights-wrapper > section:first-child > :last-child {
+  border-radius: 0 6px 0 0;
+}
+.highlights-wrapper > section:last-child {
+  border-radius: 0 0 6px 6px;
+}
+.highlights-wrapper > section:last-child > :first-child {
+  border-radius: 0 0 0 6px;
+}
+.highlights-wrapper > section:last-child > :last-child {
+  border-radius: 0 0 6px 0;
+}
+.highlights-wrapper > section:nth-child(2n) {
+  flex-direction: row-reverse;
+}
+
+.highlights-wrapper .pic {
+  background-image:
+    url("/images/cd-overlay.png"),
+    linear-gradient(45deg, #415d9d 0%, #896387 100%);
+  background-position: center, center;
+  background-repeat: repeat, no-repeat;
+  background-size: 256px, cover;
+  overflow: hidden;
+  position: relative;
+}
+.highlights-wrapper .pic::before {
+  content: "";
+  display: block;
+  padding-top: 75%;
+  width: 100%;
+}
+.highlights-wrapper .pic .highlight {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.highlights-wrapper .pic .highlight i {
+  font-size: 6em;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
+}
+.highlights-wrapper .content {
+  padding: 4em 4em 2em;
+  background-color: var(--panel-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.highlights-wrapper .content > * {
+  width: 100%;
+}
+.highlights-wrapper .content h2 {
+  color: #fff;
+}
+.highlights-wrapper .content p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@media screen and (max-width: 980px) {
+  .highlights-wrapper {
+    max-width: 32em;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .highlights-wrapper > section {
+    display: block;
+    margin-top: 2.5em !important;
+    position: relative;
+  }
+  .highlights-wrapper > section > * {
+    width: 100%;
+  }
+  .highlights-wrapper > section .pic {
+    border-radius: 6px 6px 0 0 !important;
+  }
+  .highlights-wrapper > section .content {
+    border-radius: 0 0 6px 6px !important;
+  }
+  .highlights-wrapper > section:not(:last-child)::after {
+    content: "";
+    display: block;
+    position: absolute;
+    bottom: -2.5em;
+    left: calc(50% - 1px);
+    width: 2px;
+    height: 2.5em;
+    background: var(--divider-color);
+  }
+}
+
+/* === PRO/FEATURES section === */
+.pro-wrapper header {
+  padding: 6em 4em 4em;
+}
+.pro-wrapper > .content {
+  padding: 6em 4em 4em;
+  background-color: var(--panel-bg-soft);
+  color: #fff;
+  border-radius: 0 0 6px 6px;
+}
+.pro-features {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.pro-features li {
+  flex: 0 0 50%;
+  width: 50%;
+  padding: 0 1.5em 0 4.5em;
+  position: relative;
+  text-align: left;
+  margin-bottom: 3em;
+}
+.pro-features li:nth-last-child(-n + 2) {
+  margin-bottom: 0;
+}
+.pro-features li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -0.325em;
+  width: 3em;
+  height: 3em;
+  border-radius: 3em;
+  box-shadow: inset 0 0 0 2px var(--border-color);
+  background: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='648' height='552' viewBox='0 0 648 552'%3E%3Cpath d='M225.3,517.7L2.1,293.1l68.1-67.7L226,382.3L578.1,35.6l67.4,68.4L225.3,517.7z' fill='%2333ada9' /%3E%3C/svg%3E")
+    center / 1.5em no-repeat;
+}
+.pro-features li h3 {
+  font-size: 1.25em;
+  margin: 0 0 0.35em;
+}
+.pro-features li p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.95em;
+}
+.pro-cta {
+  border-top: 2px solid rgba(255, 255, 255, 0.075);
+  margin-top: 6em;
+  padding-top: 4em;
+  text-align: center;
+}
+.pro-cta p {
+  margin-bottom: 1.5em;
+}
+
+@media screen and (max-width: 980px) {
+  .pro-features {
+    display: block;
+  }
+  .pro-features li {
+    width: 100%;
+    padding-right: 0;
+  }
+  .pro-features li:nth-last-child(-n + 2) {
+    margin-bottom: 3em;
+  }
+  .pro-features li:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* === CTA === */
+.cta-wrapper {
+  padding: 4em 4em 2em;
+  max-width: 32em;
+}
+.cta-wrapper h2 {
+  margin-bottom: 0.5em;
+}
+.cta-wrapper p {
+  margin-bottom: 1.5em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* === FOOTER (carrd style: faint menu + copyright) === */
+.cd-footer {
+  margin: 8em 0 4em;
+  padding: 0 2em;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.375);
+}
+.cd-footer a,
+.cd-footer .cd-link-btn {
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cd-footer a:hover,
+.cd-footer .cd-link-btn:hover {
+  color: #fff;
+}
+.cd-menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5em;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.cd-menu-list li {
+  padding: 0 1em;
+  border-left: 1px solid rgba(255, 255, 255, 0.375);
+}
+.cd-menu-list li:first-child {
+  border-left: 0;
+}
+.cd-copyright {
+  margin: 0;
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+/* === Mobile === */
+@media screen and (max-width: 980px) {
+  .cd-inner > section h1 {
+    font-size: 3em;
+  }
+  .about-wrapper header {
+    padding: 5em 4em 3em;
+  }
+  .about-wrapper header h2 {
+    font-size: 2.75em;
+  }
+  .carousel .reel {
+    width: 300em;
+  }
+  @keyframes cd-reel {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-150em);
+    }
+  }
+  .pro-wrapper header {
+    padding: 5em 4em 3em;
+  }
+  .pro-wrapper > .content {
+    padding: 5em 4em 3em;
+  }
+}
+@media screen and (max-width: 736px) {
+  .cd-inner {
+    width: calc(100% - 4em);
+  }
+  .cd-inner > section {
+    margin-top: 2.5em;
+  }
+  .cd-inner > section::after {
+    bottom: -2.5em;
+    height: 2.5em;
+  }
+  .cd-inner > section h1 {
+    font-size: 2.5em;
+  }
+  .cd-inner > section h2 {
+    font-size: 1.75em;
+    line-height: 1.5;
+  }
+  .intro-wrapper {
+    justify-content: center;
+    min-height: 0;
+    padding: 2em 0 1em;
+    margin-bottom: -2em !important;
+  }
+  .intro-wrapper::before {
+    display: none;
+  }
+  .intro-wrapper a[href="#about"] {
+    display: none;
+  }
+  .about-wrapper header {
+    padding: 3em 2em 1em;
+  }
+  .about-wrapper header h2 {
+    font-size: 1.75em;
+    line-height: 1.5;
+  }
+  .carousel .reel {
+    width: 250em;
+  }
+  @keyframes cd-reel {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-125em);
+    }
+  }
+  .pro-wrapper header {
+    padding: 3em 2em 1em;
+  }
+  .pro-wrapper > .content {
+    padding: 3em 2em 1em;
+  }
+  .cd-footer {
+    margin: 2em 0;
+  }
+}
+@media screen and (max-width: 480px) {
+  .cd-inner {
+    width: calc(100% - 1.5em);
+  }
+  .cta-wrapper {
+    padding: 2.5em 2em 0;
+    max-width: 20.8em;
+  }
+}
+
+/* ============================================================
+   Cross-page (Courses/Login/etc.) — re-skin Bootstrap chrome for the
+   landing dark gradient. Scoped to body so the marketing layout
+   doesn't repaint dashboard / non-landing pages.
+   ============================================================ */
+.card,
+.alert,
+.modal-content,
+.dropdown-menu,
+.list-group-item {
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 6px;
+}
+.table {
+  color: var(--text-color);
+}
+.table th,
+.table td {
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+.form-control,
+.form-select {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+}
+.form-control:focus,
+.form-select:focus {
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text-color);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(51, 173, 169, 0.18);
+}
+.form-label,
+label {
+  color: var(--text-color-soft);
+}
+.btn-primary {
+  background: var(--accent-color);
+  border: 0;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: #2a8e8b;
+  color: #fff;
+}
+
+/* ---- Auth (Login/Register) — carrd cta-wrapper .style2 look ---- */
+.tp-auth-shell {
+  min-height: calc(100vh - 160px);
+}
+.tp-auth-card {
+  background: transparent;
+  border: 0;
+  box-shadow: inset 0 0 0 2px var(--divider-color);
+  border-radius: 6px;
+  max-width: 32em;
+  width: calc(100% - 3em);
+  padding: 3.25em 3em 2.5em;
+  text-align: left;
+  color: var(--text-color);
+}
+.tp-auth-logo {
+  display: block;
+  height: 56px;
+  width: auto;
+  margin: 0 auto 1.1rem;
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+  mix-blend-mode: screen;
+}
+/* The auth-card logo links back to Home; keep it centered, add a hover cue. */
+.tp-auth-logo-link {
+  display: block;
+  transition: opacity 0.15s ease;
+}
+.tp-auth-logo-link:hover,
+.tp-auth-logo-link:focus-visible {
+  opacity: 0.82;
+}
+.tp-auth-title {
+  color: var(--text-color);
+}
+.tp-auth-sub {
+  color: var(--text-color-soft);
+}
+.tp-auth-mark {
+  background: var(--accent-color) !important;
+  box-shadow: none !important;
+}
+.tp-auth-card .form-label {
+  display: block;
+  text-align: left;
+  color: var(--text-color-soft);
+  font-weight: 600;
+}
+.tp-auth-card .form-control,
+.tp-auth-card .form-select {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--divider-color);
+  color: var(--text-color);
+}
+.tp-auth-card .form-control:focus,
+.tp-auth-card .form-select:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(51, 173, 169, 0.25);
+  color: var(--text-color);
+}
+.tp-auth-card .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+/* Submit uses the landing .button.special — just make it span the card. */
+.tp-auth-card .button {
+  width: 100%;
+}
+/* Certificate-lookup results sit below the auth card, matched to its width. */
+.tp-auth-result {
+  width: calc(100% - 3em);
+  max-width: 32em;
+  margin-inline: auto;
+}
+.tp-auth-result:empty {
+  display: none;
+}
+.tp-auth-footer {
+  color: var(--text-color-soft);
+}
+.tp-auth-footer a {
+  color: var(--accent-color);
+}
+
+/* ============================================================
+   Course catalog (Courses/Index) on the landing layout.
+   The tp-course-* classes default to the light dashboard theme
+   (white surface, dark text). On the dark landing gradient that
+   renders as white cards with invisible white titles, so re-skin
+   them here to match — mirrors the body.dash-body treatment in
+   site.css but with the landing palette's concrete teal values.
+   ============================================================ */
+.cd-body .tp-courses-header {
+  border-bottom-color: var(--border-color);
+}
+.cd-body .tp-page-subtitle {
+  color: var(--text-color-soft);
+}
+
+/* Search input + submit */
+.cd-body .tp-search-input input {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+.cd-body .tp-search-input input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+.cd-body .tp-search-input input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(51, 173, 169, 0.18);
+}
+.cd-body .tp-search-input > i {
+  color: rgba(255, 255, 255, 0.5);
+}
+.cd-body .tp-search-submit {
+  background: var(--accent-color);
+}
+.cd-body .tp-search-submit:hover,
+.cd-body .tp-search-submit:focus-visible {
+  background: #2a8e8b;
+}
+.cd-body .tp-search-cta,
+.cd-body .tp-search-cta:visited {
+  background: var(--accent-color);
+  border-color: transparent;
+  color: #fff;
+}
+.cd-body .tp-search-cta:hover,
+.cd-body .tp-search-cta:focus-visible {
+  background: #2a8e8b;
+  color: #fff;
+}
+
+/* Category tabs */
+.cd-body .tp-category-tabs {
+  border-bottom-color: var(--border-color);
+}
+.cd-body .tp-category-tab {
+  color: var(--text-color-soft);
+}
+.cd-body .tp-category-tab:hover {
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+}
+.cd-body .tp-category-tab.active {
+  background: var(--accent-color);
+  color: #fff;
+}
+.cd-body .tp-tab-count {
+  background: var(--panel-bg-soft);
+  border-color: var(--border-color);
+  color: rgba(255, 255, 255, 0.5);
+}
+.cd-body .tp-category-tab.active .tp-tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+/* Course rows — glass panels, teal selection. Reset the light theme's
+   gradient padding-box trick used for the border. */
+.cd-body .tp-course-row {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: none;
+}
+.cd-body .tp-course-row:hover {
+  background: var(--panel-bg);
+  border-color: rgba(51, 173, 169, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.55);
+}
+.cd-body .tp-course-row.is-selected {
+  background: var(--panel-bg);
+  border-color: var(--accent-color);
+  box-shadow:
+    0 0 0 1px var(--accent-color),
+    0 12px 28px -16px rgba(0, 0, 0, 0.55);
+}
+.cd-body .tp-course-row-body h3 {
+  color: var(--text-color);
+}
+.cd-body .tp-course-row-desc {
+  color: rgba(255, 255, 255, 0.6);
+}
+.cd-body .tp-course-row-image {
+  background: #2c2d36;
+}
+
+/* Tags & widget chips */
+.cd-body .tp-tag {
+  background: rgba(51, 173, 169, 0.15);
+  border-color: transparent;
+  color: var(--accent-color);
+}
+.cd-body .tp-tag i {
+  color: var(--accent-color);
+}
+.cd-body .tp-widget {
+  background: var(--panel-bg-soft);
+  border-color: var(--border-color);
+  color: var(--text-color-soft);
+}
+.cd-body .tp-widget i {
+  color: var(--accent-color);
+}
+.cd-body .tp-widget-warn {
+  background: rgba(245, 180, 65, 0.12);
+  border-color: rgba(245, 180, 65, 0.4);
+  color: #f5b441;
+}
+.cd-body .tp-widget-warn i {
+  color: #f5b441;
+}
+
+/* Row action buttons */
+.cd-body .tp-course-row-actions .btn-outline-secondary {
+  background: transparent;
+  border-color: var(--divider-color);
+  color: var(--text-color-soft);
+}
+.cd-body .tp-course-row-actions .btn-outline-secondary:hover,
+.cd-body .tp-course-row-actions .btn-outline-secondary:focus-visible {
+  background: var(--panel-bg-soft);
+  border-color: rgba(51, 173, 169, 0.5);
+  color: var(--text-color);
+}
+.cd-body .tp-course-row-actions .btn-outline-danger {
+  background: transparent;
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.cd-body .tp-course-row-actions .btn-outline-danger:hover,
+.cd-body .tp-course-row-actions .btn-outline-danger:focus-visible {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.7);
+  color: #fecaca;
+}
+
+/* Right sidebar — selected course detail panel */
+.cd-body .tp-sidebar-widget {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: none;
+}
+.cd-body .tp-selected-course-image {
+  background: #2c2d36;
+}
+.cd-body .tp-selected-course-body h3 {
+  color: var(--text-color);
+}
+.cd-body .tp-selected-description {
+  color: var(--text-color-soft);
+}
+.cd-body .tp-selected-list-row {
+  border-bottom-color: var(--border-color);
+}
+.cd-body .tp-selected-list-row dt {
+  color: var(--text-color-soft);
+}
+.cd-body .tp-selected-list-row dt i {
+  color: var(--accent-color);
+}
+.cd-body .tp-selected-list-row dd {
+  color: var(--text-color);
+}
+.cd-body .tp-selected-list-row-warn dt,
+.cd-body .tp-selected-list-row-warn dt i,
+.cd-body .tp-selected-list-row-warn dd {
+  color: #f5b441;
+}
+
+/* Empty state */
+.cd-body .tp-empty {
+  background: var(--panel-bg);
+  border: 1px dashed var(--border-color);
+  color: var(--text-color-soft);
+}
+.cd-body .tp-empty h4 {
+  color: var(--text-color);
+}

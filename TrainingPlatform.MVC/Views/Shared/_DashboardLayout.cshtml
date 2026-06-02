@@ -1,0 +1,269 @@
+@{
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Certifi</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dash-body">
+    <div class="dash-shell">
+        <partial name="_DashSidebar" />
+
+        <div class="dash-main-wrap">
+            <header class="dash-mobile-bar">
+                <button type="button" class="dash-hamburger" data-dash-toggle data-dash-nav-skip="true"
+                        aria-label="Open navigation menu" aria-controls="dashSidebar" aria-expanded="false">
+                    <i class="bi bi-list"></i>
+                </button>
+                <a class="dash-mobile-brand" data-dash-nav-skip="true" asp-controller="Dashboard" asp-action="Index">
+                    <img src="~/images/logo-3.png" alt="Certifi" class="dash-mobile-logo" />
+                    <span>Certifi</span>
+                </a>
+            </header>
+            <main id="dash-content-area" class="dash-content-area">
+                <partial name="_DashAlerts" />
+                @RenderBody()
+            </main>
+            <div id="dash-loading" class="dash-loading" aria-hidden="true">
+                <div class="dash-spinner"></div>
+            </div>
+        </div>
+
+        <div class="dash-sidebar-backdrop" data-dash-backdrop aria-hidden="true"></div>
+    </div>
+
+    <div class="tp-toast-container position-fixed bottom-0 end-0 p-3" style="z-index:2000" data-toast-container></div>
+    <form style="display:none">@Html.AntiForgeryToken()</form>
+
+    <div class="modal fade" id="tpModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" data-tp-modal-dialog>
+            <div class="modal-content" data-tp-modal-content></div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/realtime.js" asp-append-version="true"></script>
+    <script src="~/js/enrollment-ui.js" asp-append-version="true"></script>
+    <script src="~/js/tp-modal.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var shell = document.querySelector('.dash-shell');
+            var nav = document.querySelector('[data-dash-nav]');
+            var target = document.getElementById('dash-content-area');
+            var loading = document.getElementById('dash-loading');
+            if (!shell || !target) return;
+
+            var origin = window.location.origin;
+
+            function setActiveByUrl(url) {
+                if (!nav) return;
+                var path = (url.split('?')[0] || '').replace(/\/+$/, '').toLowerCase() || '/';
+                nav.querySelectorAll('.dash-nav-item').forEach(function (a) {
+                    var href = (a.getAttribute('href') || '').replace(/\/+$/, '').toLowerCase();
+                    if (!href) return;
+                    var match = path === href || path.indexOf(href + '/') === 0;
+                    a.classList.toggle('active', match);
+                });
+            }
+
+            function extractTitle(html) {
+                var m = html.match(/<title>([^<]*)<\/title>/i);
+                return m ? m[1].trim() : null;
+            }
+
+            function rebindScripts(container) {
+                container.querySelectorAll('script').forEach(function (oldScript) {
+                    var s = document.createElement('script');
+                    for (var i = 0; i < oldScript.attributes.length; i++) {
+                        var a = oldScript.attributes[i];
+                        s.setAttribute(a.name, a.value);
+                    }
+                    s.textContent = oldScript.textContent;
+                    oldScript.parentNode.replaceChild(s, oldScript);
+                });
+            }
+
+            function isSafeUrl(url) {
+                try {
+                    var u = new URL(url, window.location.href);
+                    if (u.origin !== origin) return false;
+                    // Don't AJAX-swap auth flows — those need full navigation
+                    if (/^\/Account\//i.test(u.pathname)) return false;
+                    return true;
+                } catch (e) { return false; }
+            }
+
+            async function doFetch(url, options, updateHistory) {
+                if (loading) loading.classList.add('is-active');
+                try {
+                    var resp = await fetch(url, Object.assign({
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                        credentials: 'same-origin',
+                        redirect: 'follow'
+                    }, options || {}));
+
+                    var finalUrl = resp.url || url;
+                    // Session expired → server redirected to login
+                    if (!resp.ok || /\/Account\/Login/i.test(finalUrl)) {
+                        window.location.href = url;
+                        return;
+                    }
+                    var html = await resp.text();
+                    // Safety net: if the server returned a full HTML document
+                    // (e.g., a stale cached response or a page that isn't AJAX-aware),
+                    // don't inject it as a fragment — do a real navigation instead.
+                    if (/<!DOCTYPE/i.test(html) || /<html[\s>]/i.test(html)) {
+                        window.location.href = finalUrl;
+                        return;
+                    }
+                    target.innerHTML = html;
+                    rebindScripts(target);
+                    var title = extractTitle(html);
+                    if (title) document.title = title + ' - Certifi';
+
+                    var pushed = new URL(finalUrl, window.location.href);
+                    var relUrl = pushed.pathname + pushed.search + pushed.hash;
+                    if (updateHistory === 'push') {
+                        history.pushState({ dashUrl: relUrl }, '', relUrl);
+                    } else if (updateHistory === 'replace') {
+                        history.replaceState({ dashUrl: relUrl }, '', relUrl);
+                    }
+                    setActiveByUrl(relUrl);
+                    target.scrollTop = 0;
+                    window.scrollTo(0, 0);
+                    window.dispatchEvent(new CustomEvent('tp:navigated', { detail: { url: relUrl } }));
+                } catch (e) {
+                    window.location.href = url;
+                } finally {
+                    if (loading) loading.classList.remove('is-active');
+                }
+            }
+
+            function loadInto(url, updateHistory) {
+                return doFetch(url, { method: 'GET' }, updateHistory || 'push');
+            }
+
+            // Exposed for realtime.js — silent in-place refresh of the current dashboard fragment.
+            window.dashReload = function () {
+                var current = window.location.pathname + window.location.search;
+                return loadInto(current, 'replace');
+            };
+
+            function submitForm(form, submitter) {
+                // A submit button can override the form's action/method via the
+                // formaction/formmethod attributes — honor them when present.
+                var rawAction = (submitter && submitter.getAttribute('formaction'))
+                    || form.getAttribute('action')
+                    || window.location.pathname;
+                var rawMethod = (submitter && submitter.getAttribute('formmethod'))
+                    || form.getAttribute('method')
+                    || 'GET';
+                var method = rawMethod.toUpperCase();
+                if (method === 'GET') {
+                    var params = new URLSearchParams(new FormData(form)).toString();
+                    var glue = rawAction.indexOf('?') === -1 ? '?' : '&';
+                    return loadInto(params ? rawAction + glue + params : rawAction, 'push');
+                }
+                return doFetch(rawAction, { method: method, body: new FormData(form, submitter) }, 'push');
+            }
+
+            // Intercept all in-dashboard link clicks (sidebar + content area)
+            shell.addEventListener('click', function (e) {
+                if (e.defaultPrevented || e.button !== 0) return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                var link = e.target.closest('a');
+                if (!link || !shell.contains(link)) return;
+                if (link.dataset.dashNavSkip === 'true') return;
+                if (link.target && link.target !== '' && link.target !== '_self') return;
+                if (link.hasAttribute('download')) return;
+                var href = link.getAttribute('href');
+                if (!href || href.charAt(0) === '#') return;
+                if (/^(mailto:|tel:|javascript:)/i.test(href)) return;
+                if (!isSafeUrl(href)) return;
+                e.preventDefault();
+                loadInto(link.href);
+            });
+
+            // Intercept form submits inside the content area
+            shell.addEventListener('submit', function (e) {
+                if (e.defaultPrevented) return;
+                var form = e.target;
+                if (!form || form.tagName !== 'FORM') return;
+                // Only intercept forms inside the content area (skip sidebar logout)
+                if (!target.contains(form)) return;
+                if (form.dataset.dashNavSkip === 'true') return;
+                var submitter = e.submitter || null;
+                var action = (submitter && submitter.getAttribute('formaction'))
+                    || form.getAttribute('action')
+                    || window.location.pathname;
+                if (!isSafeUrl(action)) return;
+                e.preventDefault();
+                submitForm(form, submitter);
+            });
+
+            window.addEventListener('popstate', function (e) {
+                var url = (e.state && e.state.dashUrl) || window.location.pathname + window.location.search;
+                // Browser already updated the URL — don't push or replace again
+                loadInto(url, 'none');
+            });
+
+            // Replace current state so back works after first navigation
+            history.replaceState({ dashUrl: window.location.pathname + window.location.search }, '', window.location.href);
+        })();
+    </script>
+    <script>
+        // Mobile off-canvas sidebar (hamburger) toggle.
+        (function () {
+            var sidebar = document.getElementById('dashSidebar');
+            var backdrop = document.querySelector('[data-dash-backdrop]');
+            var toggles = document.querySelectorAll('[data-dash-toggle]');
+            if (!sidebar || !backdrop) return;
+            var mq = window.matchMedia('(max-width: 900px)');
+
+            function setExpanded(open) {
+                toggles.forEach(function (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+            }
+            function open() {
+                sidebar.classList.add('is-open');
+                backdrop.classList.add('is-open');
+                document.body.classList.add('dash-drawer-open');
+                setExpanded(true);
+            }
+            function close() {
+                sidebar.classList.remove('is-open');
+                backdrop.classList.remove('is-open');
+                document.body.classList.remove('dash-drawer-open');
+                setExpanded(false);
+            }
+
+            toggles.forEach(function (b) {
+                b.addEventListener('click', function () {
+                    sidebar.classList.contains('is-open') ? close() : open();
+                });
+            });
+            backdrop.addEventListener('click', close);
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') close();
+            });
+            // Tapping a sidebar link triggers an AJAX swap — close the drawer after it.
+            window.addEventListener('tp:navigated', close);
+            // Leaving mobile width resets the drawer so it can't get stuck open.
+            mq.addEventListener('change', function (e) { if (!e.matches) close(); });
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

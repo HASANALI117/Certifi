@@ -1,0 +1,57 @@
+@using TrainingPlatform.API.Models
+@model Enrollment
+@{
+    var isEdit = Model.Id != 0;
+    var action = isEdit ? "Edit" : "Create";
+}
+
+<div class="modal-header">
+    <h5 class="modal-title">@(isEdit ? "Edit Enrollment" : "New Enrollment")</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form asp-controller="Enrollments" asp-action="@action" method="post">
+    @Html.AntiForgeryToken()
+    <div class="modal-body">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        }
+        @if (isEdit)
+        {
+            <input type="hidden" asp-for="Id" />
+        }
+
+        <div class="mb-3">
+            <label asp-for="TraineeId" class="form-label">Trainee</label>
+            <select asp-for="TraineeId" class="form-select" asp-items="ViewBag.TraineeId">
+                <option value="">-- Select Trainee --</option>
+            </select>
+            <span asp-validation-for="TraineeId" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="CourseSessionId" class="form-label">Course Session</label>
+            <select asp-for="CourseSessionId" class="form-select" asp-items="ViewBag.CourseSessionId">
+                <option value="">-- Select Course Session --</option>
+            </select>
+            <span asp-validation-for="CourseSessionId" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Status" class="form-label">Status</label>
+            <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<EnrollmentStatus>()"></select>
+            <span asp-validation-for="Status" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-1">
+            <label asp-for="EnrolledAt" class="form-label">Enrolled Date &amp; Time</label>
+            <input asp-for="EnrolledAt" class="form-control" type="datetime-local"
+                   value="@(Model.EnrolledAt == default ? DateTime.Now.ToString("yyyy-MM-ddTHH:mm") : Model.EnrolledAt.ToString("yyyy-MM-ddTHH:mm"))" />
+            <span asp-validation-for="EnrolledAt" class="text-danger small"></span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="dash-btn" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="dash-btn dash-btn-primary">@(isEdit ? "Save changes" : "Create enrollment")</button>
+    </div>
+</form>

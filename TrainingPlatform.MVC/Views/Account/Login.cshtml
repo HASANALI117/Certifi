@@ -3,7 +3,9 @@
 
 <div class="tp-auth-shell">
     <div class="tp-auth-card">
-        <div class="tp-auth-mark"><i class="bi bi-mortarboard-fill"></i></div>
+        <a asp-controller="Home" asp-action="Index" class="tp-auth-logo-link" aria-label="Certifi — back to home">
+            <img src="~/images/logo-3.png" alt="Certifi" class="tp-auth-logo" />
+        </a>
         <h1 class="tp-auth-title">Welcome back</h1>
         <p class="tp-auth-sub">Sign in to your Training Platform account.</p>
 
@@ -27,9 +29,7 @@
                 <label asp-for="RememberMe" class="form-check-label"></label>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-box-arrow-in-right"></i> Sign in
-            </button>
+            <button type="submit" class="button special">Sign in</button>
         </form>
 
         <p class="tp-auth-footer">

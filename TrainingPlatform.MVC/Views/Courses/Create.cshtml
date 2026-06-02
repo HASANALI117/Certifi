@@ -3,7 +3,6 @@
 
 <div class="tp-page-header">
     <div>
-        <span class="tp-page-eyebrow"><i class="bi bi-plus-circle"></i> Catalog</span>
         <h1 class="tp-page-title">New Course</h1>
         <p class="tp-page-subtitle">Add a new course to the training catalog.</p>
     </div>
@@ -12,7 +11,7 @@
 <div class="row">
     <div class="col-xl-8">
         <div class="tp-form-card">
-            <form asp-action="Create" method="post" novalidate>
+            <form asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
                     <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
                 </div>
@@ -41,8 +40,8 @@
                     <div class="col-md-4">
                         <label asp-for="Fee" class="form-label"></label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input asp-for="Fee" class="form-control" type="number" step="0.01" min="0" />
+                            <span class="input-group-text">BD</span>
+                            <input asp-for="Fee" class="form-control" type="number" step="0.001" min="1.000" />
                         </div>
                         <span asp-validation-for="Fee" class="text-danger"></span>
                     </div>
@@ -63,11 +62,31 @@
                     </div>
                 </div>
 
+                <hr class="tp-divider" />
+                <h2 style="font-size: 1.05rem; margin-bottom: .25rem;">Course image</h2>
+                <p class="tp-text-muted" style="font-size: .88rem; margin-bottom: 1rem;">
+                    Upload a file or paste an image URL. The image is displayed above the course on the catalog.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="ImageFile" class="form-label"></label>
+                        <input asp-for="ImageFile" type="file" accept="image/*" class="form-control" />
+                        <div class="form-text">Max 5 MB. JPG, PNG, GIF, or WEBP.</div>
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ImageUrl" class="form-label"></label>
+                        <input asp-for="ImageUrl" class="form-control" placeholder="https://... or /images/your-image.jpg" />
+                        <div class="form-text">Used only if no file is uploaded.</div>
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                    </div>
+                </div>
+
                 <div class="tp-form-actions">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="tp-cta">
                         <i class="bi bi-check2-circle"></i> Create Course
                     </button>
-                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <a asp-action="Index" class="tp-cta-ghost">Cancel</a>
                 </div>
             </form>
         </div>

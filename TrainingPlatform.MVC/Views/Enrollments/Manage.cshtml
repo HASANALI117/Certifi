@@ -1,0 +1,328 @@
+@using TrainingPlatform.API.Models
+
+@model IEnumerable<Enrollment>
+
+@{
+    ViewData["Title"] = "Manage Enrollments";
+    var certifications = ViewBag.Certifications as IEnumerable<TraineeCertification> ?? new List<TraineeCertification>();
+
+    string Initials(AppUser? user)
+    {
+        if (user == null) return "?";
+        var f = !string.IsNullOrWhiteSpace(user.FirstName) ? user.FirstName[0] : '?';
+        var l = !string.IsNullOrWhiteSpace(user.LastName) ? user.LastName[0] : ' ';
+        return $"{f}{l}".Trim().ToUpperInvariant();
+    }
+
+    string StatusPill(EnrollmentStatus s) => s switch
+    {
+        EnrollmentStatus.Completed => "dash-pill-success",
+        EnrollmentStatus.Attending => "dash-pill-info",
+        EnrollmentStatus.Confirmed => "dash-pill-primary",
+        EnrollmentStatus.Dropped   => "dash-pill-danger",
+        _                          => "dash-pill-muted"
+    };
+
+    string CertPill(CertificationStatus s) => s switch
+    {
+        CertificationStatus.Issued   => "dash-pill-success",
+        CertificationStatus.Eligible => "dash-pill-warning",
+        _                            => "dash-pill-muted"
+    };
+
+    var enrollments = Model?.ToList() ?? new List<Enrollment>();
+    var paymentStatuses = ViewBag.PaymentStatuses as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var activeCount = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Status != EnrollmentStatus.Completed);
+    var outstandingTotal = enrollments
+        .Where(e => e.Status != EnrollmentStatus.Dropped)
+        .Sum(e =>
+        {
+            var fee = e.CourseSession?.Course?.EnrollmentFee ?? 0m;
+            var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+            return Math.Max(0m, fee - paid);
+        });
+    var overdueCount = enrollments.Count(e => paymentStatuses.GetValueOrDefault(e.Id) == "Overdue");
+    var awaitingAssessment = enrollments.Count(e =>
+        (e.Status == EnrollmentStatus.Attending || e.Status == EnrollmentStatus.Confirmed) && e.Assessment == null);
+    var eligibleCerts = certifications.Count(c => c.Status == CertificationStatus.Eligible);
+}
+
+<div data-tp-live-page="manage"></div>
+@* _DashAlerts is rendered by the layout (_DashboardLayout for full loads,
+   _AjaxLayout for fragment swaps), so it is intentionally omitted here. *@
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Manage Enrollments</h1>
+            <p class="dash-page-lede">Track lifecycle, payments, assessments and certification eligibility across every trainee.</p>
+        </div>
+        @if (User.IsInRole("TrainingCoordinator"))
+        {
+            <button type="button" class="tp-cta" data-tp-modal data-tp-modal-url="@Url.Action("Create")">
+                <i class="bi bi-plus-lg"></i><span>New Enrollment</span>
+            </button>
+        }
+    </div>
+</header>
+
+<section class="dash-chip-row" aria-label="At a glance">
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-people-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@activeCount</div>
+            <div class="dash-summary-lbl">Active enrollments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-warn"><i class="bi bi-cash-coin"></i></span>
+        <div>
+            <div class="dash-summary-val">@outstandingTotal.ToString("C0")</div>
+            <div class="dash-summary-lbl">Outstanding payments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-danger"><i class="bi bi-exclamation-triangle-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@overdueCount</div>
+            <div class="dash-summary-lbl">Overdue payments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-info"><i class="bi bi-clipboard-check"></i></span>
+        <div>
+            <div class="dash-summary-val">@awaitingAssessment</div>
+            <div class="dash-summary-lbl">Awaiting assessment</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-pink"><i class="bi bi-patch-check-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@eligibleCerts</div>
+            <div class="dash-summary-lbl">Eligible certifications</div>
+        </div>
+    </div>
+</section>
+
+<section class="dash-panel" aria-labelledby="enroll-panel-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="enroll-panel-title">Enrollment lifecycle</h2>
+            <div class="dash-panel-sub">@enrollments.Count total record@(enrollments.Count == 1 ? "" : "s")</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Trainee</th>
+                    <th scope="col">Course</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col">Assessment</th>
+                    <th scope="col" class="dash-td-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (enrollments.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="dash-td-empty">
+                            <i class="bi bi-inbox" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No enrollments yet.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var e in enrollments)
+                    {
+                        var traineeName = e.Trainee?.User != null ? $"{e.Trainee.User.FirstName} {e.Trainee.User.LastName}" : "Unknown Trainee";
+                        var courseTitle = e.CourseSession?.Course?.Title ?? "N/A";
+                        var fee = e.CourseSession?.Course?.EnrollmentFee ?? 0m;
+                        var paid = e.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+                        var balance = Math.Max(0m, fee - paid);
+                        var paidPct = fee <= 0 ? 100 : (int)Math.Min(100, Math.Round(100m * paid / fee));
+                        var payStatus = paymentStatuses.GetValueOrDefault(e.Id, balance == 0 ? "Paid" : "Unpaid");
+                        var isOverdue = payStatus == "Overdue";
+
+                        <tr>
+                            <td data-label="Trainee">
+                                <div class="dash-cell-person">
+                                    <span class="dash-avatar-sm" aria-hidden="true">@Initials(e.Trainee?.User)</span>
+                                    <div>
+                                        <div class="dash-cell-line1">@traineeName</div>
+                                        <div class="dash-cell-line2">@(e.Trainee?.TraineePublicId ?? "—")</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Course">
+                                <div class="dash-cell-line1">@courseTitle</div>
+                                <div class="dash-cell-line2">@e.CourseSession?.StartDateTime.ToString("dd MMM yyyy, HH:mm")</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @StatusPill(e.Status)">@e.Status</span>
+                            </td>
+                            <td data-label="Payment">
+                                <div class="dash-pay">
+                                    <div class="dash-pay-line">
+                                        <span>@paid.ToString("C") / @fee.ToString("C")</span>
+                                        <span class="dash-pay-balance @(balance == 0 ? "is-paid" : "")">@(balance == 0 ? "Paid" : balance.ToString("C"))</span>
+                                    </div>
+                                    <div class="dash-pay-bar" role="progressbar" aria-valuenow="@paidPct" aria-valuemin="0" aria-valuemax="100" aria-label="Payment progress">
+                                        <div class="dash-pay-bar-fill" style="width:@(paidPct)%"></div>
+                                    </div>
+                                    @if (isOverdue)
+                                    {
+                                        <span class="dash-pill dash-pill-danger mt-1" title="Session has started but balance is outstanding">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Overdue
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td data-label="Assessment">
+                                @if (e.Assessment == null)
+                                {
+                                    <span class="dash-pill dash-pill-muted">Not recorded</span>
+                                }
+                                else
+                                {
+                                    <span class="dash-pill @(e.Assessment.Result == AssessmentResult.Pass ? "dash-pill-success" : "dash-pill-danger")">@e.Assessment.Result</span>
+                                    <div class="dash-cell-line2">@e.Assessment.RecordedAt.ToLocalTime().ToString("dd MMM HH:mm")</div>
+                                }
+                            </td>
+                            <td data-label="Actions" class="dash-td-actions">
+                                <div class="dash-action-group">
+                                    @if (User.IsInRole("TrainingCoordinator"))
+                                    {
+                                        <form asp-action="UpdateStatus" method="post" class="dash-status-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@e.Id" />
+                                            <label for="status-@e.Id" class="visually-hidden">Status for @traineeName</label>
+                                            <select id="status-@e.Id" name="newStatus" aria-label="Update status">
+                                                @foreach (var status in Enum.GetValues<EnrollmentStatus>())
+                                                {
+                                                    <option value="@status" selected="@(status == e.Status)">@status</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="dash-btn dash-btn-sm" title="Apply status change">
+                                                <i class="bi bi-arrow-clockwise"></i>
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <button type="button" class="dash-btn dash-btn-sm"
+                                            data-tp-modal data-tp-modal-url="@Url.Action("AssessmentForm", new { id = e.Id })"
+                                            aria-label="Record assessment for @traineeName">
+                                        <i class="bi bi-clipboard-check"></i><span>Assess</span>
+                                    </button>
+
+                                    <button type="button" class="dash-btn dash-btn-sm"
+                                            data-tp-modal data-tp-modal-url="@Url.Action("Details", new { id = e.Id })"
+                                            aria-label="View details for @traineeName">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+
+                                    @if (User.IsInRole("TrainingCoordinator"))
+                                    {
+                                        <button type="button" class="dash-btn dash-btn-sm"
+                                                data-tp-modal data-tp-modal-url="@Url.Action("Edit", new { id = e.Id })"
+                                                aria-label="Edit enrollment for @traineeName">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button type="button" class="dash-btn dash-btn-sm dash-btn-danger"
+                                                data-tp-modal data-tp-modal-url="@Url.Action("Delete", new { id = e.Id })"
+                                                aria-label="Delete enrollment for @traineeName">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="dash-panel" aria-labelledby="cert-panel-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="cert-panel-title">Certification tracking</h2>
+            <div class="dash-panel-sub">@certifications.Count() record@(certifications.Count() == 1 ? "" : "s")</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Trainee</th>
+                    <th scope="col">Certification</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Reference</th>
+                    <th scope="col">Issued</th>
+                    <th scope="col" class="dash-td-actions">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!certifications.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="dash-td-empty">
+                            <i class="bi bi-patch-question" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No certification progress tracked yet.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var cert in certifications)
+                    {
+                        var tName = cert.Trainee?.User != null ? $"{cert.Trainee.User.FirstName} {cert.Trainee.User.LastName}" : "Unknown Trainee";
+
+                        <tr>
+                            <td data-label="Trainee">
+                                <div class="dash-cell-person">
+                                    <span class="dash-avatar-sm" aria-hidden="true">@Initials(cert.Trainee?.User)</span>
+                                    <div class="dash-cell-line1">@tName</div>
+                                </div>
+                            </td>
+                            <td data-label="Certification">
+                                <div class="dash-cell-line1">@cert.CertificationTrack?.Name</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @CertPill(cert.Status)">@cert.Status</span>
+                            </td>
+                            <td data-label="Reference">
+                                <span class="dash-pill-plain">@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "—" : cert.CertRefNumber)</span>
+                            </td>
+                            <td data-label="Issued">
+                                <span class="dash-pill-plain">@(cert.IssuedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</span>
+                            </td>
+                            <td data-label="Action" class="dash-td-actions">
+                                @if (User.IsInRole("TrainingCoordinator") && cert.Status == CertificationStatus.Eligible)
+                                {
+                                    <form asp-action="IssueCertification" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="certificationId" value="@cert.Id" />
+                                        <button type="submit" class="dash-btn dash-btn-sm dash-btn-success">
+                                            <i class="bi bi-patch-check"></i><span>Issue</span>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="dash-pill-plain">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

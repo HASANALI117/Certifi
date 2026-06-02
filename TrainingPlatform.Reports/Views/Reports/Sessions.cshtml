@@ -1,0 +1,85 @@
+@model List<SessionReportRow>
+@{
+    ViewData["Title"] = "Sessions";
+    var ordered = Model.OrderBy(s => s.StartDateTime).ToList();
+    int totalCapacity = ordered.Sum(s => s.Capacity);
+    int totalEnrolled = ordered.Sum(s => s.EnrolledCount);
+    double avgFill = totalCapacity == 0 ? 0 : (double)totalEnrolled * 100 / totalCapacity;
+}
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Sessions</h1>
+            <p class="dash-page-lede">All scheduled sessions with fill-rate visual — @Model.Count.ToString("N0") sessions.</p>
+        </div>
+        <div class="dash-summary" style="min-width:auto;">
+            <span class="dash-summary-icon"><i class="bi bi-bar-chart-fill"></i></span>
+            <div>
+                <div class="dash-summary-val">@avgFill.ToString("N1")%</div>
+                <div class="dash-summary-lbl">Overall fill rate</div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Sessions</h2>
+            <div class="dash-panel-sub">@Model.Count.ToString("N0") total</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Course</th>
+                    <th>Category</th>
+                    <th>Instructor</th>
+                    <th>Classroom</th>
+                    <th style="min-width:160px;">Fill rate</th>
+                    <th class="text-end">Enrolled / Cap</th>
+                    <th class="text-end">Attending</th>
+                    <th class="text-end">Completed</th>
+                    <th class="text-end">Dropped</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="10" class="dash-td-empty">No session data available.</td></tr>
+                }
+                @foreach (var s in ordered)
+                {
+                    var fill = s.Capacity == 0 ? 0 : (double)s.EnrolledCount * 100 / s.Capacity;
+                    var fillClass = fill >= 90 ? "is-danger" : fill >= 70 ? "is-warn" : "";
+                    var widthCss = fill.ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
+                    <tr>
+                        <td data-label="When">
+                            <div>@s.StartDateTime.ToLocalTime().ToString("MMM d, yyyy")</div>
+                            <div class="small text-color-soft">@s.StartDateTime.ToLocalTime().ToString("h:mm tt")</div>
+                        </td>
+                        <td data-label="Course">@s.CourseTitle</td>
+                        <td data-label="Category"><span class="dash-pill dash-pill-muted">@s.CategoryName</span></td>
+                        <td data-label="Instructor">@s.InstructorName</td>
+                        <td data-label="Classroom">@s.ClassroomName</td>
+                        <td data-label="Fill rate">
+                            <div class="dash-progress-wrap">
+                                <div class="dash-progress">
+                                    <div class="dash-progress-fill @fillClass" style="width:@(widthCss)%;"></div>
+                                </div>
+                                <span class="dash-progress-value">@fill.ToString("F0")%</span>
+                            </div>
+                        </td>
+                        <td data-label="Enrolled / Cap" class="text-end">@s.EnrolledCount / @s.Capacity</td>
+                        <td data-label="Attending" class="text-end">@s.AttendingCount</td>
+                        <td data-label="Completed" class="text-end text-success">@s.CompletedCount</td>
+                        <td data-label="Dropped" class="text-end text-danger">@s.DroppedCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

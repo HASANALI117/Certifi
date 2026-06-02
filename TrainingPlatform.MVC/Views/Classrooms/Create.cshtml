@@ -3,7 +3,6 @@
 
 <div class="tp-page-header">
     <div>
-        <span class="tp-page-eyebrow"><i class="bi bi-plus-circle"></i> Manage</span>
         <h1 class="tp-page-title">New Classroom</h1>
         <p class="tp-page-subtitle">Register a room with its capacity and equipment.</p>
     </div>
@@ -33,8 +32,8 @@
                     <input asp-for="Equipment" class="form-control" placeholder="e.g. Projector, Lab Computers" />
                 </div>
                 <div class="tp-form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
-                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="tp-cta"><i class="bi bi-check2-circle"></i> Save</button>
+                    <a asp-action="Index" class="tp-cta-ghost">Cancel</a>
                 </div>
             </form>
         </div>

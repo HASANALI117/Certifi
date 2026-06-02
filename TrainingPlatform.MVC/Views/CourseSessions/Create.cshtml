@@ -3,7 +3,6 @@
 
 <div class="tp-page-header">
     <div>
-        <span class="tp-page-eyebrow"><i class="bi bi-plus-circle"></i> Manage</span>
         <h1 class="tp-page-title">Schedule a Course Session</h1>
         <p class="tp-page-subtitle">The system will prevent double-booking of instructors and classrooms.</p>
     </div>
@@ -13,9 +12,6 @@
     <div class="col-xl-8">
         <div class="tp-form-card">
             <form asp-action="Create" method="post" novalidate>
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
-                </div>
 
                 <div class="mb-3">
                     <label asp-for="CourseId" class="form-label"></label>
@@ -61,10 +57,10 @@
                 </div>
 
                 <div class="tp-form-actions">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="tp-cta">
                         <i class="bi bi-calendar-plus"></i> Schedule
                     </button>
-                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <a asp-action="Index" class="tp-cta-ghost">Cancel</a>
                 </div>
             </form>
         </div>

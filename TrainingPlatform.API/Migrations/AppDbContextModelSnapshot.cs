@@ -371,6 +371,9 @@ namespace TrainingPlatform.API.Migrations
                     b.Property<decimal>("EnrollmentFee")
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("PrerequisiteCourseId")
                         .HasColumnType("int");
 
@@ -587,6 +590,9 @@ namespace TrainingPlatform.API.Migrations
 
                     b.Property<DateTime>("PaidAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("StripeSessionId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

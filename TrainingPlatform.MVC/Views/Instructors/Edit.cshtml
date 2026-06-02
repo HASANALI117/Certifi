@@ -3,9 +3,8 @@
 
 <div class="tp-page-header">
     <div>
-        <span class="tp-page-eyebrow"><i class="bi bi-pencil"></i> Manage</span>
         <h1 class="tp-page-title">Edit Instructor</h1>
-        <p class="tp-page-subtitle">Update expertise areas and bio.</p>
+        <p class="tp-page-subtitle">Update name, contact, expertise, and bio.</p>
     </div>
 </div>
 
@@ -14,14 +13,27 @@
         <div class="tp-form-card">
             <form asp-action="Edit" method="post" novalidate>
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="UserId" />
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
-                </div>
 
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
                 <div class="mb-3">
                     <label asp-for="ExpertiseAreas" class="form-label"></label>
-                    <input asp-for="ExpertiseAreas" class="form-control" />
+                    <input asp-for="ExpertiseAreas" class="form-control" placeholder="e.g. Networking, Security, Cloud" />
                     <span asp-validation-for="ExpertiseAreas" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
@@ -30,8 +42,8 @@
                 </div>
 
                 <div class="tp-form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
-                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="tp-cta"><i class="bi bi-check2-circle"></i> Save Changes</button>
+                    <a asp-action="Index" class="tp-cta-ghost">Cancel</a>
                 </div>
             </form>
         </div>

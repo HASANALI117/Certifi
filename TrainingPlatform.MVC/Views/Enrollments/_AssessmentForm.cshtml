@@ -1,0 +1,35 @@
+@using TrainingPlatform.API.Models
+@model Enrollment
+@{
+    var traineeName = Model.Trainee?.User != null ? $"{Model.Trainee.User.FirstName} {Model.Trainee.User.LastName}" : "Unknown Trainee";
+    var courseTitle = Model.CourseSession?.Course?.Title ?? "N/A";
+}
+
+<div class="modal-header">
+    <h5 class="modal-title">Record Assessment</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form asp-controller="Enrollments" asp-action="RecordAssessment" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="enrollmentId" value="@Model.Id" />
+    <div class="modal-body">
+        <p class="dash-panel-sub mb-3">@traineeName · @courseTitle</p>
+        <div class="mb-3">
+            <label for="assessResult" class="form-label">Result</label>
+            <select id="assessResult" name="result" class="form-select">
+                @foreach (var result in Enum.GetValues<AssessmentResult>())
+                {
+                    <option value="@result" selected="@(Model.Assessment?.Result == result)">@result</option>
+                }
+            </select>
+        </div>
+        <div class="mb-1">
+            <label for="assessNotes" class="form-label">Notes</label>
+            <textarea id="assessNotes" name="notes" class="form-control" rows="3">@Model.Assessment?.Notes</textarea>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="dash-btn" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="dash-btn dash-btn-primary">Save assessment</button>
+    </div>
+</form>

@@ -64,79 +64,114 @@ public class InstructorsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Create()
-    {
-        return View(await BuildFormAsync(null));
-    }
+    public IActionResult Create() => View(new InstructorFormViewModel());
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(InstructorFormViewModel model)
     {
-        if (!ModelState.IsValid)
-            return View(await BuildFormAsync(model));
+        // Account fields are required on create (manual — VM is shared with Edit).
+        if (string.IsNullOrWhiteSpace(model.FirstName))
+            ModelState.AddModelError(nameof(model.FirstName), "First name is required.");
+        if (string.IsNullOrWhiteSpace(model.LastName))
+            ModelState.AddModelError(nameof(model.LastName), "Last name is required.");
+        if (string.IsNullOrWhiteSpace(model.Email))
+            ModelState.AddModelError(nameof(model.Email), "Email is required.");
+        if (string.IsNullOrWhiteSpace(model.TempPassword) || model.TempPassword.Length < 8)
+            ModelState.AddModelError(nameof(model.TempPassword), "Temporary password must be at least 8 characters.");
 
-        if (await _db.Instructors.AnyAsync(i => i.UserId == model.UserId))
+        if (!ModelState.IsValid)
+            return View(model);
+
+        if (await _userManager.FindByEmailAsync(model.Email) is not null)
         {
-            ModelState.AddModelError("UserId", "This user is already registered as an instructor.");
-            return View(await BuildFormAsync(model));
+            ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
+            return View(model);
         }
+
+        // Provision the account, assign the Instructor role, and create the profile.
+        var user = new AppUser
+        {
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            UserName = model.Email,
+            Email = model.Email,
+            EmailConfirmed = true
+        };
+
+        var result = await _userManager.CreateAsync(user, model.TempPassword);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+            return View(model);
+        }
+
+        await _userManager.AddToRoleAsync(user, "Instructor");
 
         _db.Instructors.Add(new Instructor
         {
-            UserId = model.UserId,
+            UserId = user.Id,
             ExpertiseAreas = model.ExpertiseAreas,
             Bio = model.Bio
         });
-
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Instructor profile created.";
+
+        TempData["Success"] = $"Instructor account created for {model.Email}.";
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var instructor = await _db.Instructors.FindAsync(id);
+        var instructor = await _db.Instructors
+            .Include(i => i.User)
+            .FirstOrDefaultAsync(i => i.Id == id);
         if (instructor == null) return NotFound();
 
-        var model = new InstructorFormViewModel
+        return View(new InstructorFormViewModel
         {
-            Id = instructor.Id,
-            UserId = instructor.UserId,
+            Id            = instructor.Id,
+            FirstName     = instructor.User.FirstName,
+            LastName      = instructor.User.LastName,
+            Email         = instructor.User.Email ?? string.Empty,
             ExpertiseAreas = instructor.ExpertiseAreas,
-            Bio = instructor.Bio
-        };
-
-        return View(await BuildFormAsync(model));
+            Bio           = instructor.Bio
+        });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(InstructorFormViewModel model)
     {
-        if (!ModelState.IsValid)
-            return View(await BuildFormAsync(model));
+        if (string.IsNullOrWhiteSpace(model.FirstName))
+            ModelState.AddModelError(nameof(model.FirstName), "First name is required.");
+        if (string.IsNullOrWhiteSpace(model.LastName))
+            ModelState.AddModelError(nameof(model.LastName), "Last name is required.");
+        if (string.IsNullOrWhiteSpace(model.Email))
+            ModelState.AddModelError(nameof(model.Email), "Email is required.");
 
-        var instructor = await _db.Instructors.FindAsync(model.Id);
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var instructor = await _db.Instructors
+            .Include(i => i.User)
+            .FirstOrDefaultAsync(i => i.Id == model.Id);
         if (instructor == null) return NotFound();
 
-        instructor.ExpertiseAreas = model.ExpertiseAreas;
-        instructor.Bio = model.Bio;
+        instructor.User.FirstName  = model.FirstName.Trim();
+        instructor.User.LastName   = model.LastName.Trim();
+        instructor.ExpertiseAreas  = model.ExpertiseAreas;
+        instructor.Bio             = model.Bio;
+
+        var newEmail = model.Email.Trim();
+        if (!string.Equals(instructor.User.Email, newEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            var token = await _userManager.GenerateChangeEmailTokenAsync(instructor.User, newEmail);
+            await _userManager.ChangeEmailAsync(instructor.User, newEmail, token);
+            await _userManager.SetUserNameAsync(instructor.User, newEmail);
+        }
+
         await _db.SaveChangesAsync();
         TempData["Success"] = "Instructor profile updated.";
         return RedirectToAction(nameof(Index));
-    }
-
-    private async Task<InstructorFormViewModel> BuildFormAsync(InstructorFormViewModel? existing)
-    {
-        var model = existing ?? new InstructorFormViewModel();
-        var instructorUsers = await _db.Instructors.Select(i => i.UserId).ToListAsync();
-
-        var instructorRoleUsers = await _userManager.GetUsersInRoleAsync("Instructor");
-
-        model.AvailableUsers = instructorRoleUsers
-            .Where(u => !instructorUsers.Contains(u.Id) || u.Id == existing?.UserId)
-            .Select(u => new SelectListItem { Value = u.Id, Text = $"{u.FirstName} {u.LastName} ({u.Email})" });
-
-        return model;
     }
 }

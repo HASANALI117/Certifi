@@ -1,0 +1,2220 @@
+/* Theme tokens — scoped so they only override globals on dashboard pages.
+   Without scoping they would repaint marketing/login. */
+body.dash-body {
+  /* The dashboard is permanently dark, so tell the browser to render native
+     controls (select popups, date/time picker indicators, spinners,
+     scrollbars) in their dark variants instead of the default light ones. */
+  color-scheme: dark;
+  --bg-color: #24252d;
+  --panel-bg: rgba(36, 37, 45, 0.6);
+  --panel-bg-soft: rgba(36, 37, 45, 0.35);
+  --panel-bg-solid: #2a2c36;
+  --border-color: rgba(255, 255, 255, 0.075);
+  --border-color-strong: rgba(255, 255, 255, 0.2);
+  --text-color: #ffffff;
+  --text-color-soft: rgba(255, 255, 255, 0.7);
+  --text-color-muted: rgba(255, 255, 255, 0.45);
+  --accent-color: #33ada9;
+  --accent-color-hover: #2a8e8b;
+  --accent-color-soft: rgba(51, 173, 169, 0.18);
+  --border-radius: 14px;
+  --border-radius-sm: 10px;
+}
+
+/* Reset body so the dashboard owns the viewport.
+   We re-create the home page's layered background (hex overlay + diagonal
+   gradient + twinkle SVG) here so loading carrd-theme.css isn't required. */
+body.dash-body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* override site.css's body{display:flex; flex-direction:column} */
+  display: block;
+  position: relative;
+}
+
+body.dash-body::before,
+body.dash-body::after {
+  content: "";
+  position: fixed;
+  bottom: -5vh;
+  left: -5vw;
+  width: 110vw;
+  height: 110vh;
+  pointer-events: none;
+  z-index: -1;
+}
+body.dash-body::before {
+  background-image:
+    url("/images/cd-overlay.png"),
+    linear-gradient(45deg, #6e436c 25%, #2a4584 75%);
+  background-position: center, center;
+  background-repeat: repeat, no-repeat;
+  background-size: 256px, cover;
+}
+body.dash-body::after {
+  background: url("/images/cd-bg.svg") top center / cover no-repeat;
+}
+
+/* Shell --------------------------------------------------- */
+.dash-shell {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  min-height: 100vh;
+}
+
+/* Sidebar ------------------------------------------------- */
+.dash-sidebar {
+  background: var(--panel-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-right: 1px solid var(--border-color);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  /* Lift the sidebar's stacking context so its dropup user menu floats above
+     main-content panels (backdrop-filter above traps child z-index otherwise). */
+  z-index: 1031;
+}
+
+.dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.25rem 0.75rem 0.75rem 0;
+  text-decoration: none;
+  color: var(--text-color);
+}
+.dash-brand-mark {
+  width: 60px;
+  height: 60px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 auto;
+}
+.dash-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+.dash-brand-text {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.1rem;
+}
+
+.dash-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+.dash-nav-section {
+  color: var(--text-color-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 1rem 0.65rem 0.35rem;
+}
+.dash-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  color: var(--text-color-soft);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.dash-nav-item i {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+}
+.dash-nav-item:hover {
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+}
+.dash-nav-item.active {
+  background: var(--accent-color-soft);
+  color: var(--text-color);
+  box-shadow: inset 0 0 0 1px rgba(51, 173, 169, 0.45);
+}
+.dash-nav-item.active i {
+  color: var(--accent-color);
+}
+
+.dash-sidebar-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+.dash-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text-color-soft);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.dash-logout-btn:hover {
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+}
+
+/* Main column --------------------------------------------- */
+.dash-main-wrap {
+  min-width: 0;
+  position: relative;
+  padding: 1.5rem;
+}
+.dash-alerts:empty {
+  display: none;
+}
+.dash-alerts > .alert {
+  margin-bottom: 1rem;
+}
+.dash-content-area {
+  display: block;
+}
+
+.dash-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1.5rem;
+}
+
+.dash-content-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.dash-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Topbar -------------------------------------------------- */
+.dash-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 360px) auto;
+  align-items: center;
+  gap: 1rem;
+}
+.dash-page-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.dash-page-sub {
+  margin: 0.25rem 0 0;
+  color: var(--text-color-soft);
+  font-size: 0.9rem;
+}
+
+.dash-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.dash-search i {
+  position: absolute;
+  left: 0.9rem;
+  color: var(--text-color-muted);
+  pointer-events: none;
+}
+.dash-search input {
+  width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.65rem 1rem 0.65rem 2.4rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.dash-search input::placeholder {
+  color: var(--text-color-muted);
+}
+.dash-search input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+
+.dash-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.8rem 0.35rem 0.35rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+}
+.dash-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--accent-color) 0%,
+    var(--accent-color-hover) 100%
+  );
+  color: #fff;
+  font-weight: 700;
+}
+.dash-user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.dash-user-role {
+  font-size: 0.72rem;
+  color: var(--text-color-muted);
+}
+
+/* Stat strip ---------------------------------------------- */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+.dash-stat {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.dash-stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.05rem;
+}
+.dash-stat-icon-blue {
+  background: linear-gradient(135deg, #33ada9, #2a8e8b);
+}
+.dash-stat-icon-violet {
+  background: linear-gradient(135deg, #6e7fc1, #4a5da8);
+}
+.dash-stat-icon-pink {
+  background: linear-gradient(135deg, #b16cc4, #6e436c);
+}
+.dash-stat-icon-amber {
+  background: linear-gradient(135deg, #f5b441, #d97a1c);
+}
+
+.dash-stat-value {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.dash-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-color-soft);
+  margin-top: 2px;
+}
+
+/* Section header ------------------------------------------ */
+.dash-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.dash-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.dash-section-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.dash-link,
+.dash-link-sm {
+  text-decoration: none;
+  color: var(--text-color-soft);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.15s ease;
+}
+.dash-link:hover,
+.dash-link-sm:hover {
+  color: var(--accent-color);
+}
+
+/* Category tabs ------------------------------------------- */
+.dash-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+.dash-tab {
+  text-decoration: none;
+  color: var(--text-color-soft);
+  font-size: 0.87rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.dash-tab:hover {
+  color: var(--text-color);
+  background: var(--panel-bg-soft);
+}
+.dash-tab.active {
+  background: linear-gradient(
+    135deg,
+    var(--accent-color),
+    var(--accent-color-hover)
+  );
+  color: #fff;
+}
+
+/* Course grid --------------------------------------------- */
+.dash-course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.dash-course-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.dash-course-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px -22px rgba(0, 0, 0, 0.55);
+  border-color: var(--border-color-strong);
+}
+
+.dash-course-hero {
+  position: relative;
+  height: 140px;
+  background: linear-gradient(
+    135deg,
+    var(--accent-color),
+    var(--accent-color-hover)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.dash-course-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.dash-course-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      40% 80% at 20% 0%,
+      rgba(255, 255, 255, 0.18),
+      transparent 70%
+    ),
+    radial-gradient(60% 100% at 100% 100%, rgba(0, 0, 0, 0.25), transparent 60%);
+  pointer-events: none;
+}
+.dash-course-glyph {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 1;
+}
+.dash-course-price {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1;
+}
+
+/* Per-card accent palette — keyed to the home-page purple/blue/teal family */
+.dash-accent-blue .dash-course-hero {
+  background: linear-gradient(135deg, #4a5da8, #2a4584);
+}
+.dash-accent-violet .dash-course-hero {
+  background: linear-gradient(135deg, #6e436c, #4a2a55);
+}
+.dash-accent-pink .dash-course-hero {
+  background: linear-gradient(135deg, #b16cc4, #6e436c);
+}
+.dash-accent-amber .dash-course-hero {
+  background: linear-gradient(135deg, #f5b441, #d97a1c);
+}
+.dash-accent-teal .dash-course-hero {
+  background: linear-gradient(135deg, #33ada9, #1f6b69);
+}
+.dash-accent-rose .dash-course-hero {
+  background: linear-gradient(135deg, #d97f7f, #6e436c);
+}
+
+.dash-course-body {
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex: 1;
+}
+.dash-course-cat {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-color-muted);
+  font-weight: 600;
+}
+.dash-course-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+.dash-course-desc {
+  color: var(--text-color-soft);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dash-course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  color: var(--text-color-soft);
+  font-size: 0.78rem;
+  margin-top: auto;
+}
+.dash-course-meta i {
+  margin-right: 0.25rem;
+  color: var(--text-color-muted);
+}
+
+.dash-course-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-color);
+}
+.dash-course-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.dash-chip {
+  background: var(--panel-bg-soft);
+  color: var(--text-color-soft);
+  border-radius: 8px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.dash-course-cta {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(
+    135deg,
+    var(--accent-color),
+    var(--accent-color-hover)
+  );
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.dash-course-cta:hover {
+  transform: translateX(2px);
+  box-shadow: 0 10px 20px -10px rgba(51, 173, 169, 0.7);
+  color: #fff;
+}
+
+/* Empty state */
+.dash-empty {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--text-color-soft);
+  background: var(--panel-bg);
+  border: 1px dashed var(--border-color-strong);
+  border-radius: var(--border-radius);
+}
+.dash-empty i {
+  font-size: 2rem;
+  color: var(--text-color-muted);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.dash-empty h4 {
+  color: var(--text-color);
+  font-size: 1rem;
+  margin: 0 0 0.25rem;
+}
+.dash-empty p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* Right rail cards ---------------------------------------- */
+.dash-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 1.1rem 1.15rem;
+}
+.dash-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+.dash-card-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.dash-card-empty {
+  color: var(--text-color-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Calendar */
+.dash-calendar-month {
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.dash-calendar-nav {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.dash-calendar-nav button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg-soft);
+  color: var(--text-color-soft);
+  cursor: pointer;
+}
+.dash-calendar-nav button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dash-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+.dash-cal-dow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-color-muted);
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0;
+}
+.dash-cal-blank {
+  aspect-ratio: 1 / 1;
+}
+.dash-cal-day {
+  aspect-ratio: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--text-color-soft);
+  border-radius: 8px;
+  position: relative;
+}
+.dash-cal-day.has-event::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-color);
+}
+.dash-cal-day.is-today {
+  background: linear-gradient(
+    135deg,
+    var(--accent-color),
+    var(--accent-color-hover)
+  );
+  color: #fff;
+  font-weight: 700;
+}
+.dash-cal-day.is-today.has-event::after {
+  background: #fff;
+}
+
+/* Sessions list */
+.dash-session-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.dash-session-list li {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0.8rem;
+  align-items: center;
+}
+.dash-session-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-bg-soft);
+  border-radius: 10px;
+  padding: 0.35rem 0;
+}
+.dash-session-day {
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.dash-session-mon {
+  font-size: 0.65rem;
+  color: var(--text-color-muted);
+  margin-top: 2px;
+  letter-spacing: 0.1em;
+}
+.dash-session-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.dash-session-meta {
+  font-size: 0.75rem;
+  color: var(--text-color-muted);
+  margin-top: 2px;
+}
+
+/* Learning progress */
+.dash-progress-row {
+  margin-bottom: 0.9rem;
+}
+.dash-progress-row:last-child {
+  margin-bottom: 0;
+}
+.dash-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.35rem;
+}
+.dash-progress-label {
+  font-weight: 600;
+}
+.dash-progress-pct {
+  color: var(--text-color-muted);
+}
+.dash-progress-bar {
+  height: 8px;
+  background: var(--panel-bg-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.dash-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.dash-fill-primary {
+  background: linear-gradient(90deg, #33ada9, #1f6b69);
+}
+.dash-fill-violet {
+  background: linear-gradient(90deg, #6e7fc1, #4a5da8);
+}
+.dash-fill-pink {
+  background: linear-gradient(90deg, #b16cc4, #6e436c);
+}
+.dash-fill-amber {
+  background: linear-gradient(90deg, #f5b441, #d97a1c);
+}
+.dash-progress-sub {
+  font-size: 0.72rem;
+  color: var(--text-color-muted);
+  display: block;
+  margin-top: 4px;
+}
+
+/* Loading overlay (AJAX swap) ----------------------------- */
+.dash-loading {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-color) 65%, transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+.dash-loading.is-active {
+  display: flex;
+}
+.dash-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--border-color-strong);
+  border-top-color: var(--accent-color);
+  animation: dash-spin 0.9s linear infinite;
+}
+@keyframes dash-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================
+   Embedded sub-pages — Courses, Sessions, Categories, etc.
+   These use site.css's tp-* classes (designed for the light marketing
+   layout). Re-skin them inside the dashboard so they read as frosted
+   dark cards on the home gradient bg.
+   ============================================================ */
+.dash-content-area {
+  color: var(--text-color);
+}
+.dash-content-area .tp-page-title,
+.dash-content-area .tp-page-subtitle,
+.dash-content-area h1,
+.dash-content-area h2,
+.dash-content-area h3,
+.dash-content-area h4,
+.dash-content-area h5,
+.dash-content-area h6 {
+  color: var(--text-color);
+}
+
+.dash-content-area .tp-page-eyebrow {
+  color: var(--accent-color);
+}
+.dash-content-area .tp-page-subtitle,
+.dash-content-area .tp-text-soft,
+.dash-content-area p {
+  color: var(--text-color-soft);
+}
+/* Match the enrollment (dash-page-head) header look on every dashboard page. */
+.dash-content-area .tp-page-header {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin: 0 0 1.5rem;
+  align-items: flex-end;
+}
+.dash-content-area .tp-page-title {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.85rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.dash-content-area .tp-page-subtitle {
+  font-size: 0.92rem;
+  margin: 0.35rem 0 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Cards / panels — unify every dashboard surface with the Manage page's glass panel. */
+.dash-content-area .tp-surface,
+.dash-content-area .tp-form-card,
+.dash-content-area .tp-empty,
+.dash-content-area .tp-table-card,
+.dash-content-area .tp-course-card,
+.dash-content-area .card,
+.dash-content-area .alert,
+.dash-content-area .modal-content,
+.dash-content-area .dropdown-menu,
+.dash-content-area .list-group-item {
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--border-radius);
+}
+
+/* Table card wraps its table edge-to-edge, exactly like .dash-panel. */
+.dash-content-area .tp-table-card {
+  overflow: hidden;
+  padding: 0;
+}
+.dash-content-area .tp-empty {
+  text-align: center;
+  color: var(--text-color-muted);
+  padding: 2.5rem 1rem;
+}
+
+.dash-content-area .tp-course-card .card-body,
+.dash-content-area .tp-course-card .card-footer {
+  background: transparent !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color);
+}
+.dash-content-area .tp-course-card .card-title,
+.dash-content-area .tp-course-card .card-text {
+  color: var(--text-color);
+}
+
+/* Tables — match .dash-data-table: transparent head, uppercase labels,
+   row borders, subtle hover tint (no Bootstrap striping). */
+.dash-content-area .table {
+  color: var(--text-color);
+  margin: 0;
+  --bs-table-bg: transparent;
+}
+.dash-content-area .table > thead th {
+  background: transparent;
+  color: var(--text-color-muted);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.dash-content-area .table > tbody > tr > td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  border-top: 0;
+  vertical-align: middle;
+  color: var(--text-color);
+}
+.dash-content-area .table > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+.dash-content-area .table-hover > tbody > tr:hover > * {
+  background: rgba(51, 173, 169, 0.06);
+  color: var(--text-color);
+}
+
+/* Forms */
+.dash-content-area .form-control,
+.dash-content-area .form-select {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: var(--border-radius-sm);
+}
+.dash-content-area .form-control::placeholder {
+  color: var(--text-color-muted);
+}
+.dash-content-area .form-control:focus,
+.dash-content-area .form-select:focus {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: var(--accent-color);
+  color: var(--text-color);
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+.dash-content-area .input-group-text {
+  background: var(--panel-bg-soft);
+  border: 1px solid var(--border-color);
+  color: var(--text-color-soft);
+}
+.dash-content-area .form-label,
+.dash-content-area label {
+  color: var(--text-color-soft);
+}
+/* Native <select> popups + date/time picker indicators follow color-scheme. */
+.dash-content-area .form-control,
+.dash-content-area .form-select,
+.dash-input {
+  color-scheme: dark;
+}
+/* Explicit option row colors so the popup list is dark-on-light-text even on
+   browsers that don't fully theme the popup from color-scheme alone. */
+.dash-content-area .form-select option,
+.dash-content-area .form-control option,
+.dash-input option {
+  background-color: var(--panel-bg-solid);
+  color: var(--text-color);
+}
+/* File input "Choose file" button — Bootstrap defaults it to a light surface,
+   which reads as a white block on the dark form. Recolor to a glass panel. */
+.dash-content-area .form-control::file-selector-button {
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+/* Match Bootstrap's :hover:not(...)::file-selector-button specificity (and beat
+   it with the extra .dash-content-area class) so hover keeps dark bg + light
+   text instead of reverting to Bootstrap's light surface. */
+.dash-content-area .form-control:hover:not(:disabled):not([readonly])::file-selector-button {
+  background: var(--panel-bg);
+  color: var(--text-color);
+}
+/* Helper text — Bootstrap's .form-text is a dark grey unreadable on the
+   dark form. Lift to the dashboard's muted-light token. */
+.dash-content-area .form-text {
+  color: var(--text-color-muted);
+}
+/* Bootstrap .text-muted resolves to a dark grey (light-theme secondary
+   color) — unreadable on dark surfaces. */
+.dash-content-area .text-muted {
+  color: var(--text-color-muted) !important;
+}
+/* Inline code chips (e.g. trainee public IDs) — the base rule paints them
+   dark indigo on the dark background. Use a legible light-indigo chip. */
+.dash-content-area code {
+  background: rgba(255, 255, 255, 0.06);
+  color: #c7d2fe;
+  border-color: var(--border-color);
+}
+
+/* Buttons — pill shape + accent fill to match .dash-btn on the Manage page. */
+.dash-content-area .btn {
+  border-radius: 999px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.dash-content-area .btn-primary {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #0b1a1a;
+  font-weight: 600;
+}
+.dash-content-area .btn-primary:hover,
+.dash-content-area .btn-primary:focus {
+  background: var(--accent-color-hover);
+  border-color: var(--accent-color-hover);
+  color: #0b1a1a;
+}
+.dash-content-area .btn-secondary,
+.dash-content-area .btn-outline-secondary {
+  background: transparent;
+  border: 1px solid var(--border-color-strong);
+  color: var(--text-color);
+}
+.dash-content-area .btn-secondary:hover,
+.dash-content-area .btn-outline-secondary:hover {
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+}
+.dash-content-area .btn-outline-primary {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+.dash-content-area .btn-outline-primary:hover {
+  background: var(--accent-color);
+  color: #0b1a1a;
+}
+.dash-content-area .btn-outline-danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.dash-content-area .btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+/* Badges — pill palette matching .dash-pill. */
+.dash-content-area .badge {
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+}
+.dash-content-area .badge.bg-success {
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #34d399 !important;
+}
+.dash-content-area .badge.bg-danger {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #fca5a5 !important;
+}
+.dash-content-area .badge.bg-info {
+  background: rgba(96, 165, 250, 0.16) !important;
+  color: #93c5fd !important;
+}
+.dash-content-area .badge.bg-primary {
+  background: rgba(51, 173, 169, 0.16) !important;
+  color: #5fd1cd !important;
+}
+.dash-content-area .badge.bg-warning {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #fbbf24 !important;
+}
+.dash-content-area .badge.bg-secondary {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text-color-soft) !important;
+}
+
+.dash-content-area .breadcrumb-item,
+.dash-content-area .breadcrumb-item a {
+  color: var(--text-color-soft);
+}
+.dash-content-area .breadcrumb-item.active {
+  color: var(--text-color);
+}
+.dash-content-area .breadcrumb-item + .breadcrumb-item::before {
+  color: var(--text-color-muted);
+}
+
+.dash-content-area a {
+  color: var(--accent-color);
+}
+.dash-content-area a:hover {
+  color: var(--accent-color-hover);
+}
+.dash-content-area .text-danger {
+  color: #ff8a8a !important;
+}
+
+/* ============================================================
+   Mobile hamburger + off-canvas drawer (base — hidden on desktop)
+   ============================================================ */
+/* The top bar that holds the hamburger; only shown once the sidebar collapses. */
+.dash-mobile-bar {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0.5rem;
+  z-index: 1030;
+}
+.dash-hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.dash-hamburger:hover {
+  background: var(--panel-bg);
+  border-color: var(--border-color-strong);
+}
+.dash-hamburger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+.dash-mobile-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: var(--text-color);
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+}
+.dash-mobile-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: invert(1) brightness(2.2) contrast(1.4)
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
+/* Dimmed backdrop behind the open drawer. */
+.dash-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Lock page scroll while the drawer is open. */
+body.dash-body.dash-drawer-open {
+  overflow: hidden;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 1200px) {
+  .dash-content {
+    grid-template-columns: 1fr;
+  }
+  .dash-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid;
+    gap: 1rem;
+  }
+  .dash-rail .dash-calendar {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Single column — the sidebar leaves the grid flow and becomes a drawer. */
+  .dash-shell {
+    grid-template-columns: 1fr;
+  }
+
+  /* Off-canvas drawer: full-height panel that slides in from the left. */
+  .dash-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 264px;
+    max-width: 82vw;
+    z-index: 1045;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .dash-sidebar.is-open {
+    transform: translateX(0);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  }
+  .dash-sidebar-backdrop.is-open {
+    display: block;
+  }
+
+  /* Reveal the hamburger bar that drives the drawer. */
+  .dash-mobile-bar {
+    display: flex;
+  }
+
+  .dash-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dash-topbar {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .dash-user-chip {
+    justify-self: start;
+  }
+  /* Reclaim horizontal space — the desktop 1.5rem gutter is too much on phones. */
+  .dash-main-wrap {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Stack the right-rail widgets in a single column on phones. */
+  .dash-rail {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Very small screens — single-column stat strip and tighter gutters. */
+@media (max-width: 460px) {
+  .dash-stats {
+    grid-template-columns: 1fr;
+  }
+  .dash-main-wrap {
+    padding: 0.85rem;
+  }
+}
+
+/* ---------- Realtime notifications ---------- */
+.tp-notif-wrap .dash-logout-btn {
+  justify-content: flex-start;
+}
+.tp-notif-menu {
+  width: 340px;
+  max-height: 420px;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
+  border: 1px solid var(--dash-border, rgba(15, 23, 42, 0.08));
+}
+.tp-notif-list {
+  max-height: 360px;
+  overflow-y: auto;
+}
+.tp-notif-list .list-group-item {
+  border-radius: 0;
+}
+.tp-notif-unread {
+  background:
+    linear-gradient(0deg, rgba(96, 165, 250, 0.1), rgba(96, 165, 250, 0.1)),
+    transparent;
+  border-left: 3px solid #60a5fa;
+}
+.tp-notif-icon {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tp-toast-container .toast {
+  min-width: 280px;
+  background: #1f2937;
+  color: #f3f4f6;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+
+/* ---------- Sidebar user menu (notifications + logout submenu) ---------- */
+.dash-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg-soft);
+  color: var(--text-color);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.dash-user-btn:hover {
+  background: var(--panel-bg);
+  border-color: var(--border-color-strong);
+}
+.dash-user-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), #6e436c);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.dash-user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.dash-user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-user-role {
+  font-size: 0.7rem;
+  color: var(--text-color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.dash-user-caret {
+  font-size: 0.8rem;
+  color: var(--text-color-muted);
+  flex-shrink: 0;
+}
+.tp-user-badge {
+  top: -4px;
+  right: -4px;
+}
+.dropdown-menu.tp-user-menu {
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  max-height: 460px;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color-strong);
+  /* Translucent carrd glass — !important beats Bootstrap's --bs-dropdown-bg.
+     Blur keeps text readable over page content; high z-index floats it above panels. */
+  background-color: rgba(36, 37, 45, 0.9) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--text-color);
+  padding: 0;
+  z-index: 3000;
+}
+/* Re-theme the Bootstrap utility classes used inside the menu. */
+.tp-user-menu .border-bottom,
+.tp-user-menu .border-top {
+  border-color: var(--border-color) !important;
+}
+.tp-user-menu .text-muted {
+  color: var(--text-color-muted) !important;
+}
+.tp-user-menu-head .fw-semibold {
+  color: var(--text-color);
+}
+
+.tp-user-menu .tp-notif-list {
+  max-height: 300px;
+  overflow-y: auto;
+  background: transparent;
+}
+.tp-user-menu .tp-notif-list .list-group-item {
+  background: transparent;
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+.tp-user-menu .tp-notif-list .list-group-item:hover {
+  background: var(--panel-bg-soft);
+}
+
+/* "Mark all read" — real button so the whole control is the hover/click target. */
+.tp-notif-clear-btn {
+  border: 1px solid var(--border-color);
+  background: var(--accent-color-soft);
+  color: var(--accent-color);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.tp-notif-clear-btn:hover {
+  background: var(--accent-color);
+  color: #0b1a1a;
+  border-color: var(--accent-color);
+}
+
+.tp-user-logout {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #fca5a5;
+}
+.tp-user-logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fecaca;
+}
+
+/* ---------- Live activity pill + feed ---------- */
+.tp-live-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--dash-border, rgba(15, 23, 42, 0.08));
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.tp-live-pill:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tp-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  background: #94a3b8;
+  box-shadow: 0 0 0 0 rgba(148, 163, 184, 0.6);
+}
+.tp-live-connected {
+  background: #10b981;
+  animation: tpLivePulse 2s infinite;
+}
+.tp-live-connecting {
+  background: #f59e0b;
+}
+.tp-live-reconnecting {
+  background: #f59e0b;
+  animation: tpLivePulse 1s infinite;
+}
+.tp-live-offline {
+  background: #ef4444;
+}
+
+@keyframes tpLivePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.tp-live-label {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tp-live-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  font-size: 0.72rem;
+}
+
+.tp-live-menu {
+  width: 340px;
+  max-height: 380px;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
+  border: 1px solid var(--dash-border, rgba(15, 23, 42, 0.08));
+}
+.tp-live-feed {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+.tp-live-feed-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  border-bottom: 1px dashed rgba(15, 23, 42, 0.05);
+}
+.tp-live-feed-row:last-child {
+  border-bottom: 0;
+}
+.tp-live-feed-time {
+  font-variant-numeric: tabular-nums;
+  color: #6b7280;
+  font-size: 0.72rem;
+}
+.tp-live-feed-type {
+  font-size: 0.65rem;
+}
+.tp-live-feed-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Enrollments / Manage styles (merged from dashboard-manage.css).
+   Placed last so these win any conflicting earlier rules.
+   ============================================================ */
+/* ============================================================
+   Carrd-themed Enrollments / Manage redesign
+   Scoped under .dash-content-area to keep marketing pages clean.
+   ============================================================ */
+
+/* Page header ------------------------------------------------ */
+.dash-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.dash-page-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.dash-page-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+}
+.dash-page-h {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.85rem);
+  letter-spacing: -0.02em;
+  color: var(--text-color);
+  margin: 0;
+}
+.dash-page-lede {
+  color: var(--text-color-soft);
+  font-size: 0.92rem;
+  margin: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Summary chip strip ---------------------------------------- */
+.dash-chip-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.dash-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.dash-summary-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--accent-color-soft);
+  color: var(--accent-color);
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+.dash-summary-icon.is-warn {
+  background: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
+}
+.dash-summary-icon.is-info {
+  background: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
+}
+.dash-summary-icon.is-pink {
+  background: rgba(244, 114, 182, 0.18);
+  color: #f472b6;
+}
+.dash-summary-val {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  color: var(--text-color);
+}
+.dash-summary-lbl {
+  color: var(--text-color-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Panel wrapper --------------------------------------------- */
+.dash-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+.dash-panel + .dash-panel {
+  margin-top: 1.25rem;
+}
+.dash-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  gap: 1rem;
+}
+.dash-panel-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--text-color);
+  margin: 0;
+}
+.dash-panel-sub {
+  font-size: 0.78rem;
+  color: var(--text-color-muted);
+}
+
+/* Data table ------------------------------------------------ */
+.dash-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.dash-data-table thead th {
+  background: transparent;
+  color: var(--text-color-muted);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+.dash-data-table tbody td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  color: var(--text-color);
+}
+.dash-data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.dash-data-table tbody tr {
+  transition: background 0.15s ease;
+}
+.dash-data-table tbody tr:hover {
+  background: rgba(51, 173, 169, 0.06);
+}
+.dash-data-table .dash-td-actions {
+  text-align: right;
+}
+.dash-data-table .dash-td-empty {
+  text-align: center;
+  color: var(--text-color-muted);
+  padding: 2.5rem 1rem;
+}
+
+/* Cell composites ------------------------------------------ */
+.dash-cell-person {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.dash-avatar-sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), #6e436c);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+.dash-cell-line1 {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.92rem;
+  line-height: 1.15;
+}
+.dash-cell-line2 {
+  color: var(--text-color-muted);
+  font-size: 0.74rem;
+  margin-top: 2px;
+}
+
+/* Pill badges ---------------------------------------------- */
+.dash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.dash-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dash-pill-success {
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.28);
+}
+.dash-pill-primary {
+  background: rgba(51, 173, 169, 0.16);
+  color: #5fd1cd;
+  border-color: rgba(51, 173, 169, 0.3);
+}
+.dash-pill-info {
+  background: rgba(96, 165, 250, 0.16);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.3);
+}
+.dash-pill-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.dash-pill-danger {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.dash-pill-muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-color-soft);
+  border-color: var(--border-color);
+}
+.dash-pill-plain {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-color-muted);
+  font-weight: 500;
+}
+.dash-pill-plain::before {
+  display: none;
+}
+
+/* Inline payment progress ---------------------------------- */
+.dash-pay {
+  min-width: 140px;
+}
+.dash-pay-line {
+  font-size: 0.82rem;
+  color: var(--text-color);
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.dash-pay-balance {
+  color: #fbbf24;
+  font-weight: 600;
+}
+.dash-pay-balance.is-paid {
+  color: #34d399;
+}
+.dash-pay-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.dash-pay-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color), #5fd1cd);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+.dash-pay-meta {
+  font-size: 0.72rem;
+  color: var(--text-color-muted);
+  margin-top: 4px;
+}
+
+/* Action group + buttons ----------------------------------- */
+.dash-action-group {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.dash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+  text-decoration: none;
+  min-height: 36px;
+  white-space: nowrap;
+}
+.dash-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color-strong);
+  color: var(--text-color);
+}
+.dash-btn:active {
+  transform: scale(0.97);
+}
+.dash-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+.dash-btn:disabled,
+.dash-btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.dash-btn-primary {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #0b1a1a;
+  font-weight: 600;
+}
+.dash-btn-primary:hover {
+  background: var(--accent-color-hover);
+  border-color: var(--accent-color-hover);
+  color: #0b1a1a;
+}
+.dash-btn-success {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+.dash-btn-success:hover {
+  background: rgba(16, 185, 129, 0.24);
+  color: #34d399;
+}
+.dash-btn-danger {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+.dash-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+}
+.dash-btn-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.74rem;
+  min-height: 30px;
+}
+
+/* Status select inline ------------------------------------- */
+.dash-status-form {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.dash-status-form select {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  min-width: 130px;
+  cursor: pointer;
+}
+.dash-status-form select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+
+/* Themed Bootstrap modal override -------------------------- */
+.dash-content-area .modal-content,
+.modal .modal-content {
+  background: rgba(36, 37, 45, 0.92) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  color: var(--text-color) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.modal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+}
+.modal .modal-footer {
+  border-top: 1px solid var(--border-color);
+}
+.modal .modal-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+}
+.modal .btn-close {
+  filter: invert(1) opacity(0.7);
+}
+.modal label {
+  color: var(--text-color-soft);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+}
+.modal .form-control,
+.modal .form-select,
+.modal textarea.form-control {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  border-radius: 10px !important;
+}
+.modal .form-control:focus,
+.modal .form-select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px var(--accent-color-soft) !important;
+}
+
+/* Mobile responsive ---------------------------------------- */
+@media (max-width: 768px) {
+  .dash-data-table thead {
+    display: none;
+  }
+  .dash-data-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .dash-data-table tbody td {
+    padding: 0.25rem 0;
+    border-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+  }
+  .dash-data-table tbody td::before {
+    content: attr(data-label);
+    color: var(--text-color-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .dash-data-table .dash-td-actions {
+    justify-content: flex-end;
+  }
+  .dash-action-group {
+    justify-content: flex-end;
+    flex: 1;
+  }
+}
+
+/* Reports (read-only) sidebar group — visually distinct from Manage so
+   coordinators see at a glance they are about to leave the editable app. */
+.dash-nav-section--readonly {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--accent-color);
+}
+.dash-readonly-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(51, 173, 169, 0.15);
+  color: var(--accent-color);
+  border: 1px solid rgba(51, 173, 169, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+/* dash-nav-item--external: no extra styling */
+
+/* Reports app body marker — applied when the layout knows it's the reporting
+   client so subtle accents (eg an accent strip on the brand) can flag it. */
+.dash-body--reports .dash-brand-text::after {
+  content: "Reporting";
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+  margin-top: 2px;
+}
+
+/* Chart wrappers — sized so charts render predictably inside dash-panel. */
+.dash-chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+.dash-chart-wrap-sm { height: 220px; }
+.dash-chart-wrap-lg { height: 420px; }
+
+/* Progress bar inline inside a data-table cell. The % value is rendered as a
+   separate label to the right of the bar (see .dash-progress-wrap), so the
+   bar itself is a pure visual fill at its true width. */
+.dash-progress {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.dash-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--accent-color);
+}
+.dash-progress-fill.is-warn   { background: #f5a524; }
+.dash-progress-fill.is-danger { background: #f15a5a; }
+.dash-progress-fill.is-info   { background: #4ea3ff; }
+
+/* Bar + right-aligned white % label on one row. */
+.dash-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.dash-progress-wrap .dash-progress {
+  flex: 1;
+}
+.dash-progress-value {
+  flex-shrink: 0;
+  min-width: 3em;
+  text-align: right;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.dash-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  min-width: 220px;
+  /* Render the native <option> popup dark instead of white-on-white. */
+  color-scheme: dark;
+}
+.dash-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(51, 173, 169, 0.18);
+}
+.dash-page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}

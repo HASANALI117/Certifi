@@ -19,8 +19,9 @@ public class RegisterViewModel
     [Required, DataType(DataType.Password), Compare(nameof(Password)), Display(Name = "Confirm Password")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    [Required, Display(Name = "Role")]
-    public string Role { get; set; } = string.Empty;
+    [Required, Phone, Display(Name = "Phone")]
+    public string Phone { get; set; } = string.Empty;
 
-    public List<string> AvailableRoles { get; set; } = new() { "Trainee", "Instructor" };
+    [Required, DataType(DataType.Date), Display(Name = "Date of Birth")]
+    public DateOnly DateOfBirth { get; set; }
 }

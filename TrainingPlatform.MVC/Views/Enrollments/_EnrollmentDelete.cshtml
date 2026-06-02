@@ -1,0 +1,30 @@
+@using TrainingPlatform.API.Models
+@model Enrollment
+@{
+    var traineeName = Model.Trainee?.User != null ? $"{Model.Trainee.User.FirstName} {Model.Trainee.User.LastName}" : "Unknown Trainee";
+    var courseTitle = Model.CourseSession?.Course?.Title ?? "N/A";
+}
+
+<div class="modal-header">
+    <h5 class="modal-title">Delete Enrollment</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form asp-controller="Enrollments" asp-action="Delete" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="modal-body">
+        <p class="mb-3">This permanently deletes the enrollment and its payments/assessment. This cannot be undone.</p>
+        <dl class="row small mb-0">
+            <dt class="col-4 text-muted">Trainee</dt>
+            <dd class="col-8">@traineeName</dd>
+            <dt class="col-4 text-muted">Course</dt>
+            <dd class="col-8">@courseTitle</dd>
+            <dt class="col-4 text-muted">Status</dt>
+            <dd class="col-8">@Model.Status</dd>
+        </dl>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="dash-btn" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="dash-btn dash-btn-danger">Delete enrollment</button>
+    </div>
+</form>

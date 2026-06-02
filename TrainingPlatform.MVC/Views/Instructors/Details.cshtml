@@ -15,14 +15,13 @@
     <div class="d-flex align-items-center gap-3">
         <span class="tp-avatar" style="width: 56px; height: 56px; font-size: 1.4rem; border-radius: 14px;">@initial</span>
         <div>
-            <span class="tp-page-eyebrow"><i class="bi bi-person-badge"></i> Instructor</span>
             <h1 class="tp-page-title">@Model.FullName</h1>
             <p class="tp-page-subtitle">@Model.Email</p>
         </div>
     </div>
     <div class="tp-page-actions">
-        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit</a>
+        <a asp-action="Index" class="tp-cta-ghost"><i class="bi bi-arrow-left"></i> Back</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="tp-cta"><i class="bi bi-pencil"></i> Edit</a>
     </div>
 </div>
 

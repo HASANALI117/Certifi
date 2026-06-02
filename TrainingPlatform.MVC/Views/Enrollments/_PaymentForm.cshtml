@@ -1,0 +1,31 @@
+@using TrainingPlatform.API.Models
+@model Enrollment
+@{
+    var traineeName = Model.Trainee?.User != null ? $"{Model.Trainee.User.FirstName} {Model.Trainee.User.LastName}" : "Unknown Trainee";
+    var courseTitle = Model.CourseSession?.Course?.Title ?? "N/A";
+    var fee = Model.CourseSession?.Course?.EnrollmentFee ?? 0m;
+    var paid = Model.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+    var balance = Math.Max(0m, fee - paid);
+}
+
+<div class="modal-header">
+    <h5 class="modal-title">Pay with card</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form asp-controller="Payments" asp-action="CreateCheckoutSession" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="enrollmentId" value="@Model.Id" />
+    <div class="modal-body">
+        <p class="dash-panel-sub mb-3">@traineeName · @courseTitle</p>
+        <label for="payAmount" class="form-label">Amount to pay</label>
+        <input id="payAmount" type="number" name="amount" class="form-control" step="0.01" min="0.01" max="@balance" value="@balance" required autocomplete="off" />
+        <div class="dash-pay-meta mt-2">Outstanding balance: <strong>@balance.ToString("C")</strong></div>
+        <div class="dash-pay-meta mt-2 text-muted small">
+            <i class="bi bi-lock-fill"></i> You'll be redirected to Stripe's secure checkout to complete payment.
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="dash-btn" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="dash-btn dash-btn-success"><i class="bi bi-credit-card"></i> Continue to payment</button>
+    </div>
+</form>

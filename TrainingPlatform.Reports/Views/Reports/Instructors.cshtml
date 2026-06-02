@@ -1,0 +1,107 @@
+@using System.Text.Json
+@model List<InstructorReportRow>
+@{
+    ViewData["Title"] = "Instructor Workload";
+    var ordered = Model.OrderByDescending(i => i.TotalHours).ToList();
+    var labels = ordered.Select(i => i.InstructorName).ToList();
+    var hours = ordered.Select(i => i.TotalHours).ToList();
+    var sessions = ordered.Select(i => i.SessionCount).ToList();
+}
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Instructor Workload</h1>
+            <p class="dash-page-lede">Sessions, teaching hours and reach per instructor — @Model.Count.ToString("N0") instructors.</p>
+        </div>
+    </div>
+</header>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Workload comparison</h2>
+        </div>
+    </div>
+    <div class="dash-chart-wrap-lg">
+        <canvas id="instructorChart"></canvas>
+    </div>
+</section>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Instructors</h2>
+            <div class="dash-panel-sub">@Model.Count.ToString("N0") total</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th>Instructor</th>
+                    <th class="text-end">Sessions</th>
+                    <th class="text-end">Total hours</th>
+                    <th class="text-end">Trainees reached</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="4" class="dash-td-empty">No instructor data available.</td></tr>
+                }
+                @foreach (var i in ordered)
+                {
+                    <tr>
+                        <td data-label="Instructor">@i.InstructorName</td>
+                        <td data-label="Sessions" class="text-end">@i.SessionCount.ToString("N0")</td>
+                        <td data-label="Total hours" class="text-end fw-semibold">@i.TotalHours.ToString("N1")</td>
+                        <td data-label="Trainees reached" class="text-end">@i.TraineeCount.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const ctx = document.getElementById('instructorChart');
+            if (!ctx) return;
+            Chart.defaults.color = 'rgba(255,255,255,0.7)';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(JsonSerializer.Serialize(labels)),
+                    datasets: [
+                        {
+                            label: 'Total Hours',
+                            data: @Html.Raw(JsonSerializer.Serialize(hours)),
+                            backgroundColor: 'rgba(51,173,169,0.65)',
+                            borderRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Sessions',
+                            data: @Html.Raw(JsonSerializer.Serialize(sessions)),
+                            backgroundColor: 'rgba(78,163,255,0.65)',
+                            borderRadius: 6,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y:  { beginAtZero: true, position: 'left',  title: { display: true, text: 'Hours' } },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Sessions' }, ticks: { precision: 0 } },
+                        x:  { ticks: { autoSkip: false, maxRotation: 50, minRotation: 30 } }
+                    }
+                }
+            });
+        })();
+    </script>
+}

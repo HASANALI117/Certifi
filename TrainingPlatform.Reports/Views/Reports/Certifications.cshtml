@@ -1,0 +1,63 @@
+@model List<CertificationReportRow>
+@{
+    ViewData["Title"] = "Certifications";
+    var ordered = Model.OrderByDescending(c => c.CompletionRate).ToList();
+}
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Certifications</h1>
+            <p class="dash-page-lede">Completion progress by certification track — @Model.Count.ToString("N0") tracks.</p>
+        </div>
+    </div>
+</header>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Tracks</h2>
+            <div class="dash-panel-sub">@Model.Count.ToString("N0") total</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th>Track</th>
+                    <th class="text-end">Trainees</th>
+                    <th class="text-end">In progress</th>
+                    <th class="text-end">Eligible</th>
+                    <th class="text-end">Issued</th>
+                    <th style="min-width:220px;">Completion rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="dash-td-empty">No certification data available.</td></tr>
+                }
+                @foreach (var c in ordered)
+                {
+                    var rate = (double)c.CompletionRate;
+                    var widthCss = rate.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                    <tr>
+                        <td data-label="Track"><strong>@c.TrackName</strong></td>
+                        <td data-label="Trainees" class="text-end">@c.TotalTrainees.ToString("N0")</td>
+                        <td data-label="In progress" class="text-end">@c.InProgressCount.ToString("N0")</td>
+                        <td data-label="Eligible" class="text-end">@c.EligibleCount.ToString("N0")</td>
+                        <td data-label="Issued" class="text-end fw-semibold">@c.IssuedCount.ToString("N0")</td>
+                        <td data-label="Completion rate">
+                            <div class="dash-progress-wrap">
+                                <div class="dash-progress">
+                                    <div class="dash-progress-fill" style="width:@(widthCss)%;"></div>
+                                </div>
+                                <span class="dash-progress-value">@rate.ToString("F1")%</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

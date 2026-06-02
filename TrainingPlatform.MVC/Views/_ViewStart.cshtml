@@ -1,3 +1,22 @@
-﻿@{
-    Layout = "_Layout";
+@{
+    var isAjax = string.Equals(
+        Context.Request.Headers["X-Requested-With"],
+        "XMLHttpRequest",
+        StringComparison.OrdinalIgnoreCase);
+
+    if (isAjax)
+    {
+        // Minimal layout that still renders _DashAlerts so flash-message
+        // toasts fire immediately after a redirected POST, instead of only
+        // appearing after a manual page refresh.
+        Layout = "_AjaxLayout";
+    }
+    else if (User.Identity?.IsAuthenticated == true)
+    {
+        Layout = "_DashboardLayout";
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
 }

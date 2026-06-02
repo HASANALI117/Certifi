@@ -1,0 +1,163 @@
+@using System.Text.Json
+@model RevenueReportViewModel
+@{
+    ViewData["Title"] = "Revenue";
+    var courses = Model.Courses.OrderByDescending(c => c.TotalCollected).ToList();
+    var totalExpected = courses.Sum(c => c.TotalFeesExpected);
+    var totalCollected = courses.Sum(c => c.TotalCollected);
+    var totalOutstanding = courses.Sum(c => c.TotalOutstanding);
+    var overallRate = totalExpected == 0 ? 0m : totalCollected * 100 / totalExpected;
+
+    var months = Model.Timeline.Select(t => t.Month).ToList();
+    var collected = Model.Timeline.Select(t => t.TotalCollected).ToList();
+    var counts = Model.Timeline.Select(t => t.PaymentCount).ToList();
+}
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Revenue</h1>
+            <p class="dash-page-lede">Collected vs outstanding by course, plus a 12-month timeline.</p>
+        </div>
+    </div>
+</header>
+
+<section class="dash-chip-row" aria-label="At a glance">
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-receipt"></i></span>
+        <div>
+            <div class="dash-summary-val">@totalExpected.ToString("C0")</div>
+            <div class="dash-summary-lbl">Expected</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-cash-stack"></i></span>
+        <div>
+            <div class="dash-summary-val">@totalCollected.ToString("C0")</div>
+            <div class="dash-summary-lbl">Collected</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-danger"><i class="bi bi-exclamation-octagon-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@totalOutstanding.ToString("C0")</div>
+            <div class="dash-summary-lbl">Outstanding</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-info"><i class="bi bi-pie-chart-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@overallRate.ToString("F1")%</div>
+            <div class="dash-summary-lbl">Overall collection rate</div>
+        </div>
+    </div>
+</section>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Collections over the last 12 months</h2>
+        </div>
+    </div>
+    <div class="dash-chart-wrap-lg">
+        <canvas id="revenueChart"></canvas>
+    </div>
+</section>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Per-course revenue</h2>
+            <div class="dash-panel-sub">@courses.Count.ToString("N0") courses</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Category</th>
+                    <th class="text-end">Enrollments</th>
+                    <th class="text-end">Expected</th>
+                    <th class="text-end">Collected</th>
+                    <th class="text-end">Outstanding</th>
+                    <th style="min-width:160px;">Collection rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!courses.Any())
+                {
+                    <tr><td colspan="7" class="dash-td-empty">No revenue data available.</td></tr>
+                }
+                @foreach (var c in courses)
+                {
+                    var rate = (double)c.CollectionRate;
+                    var cls = rate >= 90 ? "" : rate >= 60 ? "is-info" : rate >= 30 ? "is-warn" : "is-danger";
+                    var widthCss = rate.ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
+                    <tr>
+                        <td data-label="Course">@c.CourseTitle</td>
+                        <td data-label="Category"><span class="dash-pill dash-pill-muted">@c.CategoryName</span></td>
+                        <td data-label="Enrollments" class="text-end">@c.TotalEnrollments.ToString("N0")</td>
+                        <td data-label="Expected" class="text-end">@c.TotalFeesExpected.ToString("C0")</td>
+                        <td data-label="Collected" class="text-end text-success fw-semibold">@c.TotalCollected.ToString("C0")</td>
+                        <td data-label="Outstanding" class="text-end text-danger">@c.TotalOutstanding.ToString("C0")</td>
+                        <td data-label="Collection rate">
+                            <div class="dash-progress-wrap">
+                                <div class="dash-progress">
+                                    <div class="dash-progress-fill @cls" style="width:@(widthCss)%;"></div>
+                                </div>
+                                <span class="dash-progress-value">@rate.ToString("F0")%</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+            Chart.defaults.color = 'rgba(255,255,255,0.7)';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+            new Chart(ctx, {
+                data: {
+                    labels: @Html.Raw(JsonSerializer.Serialize(months)),
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Collected',
+                            data: @Html.Raw(JsonSerializer.Serialize(collected)),
+                            backgroundColor: 'rgba(51,173,169,0.6)',
+                            borderRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'line',
+                            label: 'Payments',
+                            data: @Html.Raw(JsonSerializer.Serialize(counts)),
+                            borderColor: '#4ea3ff',
+                            backgroundColor: 'rgba(78,163,255,0.2)',
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y:  { beginAtZero: true, position: 'left',  title: { display: true, text: 'Collected' },
+                              ticks: { callback: v => '$' + Number(v).toLocaleString() } },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false },
+                              title: { display: true, text: 'Payments' }, ticks: { precision: 0 } }
+                    }
+                }
+            });
+        })();
+    </script>
+}

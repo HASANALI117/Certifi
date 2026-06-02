@@ -3,9 +3,8 @@
 
 <div class="tp-page-header">
     <div>
-        <span class="tp-page-eyebrow"><i class="bi bi-plus-circle"></i> Manage</span>
         <h1 class="tp-page-title">Add Instructor</h1>
-        <p class="tp-page-subtitle">Promote an existing user account into an instructor profile.</p>
+        <p class="tp-page-subtitle">Create an instructor account and profile. Share the temporary password with the instructor.</p>
     </div>
 </div>
 
@@ -17,12 +16,29 @@
                     <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="UserId" class="form-label"></label>
-                    <select asp-for="UserId" asp-items="Model.AvailableUsers" class="form-select">
-                        <option value="">-- Select User --</option>
-                    </select>
-                    <span asp-validation-for="UserId" class="text-danger"></span>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="TempPassword" class="form-label"></label>
+                        <input asp-for="TempPassword" class="form-control" autocomplete="new-password" placeholder="Min 8 characters" />
+                        <span asp-validation-for="TempPassword" class="text-danger"></span>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label asp-for="ExpertiseAreas" class="form-label"></label>
@@ -35,8 +51,8 @@
                 </div>
 
                 <div class="tp-form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Save</button>
-                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="tp-cta"><i class="bi bi-check2-circle"></i> Save</button>
+                    <a asp-action="Index" class="tp-cta-ghost">Cancel</a>
                 </div>
             </form>
         </div>

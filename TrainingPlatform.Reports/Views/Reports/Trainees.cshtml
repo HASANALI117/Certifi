@@ -1,0 +1,81 @@
+@model List<TraineeReportRow>
+@{
+    ViewData["Title"] = "Trainees";
+    var ordered = Model.OrderBy(t => t.FullName).ToList();
+}
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Trainees</h1>
+            <p class="dash-page-lede">Per-trainee enrollment and certification stats — @Model.Count.ToString("N0") trainees.</p>
+        </div>
+        <div class="dash-page-toolbar">
+            <input type="text" id="traineeSearch" class="dash-input" placeholder="Search trainees…" />
+        </div>
+    </div>
+</header>
+
+<section class="dash-panel">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title">Trainees</h2>
+            <div class="dash-panel-sub"><span id="traineeCount">@Model.Count</span> matching</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="dash-data-table" id="traineesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th class="text-end">Enrollments</th>
+                    <th class="text-end">Completed</th>
+                    <th class="text-end">Passed</th>
+                    <th class="text-end">Certs in progress</th>
+                    <th class="text-end">Certs issued</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8" class="dash-td-empty">No trainee data available.</td></tr>
+                }
+                @foreach (var t in ordered)
+                {
+                    <tr data-search="@($"{t.FullName} {t.Email} {t.TraineePublicId}".ToLower())">
+                        <td data-label="ID"><code class="small">@t.TraineePublicId</code></td>
+                        <td data-label="Name">@t.FullName</td>
+                        <td data-label="Email" class="text-color-soft small">@t.Email</td>
+                        <td data-label="Enrollments" class="text-end">@t.TotalEnrollments.ToString("N0")</td>
+                        <td data-label="Completed" class="text-end text-success">@t.CompletedCount.ToString("N0")</td>
+                        <td data-label="Passed" class="text-end">@t.PassedCount.ToString("N0")</td>
+                        <td data-label="Certs in progress" class="text-end">@t.CertificationsInProgress.ToString("N0")</td>
+                        <td data-label="Certs issued" class="text-end fw-semibold text-success">@t.CertificationsIssued.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const input = document.getElementById('traineeSearch');
+            const rows = document.querySelectorAll('#traineesTable tbody tr[data-search]');
+            const count = document.getElementById('traineeCount');
+            input.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                let v = 0;
+                rows.forEach(r => {
+                    const show = !q || r.getAttribute('data-search').includes(q);
+                    r.style.display = show ? '' : 'none';
+                    if (show) v++;
+                });
+                count.textContent = v;
+            });
+        })();
+    </script>
+}

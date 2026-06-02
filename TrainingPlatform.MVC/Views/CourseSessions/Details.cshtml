@@ -13,12 +13,11 @@
 
 <div class="tp-page-header">
     <div>
-        <span class="tp-page-eyebrow"><i class="bi bi-calendar-event"></i> Session</span>
         <h1 class="tp-page-title">@Model.CourseTitle</h1>
         <p class="tp-page-subtitle">@(string.IsNullOrWhiteSpace(Model.CourseDescription) ? "—" : Model.CourseDescription)</p>
     </div>
     <div class="tp-page-actions">
-        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Schedule</a>
+        <a asp-action="Index" class="tp-cta-ghost"><i class="bi bi-arrow-left"></i> Back to Schedule</a>
     </div>
 </div>
 
@@ -62,9 +61,9 @@
             </div>
             @{
                 var pct = Model.AvailableSpots > 0 ? (int)(Model.EnrollmentCount * 100.0 / Model.AvailableSpots) : 0;
-                var fillClass = spotsLeft <= 0 ? "var(--tp-danger)" : spotsLeft <= 5 ? "var(--tp-warning)" : "var(--tp-success)";
+                var fillClass = spotsLeft <= 0 ? "var(--danger-color)" : spotsLeft <= 5 ? "var(--warning-color)" : "var(--success-color)";
             }
-            <div style="height: 8px; background: var(--tp-bg); border-radius: 999px; overflow: hidden; margin-bottom: .85rem;">
+            <div style="height: 8px; background: var(--bg-color); border-radius: 999px; overflow: hidden; margin-bottom: .85rem;">
                 <div style="width: @pct%; height: 100%; background: @fillClass; transition: width 250ms ease;"></div>
             </div>
             @if (spotsLeft <= 0)
