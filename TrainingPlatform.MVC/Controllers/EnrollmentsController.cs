@@ -54,8 +54,7 @@ public class EnrollmentsController : Controller
         return View(new ManageEnrollmentsViewModel
         {
             Enrollments = enrollments,
-            PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus),
-            Certifications = await LoadCertificationsAsync()
+            PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus)
         });
     }
 
@@ -468,40 +467,6 @@ public class EnrollmentsController : Controller
         return RedirectToAction(nameof(Manage));
     }
 
-    [Authorize(Roles = "TrainingCoordinator")]
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> IssueCertification(int certificationId)
-    {
-        var certification = await _context.TraineeCertifications
-            .Include(c => c.Trainee)
-            .Include(c => c.CertificationTrack)
-            .FirstOrDefaultAsync(c => c.Id == certificationId);
-
-        if (certification == null) return NotFound();
-
-        certification.Status = CertificationStatus.Issued;
-        certification.IssuedAt = DateTime.UtcNow;
-
-        // Persist the issued state first so the reference embeds a saved row's
-        // Id (collision-free across coordinators issuing concurrently). On the
-        // happy path the row already had an Id from StartCertificationTrackingAsync,
-        // but using SaveChangesAsync as the anchor keeps the invariant intact
-        // even if the upstream creation flow changes.
-        var generateRef = string.IsNullOrWhiteSpace(certification.CertRefNumber);
-        if (generateRef) await _context.SaveChangesAsync();
-        if (generateRef) certification.CertRefNumber = BuildCertificateReference(certification);
-
-        await AddNotificationForTraineeAsync(
-            certification.TraineeId,
-            $"Certification issued: {certification.CertificationTrack.Name}. Reference: {certification.CertRefNumber}.",
-            "Certification");
-
-        await SaveChangesAndNotifyAsync();
-
-        TempData["Success"] = "Certification issued.";
-        return RedirectToAction(nameof(Manage));
-    }
-
     private IQueryable<Enrollment> EnrollmentQuery() =>
         _context.Enrollments
             .Include(e => e.Trainee).ThenInclude(t => t.User)
@@ -536,14 +501,6 @@ public class EnrollmentsController : Controller
             "Name",
             courseSessionId);
     }
-
-    private async Task<List<TraineeCertification>> LoadCertificationsAsync() =>
-        await _context.TraineeCertifications
-            .Include(c => c.Trainee).ThenInclude(t => t.User)
-            .Include(c => c.CertificationTrack)
-            .OrderBy(c => c.Status)
-            .ThenBy(c => c.CertificationTrack.Name)
-            .ToListAsync();
 
     private void ClearEnrollmentNavigationValidation()
     {
@@ -844,13 +801,4 @@ public class EnrollmentsController : Controller
 
     private static string FullName(AppUser user) =>
         $"{user.FirstName} {user.LastName}".Trim();
-
-    private static string BuildCertificateReference(TraineeCertification certification)
-    {
-        var prefix = string.IsNullOrWhiteSpace(certification.CertificationTrack.CertRefPrefix)
-            ? "CERT"
-            : certification.CertificationTrack.CertRefPrefix.Trim();
-
-        return $"{prefix}-{DateTime.UtcNow:yyyy}-{certification.Id:D5}";
-    }
 }

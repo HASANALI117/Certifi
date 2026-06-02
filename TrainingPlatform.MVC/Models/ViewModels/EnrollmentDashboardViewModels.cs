@@ -3,13 +3,11 @@ using TrainingPlatform.API.Models;
 namespace TrainingPlatform.MVC.Models.ViewModels;
 
 // Coordinator/Instructor "Manage Enrollments" page. Bundles the enrollment list
-// with the derived payment-status map and the certifications panel that were
-// previously passed as separate ViewBag entries.
+// with the derived payment-status map.
 public class ManageEnrollmentsViewModel
 {
     public IReadOnlyList<Enrollment> Enrollments { get; set; } = [];
     public IReadOnlyDictionary<int, string> PaymentStatuses { get; set; } = new Dictionary<int, string>();
-    public IReadOnlyList<TraineeCertification> Certifications { get; set; } = [];
 }
 
 // Trainee "My Enrollment Dashboard" (BillingAndAlerts) page. Replaces the four

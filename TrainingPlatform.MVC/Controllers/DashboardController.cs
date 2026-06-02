@@ -130,6 +130,16 @@ public class DashboardController : Controller
         var progress = await BuildLearningProgressAsync(user, role);
         var stats = await BuildStatsAsync(user, role);
 
+        // Trainees see their latest notifications on the dashboard (moved here
+        // from the enrollments page).
+        var notifications = role == "Trainee"
+            ? await _db.Notifications
+                .Where(n => n.UserId == user.Id)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(10)
+                .ToListAsync()
+            : [];
+
         var model = new DashboardViewModel
         {
             FirstName = user.FirstName,
@@ -142,6 +152,7 @@ public class DashboardController : Controller
             Courses = courses,
             UpcomingSessions = sessions,
             LearningProgress = progress,
+            Notifications = notifications,
             Stats = stats
         };
 
