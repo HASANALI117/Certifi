@@ -207,7 +207,7 @@
                                                 }
                                             </select>
                                             <button type="submit" class="dash-btn dash-btn-sm" title="Apply status change">
-                                                <i class="bi bi-arrow-clockwise"></i>
+                                                <i class="bi bi-arrow-clockwise"></i><span>Apply</span>
                                             </button>
                                         </form>
                                     }
@@ -218,23 +218,22 @@
                                         <i class="bi bi-clipboard-check"></i><span>Assess</span>
                                     </button>
 
-                                    <button type="button" class="dash-btn dash-btn-sm"
-                                            data-tp-modal data-tp-modal-url="@Url.Action("Details", new { id = e.Id })"
-                                            aria-label="View details for @traineeName">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-
                                     @if (User.IsInRole("TrainingCoordinator"))
                                     {
                                         <button type="button" class="dash-btn dash-btn-sm"
+                                                data-tp-modal data-tp-modal-url="@Url.Action("Details", new { id = e.Id })"
+                                                aria-label="View details for @traineeName">
+                                            <i class="bi bi-eye"></i><span>Details</span>
+                                        </button>
+                                        <button type="button" class="dash-btn dash-btn-sm"
                                                 data-tp-modal data-tp-modal-url="@Url.Action("Edit", new { id = e.Id })"
                                                 aria-label="Edit enrollment for @traineeName">
-                                            <i class="bi bi-pencil-square"></i>
+                                            <i class="bi bi-pencil-square"></i><span>Edit</span>
                                         </button>
                                         <button type="button" class="dash-btn dash-btn-sm dash-btn-danger"
                                                 data-tp-modal data-tp-modal-url="@Url.Action("Delete", new { id = e.Id })"
-                                                aria-label="Delete enrollment for @traineeName">
-                                            <i class="bi bi-trash"></i>
+												aria-label="Delete enrollment for @traineeName">
+											    <i class="bi bi-trash"></i><span>Delete</span>
                                         </button>
                                     }
                                 </div>

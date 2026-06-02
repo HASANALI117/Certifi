@@ -867,9 +867,12 @@ label {
 .tp-auth-card .form-control::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
-/* Submit uses the landing .button.special — just make it span the card. */
+/* Submit uses the landing .button.special — just make it span the card.
+   text-align:center keeps anchor-based buttons (e.g. Access Denied "Go Home")
+   centered like the <button> submit on the login form. */
 .tp-auth-card .button {
   width: 100%;
+  text-align: center;
 }
 /* Certificate-lookup results sit below the auth card, matched to its width. */
 .tp-auth-result {

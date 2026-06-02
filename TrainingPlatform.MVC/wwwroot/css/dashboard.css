@@ -2102,6 +2102,12 @@ body.dash-body.dash-drawer-open {
   font-weight: 500;
   margin-bottom: 0.35rem;
 }
+/* Bootstrap .text-muted defaults to a dark grey that is illegible on the dark
+   modal surface (modals render outside .dash-content-area, so the scoped fix
+   there doesn't reach them). Lift it to the soft text token. */
+.modal .text-muted {
+  color: var(--text-color-soft) !important;
+}
 .modal .form-control,
 .modal .form-select,
 .modal textarea.form-control {
