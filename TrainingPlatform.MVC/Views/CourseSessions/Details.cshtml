@@ -2,11 +2,13 @@
 @{
     ViewData["Title"] = "Session Details";
     var spotsLeft = Model.AvailableSpots - Model.EnrollmentCount;
+    // Only trainees came in via the course-filtered "Find Sessions" flow; everyone else goes back to the full list.
+    int? backCourseId = User.IsInRole("Trainee") ? Model.CourseId : null;
 }
 
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index" asp-route-courseId="@Model.CourseId">Schedule</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-route-courseId="@backCourseId">Schedule</a></li>
         <li class="breadcrumb-item active" aria-current="page">Session Details</li>
     </ol>
 </nav>
@@ -17,7 +19,7 @@
         <p class="tp-page-subtitle">@(string.IsNullOrWhiteSpace(Model.CourseDescription) ? "—" : Model.CourseDescription)</p>
     </div>
     <div class="tp-page-actions">
-        <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="tp-cta-ghost"><i class="bi bi-arrow-left"></i> Back</a>
+        <a asp-action="Index" asp-route-courseId="@backCourseId" class="tp-cta-ghost"><i class="bi bi-arrow-left"></i> Back</a>
     </div>
 </div>
 

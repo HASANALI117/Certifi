@@ -9,6 +9,12 @@ public class ManageEnrollmentsViewModel
     public IReadOnlyDictionary<int, string> PaymentStatuses { get; set; } = new Dictionary<int, string>();
 }
 
+// Data for the instructor's assessment roster: enrollments only, no payment info.
+public class InstructorRosterViewModel
+{
+    public IReadOnlyList<Enrollment> Enrollments { get; set; } = [];
+}
+
 // Data for the trainee's billing page: payment status, balances, notifications, and certificates.
 public class TraineeBillingViewModel
 {

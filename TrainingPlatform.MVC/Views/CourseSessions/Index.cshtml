@@ -66,7 +66,10 @@ else
             <thead>
                 <tr>
                     <th class="tp-sortable" data-sort-type="text">Course</th>
-                    <th class="tp-sortable" data-sort-type="text">Instructor</th>
+                    @if (!isInstructor)
+                    {
+                        <th class="tp-sortable" data-sort-type="text">Instructor</th>
+                    }
                     <th class="tp-sortable" data-sort-type="text">Classroom</th>
                     <th class="tp-sortable" data-sort-type="number">Date</th>
                     <th class="tp-sortable" data-sort-type="number">Time</th>
@@ -85,9 +88,12 @@ else
                         ("bg-success", "bi-check-circle-fill", spotsLeft + " left");
                     <tr data-session-card="@s.Id">
                         <td><span class="fw-semibold">@s.CourseTitle</span></td>
-                        <td class="tp-text-soft">
-                            <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-person"></i> @s.InstructorName</span>
-                        </td>
+                        @if (!isInstructor)
+                        {
+                            <td class="tp-text-soft">
+                                <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-person"></i> @s.InstructorName</span>
+                            </td>
+                        }
                         <td class="tp-text-soft">
                             <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-door-open"></i> @s.ClassroomName</span>
                         </td>
