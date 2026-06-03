@@ -1,3 +1,4 @@
+@using TrainingPlatform.API.Models
 @model TrainingPlatform.MVC.Models.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
@@ -31,7 +32,7 @@
 <header class="dash-topbar">
     <div>
         <h1 class="dash-page-title">Hello, @(string.IsNullOrWhiteSpace(Model.FirstName) ? "there" : Model.FirstName) 👋</h1>
-        <p class="dash-page-sub">Your @Model.Role.ToLowerInvariant() workspace — courses, schedule, and progress at a glance.</p>
+        <p class="dash-page-sub">@(Model.Role == "Instructor" ? "Your instructor workspace — Your courses and schedule at a glance." : $"Your {Model.Role.ToLowerInvariant()} workspace — courses, schedule, and progress at a glance.")</p>
     </div>
 </header>
 
@@ -59,14 +60,63 @@
                     <div class="dash-stat-label">@(Model.Role == "Instructor" ? "Total learners" : "Active enrollments")</div>
                 </div>
             </div>
-            <div class="dash-stat">
-                <span class="dash-stat-icon dash-stat-icon-amber"><i class="bi bi-patch-check"></i></span>
-                <div>
-                    <div class="dash-stat-value">@Model.Stats.CertificationCount</div>
-                    <div class="dash-stat-label">Certifications</div>
+            @if (Model.Role == "Instructor")
+            {
+                <div class="dash-stat">
+                    <span class="dash-stat-icon dash-stat-icon-amber"><i class="bi bi-clipboard-check"></i></span>
+                    <div>
+                        <div class="dash-stat-value">@Model.Stats.AwaitingAssessmentCount</div>
+                        <div class="dash-stat-label">Awaiting assessment</div>
+                    </div>
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="dash-stat">
+                    <span class="dash-stat-icon dash-stat-icon-amber"><i class="bi bi-patch-check"></i></span>
+                    <div>
+                        <div class="dash-stat-value">@Model.Stats.CertificationCount</div>
+                        <div class="dash-stat-label">Certifications</div>
+                    </div>
+                </div>
+            }
         </section>
+
+        @if (Model.Role == "Instructor" && Model.NextSession is not null)
+        {
+            var ns = Model.NextSession;
+            var isLive = ns.Status == SessionStatus.InProgress;
+            <section class="dash-spotlight @(isLive ? "is-live" : null)" aria-label="Your next class">
+                <div class="dash-spotlight-date">
+                    <span class="dash-spotlight-day">@ns.StartDateTime.Day</span>
+                    <span class="dash-spotlight-mon">@MonthShort(ns.StartDateTime.Month)</span>
+                </div>
+                <div class="dash-spotlight-body">
+                    <div class="dash-spotlight-eyebrow">
+                        @if (isLive)
+                        {
+                            <span class="dash-spotlight-live"><i class="bi bi-broadcast"></i> Happening now</span>
+                        }
+                        else
+                        {
+                            <span>Your next class</span>
+                        }
+                        <span class="dash-pill dash-pill-muted">@ns.CategoryName</span>
+                    </div>
+                    <h2 class="dash-spotlight-title">@ns.CourseTitle</h2>
+                    <div class="dash-spotlight-meta">
+                        <span><i class="bi bi-clock"></i> @ns.StartDateTime.ToString("ddd dd MMM, HH:mm")–@ns.EndDateTime.ToString("HH:mm")</span>
+                        <span><i class="bi bi-geo-alt"></i> @ns.RoomName</span>
+                        <span><i class="bi bi-people"></i> @ns.EnrolledCount / @ns.Capacity enrolled</span>
+                    </div>
+                </div>
+                <div class="dash-spotlight-actions">
+                    <a class="dash-btn dash-btn-sm" asp-controller="CourseSessions" asp-action="Details" asp-route-id="@ns.Id" asp-route-courseId="@ns.CourseId">
+                        <i class="bi bi-box-arrow-up-right"></i><span>View session</span>
+                    </a>
+                </div>
+            </section>
+        }
 
         <section class="dash-section">
             <div class="dash-section-head">
@@ -266,30 +316,33 @@
             }
         </section>
 
-        <section class="dash-card dash-progress">
-            <div class="dash-card-head">
-                <h3 class="dash-card-title">Learning progress</h3>
-            </div>
-            @if (!Model.LearningProgress.Any())
-            {
-                <p class="dash-card-empty">No progress to show yet.</p>
-            }
-            else
-            {
-                foreach (var p in Model.LearningProgress)
+        @if (Model.Role != "Instructor")
+        {
+            <section class="dash-card dash-progress">
+                <div class="dash-card-head">
+                    <h3 class="dash-card-title">Learning progress</h3>
+                </div>
+                @if (!Model.LearningProgress.Any())
                 {
-                    <div class="dash-progress-row">
-                        <div class="dash-progress-meta">
-                            <span class="dash-progress-label">@p.Label</span>
-                            <span class="dash-progress-pct">@p.Percent%</span>
-                        </div>
-                        <div class="dash-progress-bar">
-                            <div class="dash-progress-fill dash-fill-@p.Accent" style="width: @(p.Percent)%"></div>
-                        </div>
-                        <span class="dash-progress-sub">@p.Sublabel</span>
-                    </div>
+                    <p class="dash-card-empty">No progress to show yet.</p>
                 }
-            }
-        </section>
+                else
+                {
+                    foreach (var p in Model.LearningProgress)
+                    {
+                        <div class="dash-progress-row">
+                            <div class="dash-progress-meta">
+                                <span class="dash-progress-label">@p.Label</span>
+                                <span class="dash-progress-pct">@p.Percent%</span>
+                            </div>
+                            <div class="dash-progress-bar">
+                                <div class="dash-progress-fill dash-fill-@p.Accent" style="width: @(p.Percent)%"></div>
+                            </div>
+                            <span class="dash-progress-sub">@p.Sublabel</span>
+                        </div>
+                    }
+                }
+            </section>
+        }
     </aside>
 </div>

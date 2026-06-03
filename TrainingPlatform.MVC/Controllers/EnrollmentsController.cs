@@ -40,7 +40,7 @@ public class EnrollmentsController : Controller
     [Authorize(Roles = "TrainingCoordinator")]
     public IActionResult Index() => RedirectToAction(nameof(Manage));
 
-    [Authorize(Roles = "TrainingCoordinator,Instructor")]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Manage()
     {
         var enrollments = await EnrollmentQuery()
@@ -55,6 +55,28 @@ public class EnrollmentsController : Controller
             Enrollments = enrollments,
             PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus)
         });
+    }
+
+    // Instructors get their own assessment roster, scoped to sessions they teach. No payment data.
+    [Authorize(Roles = "Instructor")]
+    public async Task<IActionResult> Roster()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var instructor = await _context.Instructors.FirstOrDefaultAsync(i => i.UserId == userId);
+        if (instructor == null)
+        {
+            TempData["Error"] = "Instructor profile not found.";
+            return View(new InstructorRosterViewModel());
+        }
+
+        var enrollments = await EnrollmentQuery()
+            .Where(e => e.CourseSession.InstructorId == instructor.Id)
+            .Where(e => e.Status == EnrollmentStatus.Confirmed || e.Status == EnrollmentStatus.Attending || e.Status == EnrollmentStatus.Completed)
+            .OrderBy(e => e.CourseSession.StartDateTime)
+            .ThenBy(e => e.Trainee.User.LastName)
+            .ToListAsync();
+
+        return View(new InstructorRosterViewModel { Enrollments = enrollments });
     }
 
     [Authorize(Roles = "Trainee")]
@@ -399,7 +421,7 @@ public class EnrollmentsController : Controller
     [HttpGet]
     public async Task<IActionResult> AssessmentForm(int id)
     {
-        if (!IsModal) return RedirectToAction(nameof(Manage));
+        if (!IsModal) return RedirectToEnrollmentList();
         var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == id);
         if (enrollment == null) return NotFound();
         return PartialView("_AssessmentForm", enrollment);
@@ -418,7 +440,7 @@ public class EnrollmentsController : Controller
         {
             if (IsModal) return JsonFail("No instructor profile was found for recording this assessment.");
             TempData["Error"] = "No instructor profile was found for recording this assessment.";
-            return RedirectToAction(nameof(Manage));
+            return RedirectToEnrollmentList();
         }
 
         var assessment = await _context.Assessments.FirstOrDefaultAsync(a => a.EnrollmentId == enrollmentId);
@@ -447,7 +469,7 @@ public class EnrollmentsController : Controller
 
         if (IsModal) return JsonOk("Assessment recorded.", "Assessment");
         TempData["Success"] = "Assessment recorded.";
-        return RedirectToAction(nameof(Manage));
+        return RedirectToEnrollmentList();
     }
 
     private IQueryable<Enrollment> EnrollmentQuery() =>
@@ -704,6 +726,12 @@ public class EnrollmentsController : Controller
     private IActionResult RedirectAfterPayment() =>
         User.IsInRole("Trainee")
             ? RedirectToAction(nameof(BillingAndAlerts))
+            : RedirectToAction(nameof(Manage));
+
+    // Instructors land on their roster; coordinators on the full manage page.
+    private IActionResult RedirectToEnrollmentList() =>
+        User.IsInRole("Instructor")
+            ? RedirectToAction(nameof(Roster))
             : RedirectToAction(nameof(Manage));
 
     private static int ActiveEnrollmentCount(CourseSession session) =>

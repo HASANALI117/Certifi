@@ -66,6 +66,19 @@ public class DashboardController : Controller
                     s.Enrollments.Any(e => e.TraineeId == trainee.Id && e.Status != EnrollmentStatus.Dropped)));
             }
         }
+        // Instructor dashboard only shows courses they're assigned to teach.
+        else if (role == "Instructor")
+        {
+            var instructor = await _db.Instructors.FirstOrDefaultAsync(i => i.UserId == user.Id);
+            if (instructor is null)
+            {
+                coursesQuery = coursesQuery.Where(_ => false);
+            }
+            else
+            {
+                coursesQuery = coursesQuery.Where(c => c.Sessions.Any(s => s.InstructorId == instructor.Id));
+            }
+        }
 
         // Save the query before filtering so the category counts show the totals, not just the filtered results.
         var scopedCoursesQuery = coursesQuery;
@@ -119,6 +132,7 @@ public class DashboardController : Controller
             .ToListAsync();
 
         var sessions = await BuildUpcomingSessionsAsync(user, role);
+        var nextSession = await BuildNextSessionAsync(user, role);
         var progress = await BuildLearningProgressAsync(user, role);
         var stats = await BuildStatsAsync(user, role);
 
@@ -141,6 +155,7 @@ public class DashboardController : Controller
             SelectedCategoryId = categoryId,
             Search = search,
             Courses = courses,
+            NextSession = nextSession,
             UpcomingSessions = sessions,
             LearningProgress = progress,
             Notifications = notifications,
@@ -186,6 +201,37 @@ public class DashboardController : Controller
                 Status = s.Status
             })
             .ToListAsync();
+    }
+
+    // Spotlight the instructor's next class (or one currently in progress).
+    private async Task<DashboardNextSession?> BuildNextSessionAsync(AppUser user, string role)
+    {
+        if (role != "Instructor") return null;
+
+        var instructor = await _db.Instructors.FirstOrDefaultAsync(i => i.UserId == user.Id);
+        if (instructor is null) return null;
+
+        var now = DateTime.UtcNow;
+
+        return await _db.CourseSessions
+            .Where(s => s.InstructorId == instructor.Id
+                        && s.Status != SessionStatus.Cancelled
+                        && s.EndDateTime >= now)
+            .OrderBy(s => s.StartDateTime)
+            .Select(s => new DashboardNextSession
+            {
+                Id = s.Id,
+                CourseId = s.CourseId,
+                CourseTitle = s.Course.Title,
+                CategoryName = s.Course.Category.Name,
+                RoomName = s.Classroom.Name,
+                StartDateTime = s.StartDateTime,
+                EndDateTime = s.EndDateTime,
+                EnrolledCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
+                Capacity = s.Capacity,
+                Status = s.Status
+            })
+            .FirstOrDefaultAsync();
     }
 
     private async Task<IReadOnlyList<DashboardProgressItem>> BuildLearningProgressAsync(AppUser user, string role)
@@ -310,14 +356,24 @@ public class DashboardController : Controller
 
             return new DashboardStats
             {
-                CourseCount = courseCount,
+                CourseCount = await _db.CourseSessions
+                    .Where(s => s.InstructorId == instructor.Id)
+                    .Select(s => s.CourseId)
+                    .Distinct()
+                    .CountAsync(),
                 UpcomingSessionCount = await _db.CourseSessions.CountAsync(s =>
                     s.InstructorId == instructor.Id && s.StartDateTime >= DateTime.UtcNow),
                 ActiveEnrollmentCount = await _db.CourseSessions
                     .Where(s => s.InstructorId == instructor.Id)
                     .SelectMany(s => s.Enrollments)
                     .CountAsync(),
-                CertificationCount = 0
+                CertificationCount = 0,
+                // Same rule as the assessment roster: confirmed/attending enrollments with no assessment yet.
+                AwaitingAssessmentCount = await _db.CourseSessions
+                    .Where(s => s.InstructorId == instructor.Id)
+                    .SelectMany(s => s.Enrollments)
+                    .CountAsync(e => (e.Status == EnrollmentStatus.Confirmed || e.Status == EnrollmentStatus.Attending)
+                                     && e.Assessment == null)
             };
         }
 
