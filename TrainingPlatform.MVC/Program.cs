@@ -7,8 +7,7 @@ using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Hubs;
 using TrainingPlatform.MVC.Services;
 
-// Use Bahraini Dinar (BHD) as the app-wide currency so every ToString("C") call
-// automatically formats as "BD 1.000" (3 decimal places, symbol prefix).
+// Set the whole app to Bahraini Dinar so money is formatted correctly everywhere.
 var bhdCulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
 bhdCulture.NumberFormat.CurrencySymbol = "BD";
 bhdCulture.NumberFormat.CurrencyDecimalDigits = 3;
@@ -35,8 +34,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// Shared with Reports app: same cookie name + same DataProtection key ring +
-// same application name so the cookie issued here decrypts there too.
+// Use the same cookie settings as the Reports app so the login cookie works in both.
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -66,9 +64,7 @@ builder.Services.AddHttpClient<ICertificationLookupService, CertificationLookupS
     client.BaseAddress = new Uri(apiBaseUrl);
 });
 
-// Typed HttpClient that exchanges the user's MVC credentials for an API JWT.
-// The JWT is stored as a claim on the MVC auth cookie so the Reports app can
-// read it after SSO and call the API as the same user.
+// Gets an API token when the user logs in and saves it in the cookie, so the Reports app can use it too.
 builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
@@ -80,15 +76,12 @@ builder.Services.AddSingleton<INavLinks, NavLinks>();
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddSignalR();
 
-// Stripe: global API key from config (real keys live in User Secrets / Azure App
-// Settings, never committed). Payments are taken via Stripe Checkout.
+// Stripe API key from config. The real keys are kept out of source control.
 Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
 var app = builder.Build();
 
-// Seed roles + reference data + sample activity. Shared with the API host so a
-// developer running only the MVC project still gets a usable database.
-// DbSeeder is idempotent (guards on "if (table.Any()) return") so re-runs are safe.
+// Set up roles and sample data so the app works even if you only run this project. It's safe to run again.
 using (var scope = app.Services.CreateAsyncScope())
 {
     var services = scope.ServiceProvider;
@@ -118,9 +111,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// AJAX-aware caching: tell the browser the response varies on X-Requested-With,
-// and never cache fragment (AJAX) responses — otherwise the cache will serve a
-// layout-less fragment when the user navigates to the same URL via the address bar.
+// Don't cache the AJAX fragment responses, or the browser might show a page with no layout.
 app.Use(async (ctx, next) =>
 {
     var isAjax = string.Equals(

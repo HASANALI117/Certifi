@@ -8,9 +8,7 @@ using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-// Coordinator-only management of per-trainee certificate records
-// (TraineeCertification): full create/read/update/delete plus a one-click
-// Issue action that stamps the reference number.
+// Only the coordinator manages trainee certificates here, including issuing them with a reference number.
 [Authorize(Roles = "TrainingCoordinator")]
 public class TraineeCertificationsController : Controller
 {
@@ -130,8 +128,7 @@ public class TraineeCertificationsController : Controller
         cert.Status = CertificationStatus.Issued;
         cert.IssuedAt = DateTime.UtcNow;
 
-        // Persist first so a generated reference embeds the saved row's Id
-        // (collision-free), then stamp the reference if one isn't set yet.
+        // Save first so the new id can go into the reference number, then set the reference if it doesn't have one.
         if (string.IsNullOrWhiteSpace(cert.CertRefNumber))
         {
             await _db.SaveChangesAsync();

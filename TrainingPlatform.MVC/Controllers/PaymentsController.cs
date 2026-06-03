@@ -12,9 +12,7 @@ using TrainingPlatform.MVC.Hubs;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-// Stripe Checkout payment flow. Trainees pay their outstanding enrollment fee via a
-// Stripe-hosted page; the webhook is the single source of truth that writes the
-// Payment row. There is no manual/offline payment path — all money flows through Stripe.
+// Stripe payment flow. Trainees pay on a Stripe page, and the webhook is the only thing that saves the payment.
 [Authorize]
 public class PaymentsController(
     AppDbContext context,
@@ -29,8 +27,7 @@ public class PaymentsController(
 
     private string Currency => (_config["Stripe:Currency"] ?? "bhd").ToLowerInvariant();
 
-    // Create a Stripe Checkout Session for an enrollment's (partial) balance and return
-    // the hosted-page URL for the browser to redirect to.
+    // Set up a Stripe payment for what the trainee owes and return the URL to send them to.
     [Authorize(Roles = "Trainee")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateCheckoutSession(int enrollmentId, decimal amount)
@@ -62,8 +59,7 @@ public class PaymentsController(
         var courseTitle = enrollment.CourseSession?.Course?.Title ?? "Course enrollment";
         var origin = $"{Request.Scheme}://{Request.Host}";
 
-        // Convert to Stripe's smallest currency unit (cents/fils). Factor depends on
-        // the currency's decimal places (2 for usd/aed/sar, 3 for bhd/kwd, 0 for jpy).
+        // Convert the amount to the currency's smallest unit, which is what Stripe expects.
         var unitAmount = (long)Math.Round(amount * MinorUnitFactor(Currency), MidpointRounding.AwayFromZero);
 
         var options = new SessionCreateOptions
@@ -108,8 +104,7 @@ public class PaymentsController(
         }
     }
 
-    // Stripe webhook — authoritative payment confirmation. Anonymous + no antiforgery;
-    // authenticity is verified with the webhook signing secret instead.
+    // Stripe calls this to confirm a payment. It's open to anyone, but we check Stripe's signature to make sure it's real.
     [AllowAnonymous]
     [HttpPost]
     [IgnoreAntiforgeryToken]
@@ -143,8 +138,7 @@ public class PaymentsController(
         return Ok();
     }
 
-    // Writes the Payment row for a paid Checkout Session. Idempotent across Stripe's
-    // delivery retries via the StripeSessionId guard.
+    // Saves the payment. Checking the Stripe session id stops it being saved twice if Stripe calls again.
     private async Task ApplyPaymentAsync(Session session)
     {
         if (await _context.Payments.AnyAsync(p => p.StripeSessionId == session.Id))
@@ -227,9 +221,7 @@ public class PaymentsController(
         return traineeUserId == userId;
     }
 
-    // Stripe expresses amounts in a currency's smallest unit. Most currencies use 2
-    // decimals (x100); three-decimal currencies (bhd, kwd, omr, etc.) use x1000;
-    // zero-decimal currencies (jpy, krw, etc.) use x1.
+    // Stripe uses the currency's smallest unit, so multiply based on how many decimal places it has.
     private static decimal MinorUnitFactor(string currency) => currency.ToLowerInvariant() switch
     {
         "bhd" or "kwd" or "omr" or "jod" or "tnd" => 1000m,

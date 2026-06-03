@@ -4,18 +4,21 @@
     var isCoordinator = User.IsInRole("TrainingCoordinator");
     var isInstructor = User.IsInRole("Instructor");
     var isTrainee = User.IsInRole("Trainee");
+    var filterCourseTitle = ViewBag.FilterCourseTitle as string;
     var subtitle = isCoordinator
         ? "All scheduled sessions. The system prevents instructor and classroom double-booking."
         : isInstructor
             ? "Sessions you're scheduled to teach."
-            : "Browse upcoming sessions and enrol. Seat availability updates live.";
+            : !string.IsNullOrEmpty(filterCourseTitle)
+                ? $"Available sessions for “{filterCourseTitle}”. Pick one and enrol — seat availability updates live."
+                : "Browse upcoming sessions and enrol. Seat availability updates live.";
 }
 
 <div data-tp-live-page="sessions"></div>
 
 <div class="tp-page-header">
     <div>
-        <h1 class="tp-page-title">Course Sessions</h1>
+        <h1 class="tp-page-title">@(!string.IsNullOrEmpty(filterCourseTitle) ? filterCourseTitle + " — Sessions" : "Course Sessions")</h1>
         <p class="tp-page-subtitle">@subtitle</p>
     </div>
     @if (isCoordinator)
@@ -23,6 +26,14 @@
         <div class="tp-page-actions">
             <a asp-action="Create" class="tp-cta">
                 <i class="bi bi-plus-lg"></i> Schedule Session
+            </a>
+        </div>
+    }
+    else if (isTrainee && !string.IsNullOrEmpty(filterCourseTitle))
+    {
+        <div class="tp-page-actions">
+            <a asp-controller="Courses" asp-action="Index" class="tp-cta-ghost">
+                <i class="bi bi-arrow-left"></i> Back
             </a>
         </div>
     }

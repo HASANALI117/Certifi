@@ -3,9 +3,7 @@ using TrainingPlatform.API.Models;
 
 namespace TrainingPlatform.MVC.Models.ViewModels;
 
-// Coordinator-facing form for a single trainee certificate record
-// (TraineeCertification). Select lists for Trainee/Track are supplied via
-// ViewBag by the controller, mirroring the EnrollmentsController pattern.
+// Form the coordinator uses for one trainee certificate. The dropdown lists come from ViewBag.
 public class TraineeCertificationFormViewModel
 {
     public int Id { get; set; }
@@ -30,9 +28,7 @@ public class TraineeCertificationFormViewModel
     public DateTime? IssuedAt { get; set; }
 }
 
-// Coordinator-facing form for a certification track template (CertificationTrack)
-// plus the set of required courses (CertificationTrackCourse). The full course
-// list is supplied via ViewBag.Courses.
+// Form the coordinator uses for a certification track and its required courses. The course list comes from ViewBag.Courses.
 public class CertificationTrackFormViewModel
 {
     public int Id { get; set; }

@@ -14,9 +14,7 @@ public class CertificationController(ICertificationLookupService lookupService, 
     private readonly ICertificationLookupService _lookupService = lookupService;
     private readonly AppDbContext _db = db;
 
-    // Public certificate verification — the only entry point is the home page
-    // (hero cards + footer). Intentionally anonymous; not linked from any
-    // dashboard navigation.
+    // Public page for checking a certificate. Only linked from the home page and open to everyone.
     [HttpGet]
     public IActionResult Lookup() => View(new CertificationLookupViewModel());
 
@@ -43,8 +41,7 @@ public class CertificationController(ICertificationLookupService lookupService, 
         return View(model);
     }
 
-    // Trainee self-service: automatically lists the signed-in trainee's own
-    // certificates on page load — no lookup form, no navigation required.
+    // Shows the logged-in trainee their own certificates right away, no search needed.
     [Authorize(Roles = "Trainee")]
     [HttpGet]
     public async Task<IActionResult> MyCertificate()

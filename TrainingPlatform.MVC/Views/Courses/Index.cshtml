@@ -150,6 +150,12 @@
                         <dd><span id="tp-selected-prereq"></span></dd>
                     </div>
                 </dl>
+                @if (User.IsInRole("Trainee"))
+                {
+                    <a id="tp-find-sessions" class="tp-cta tp-find-sessions" href="@Url.Action("Index", "CourseSessions")">
+                        <i class="bi bi-calendar-event"></i> Find Sessions
+                    </a>
+                }
             </div>
         </div>
     </aside>
@@ -175,8 +181,11 @@
                 fee: document.getElementById('tp-selected-fee'),
                 sessions: document.getElementById('tp-selected-sessions'),
                 prereqRow: document.getElementById('tp-selected-prereq-row'),
-                prereq: document.getElementById('tp-selected-prereq')
+                prereq: document.getElementById('tp-selected-prereq'),
+                findSessions: document.getElementById('tp-find-sessions')
             };
+
+            const findSessionsBase = '@Url.Action("Index", "CourseSessions")';
 
             function selectCourse(row) {
                 if (!row || !list) return;
@@ -215,6 +224,10 @@
                     els.prereqRow.hidden = false;
                 } else {
                     els.prereqRow.hidden = true;
+                }
+
+                if (els.findSessions && d.courseId) {
+                    els.findSessions.href = findSessionsBase + '?courseId=' + encodeURIComponent(d.courseId);
                 }
             }
 

@@ -231,7 +231,14 @@
         <section class="dash-card dash-sessions">
             <div class="dash-card-head">
                 <h3 class="dash-card-title">Upcoming sessions</h3>
-                <a class="dash-link-sm" asp-controller="CourseSessions" asp-action="Index">See all</a>
+                @if (User.IsInRole("Trainee"))
+                {
+                    <a class="dash-link-sm" asp-controller="Courses" asp-action="Index">See all</a>
+                }
+                else
+                {
+                    <a class="dash-link-sm" asp-controller="CourseSessions" asp-action="Index">See all</a>
+                }
             </div>
             @if (!Model.UpcomingSessions.Any())
             {

@@ -19,8 +19,7 @@ public class TraineeFormViewModel
     // True on edit — account fields are hidden and not validated.
     public bool IsEdit => Id != 0;
 
-    // Account fields (Create only). Validated manually in the controller so Edit
-    // can reuse the same view model without tripping [Required].
+    // These account fields are only used when creating. The controller checks them by hand so Edit can share this model.
     [Display(Name = "First Name")]
     public string FirstName { get; set; } = string.Empty;
 

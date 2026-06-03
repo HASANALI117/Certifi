@@ -1,9 +1,6 @@
 namespace TrainingPlatform.Reports.Auth;
 
-// Reports shares its auth cookie with the MVC app so a single sign-in there
-// flows into the reporting client. Both sides must use the same scheme name
-// (ASP.NET Identity's "Identity.Application") because the data-protection
-// purpose string is derived from it.
+// Reports uses the same login cookie as the MVC app, so logging in once works for both. The scheme name has to match on both sides.
 public static class SharedCookie
 {
     public const string Scheme = "Identity.Application";

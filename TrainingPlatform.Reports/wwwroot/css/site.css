@@ -2194,20 +2194,13 @@ code {
 :root {
   color-scheme: light;
 }
-/* Every dashboard (dash-body) and marketing/auth (cd-body) page is a dark
-   surface, so the document itself must use a dark color-scheme. Native
-   <select> option popups follow the ROOT element's color-scheme (not the
-   control's), so without this they render as a white panel on the dark UI. */
+/* Dashboard and marketing pages are dark, so set the page itself to dark. Otherwise the dropdown popups show up white. */
 html:has(body.dash-body),
 html:has(body.cd-body) {
   color-scheme: dark;
 }
 
-/* Unified dark <select> dropdown look across the whole site — content areas,
-   modals, the marketing/landing pages and the reports app. Scoped to the dark
-   body classes so the only genuinely light page (the reports login) is left
-   alone. color-scheme darkens the popup chrome; the option rules color the
-   list itself for browsers that don't fully theme it from color-scheme. */
+/* Make all the dropdowns dark across the site, except the light reports login page. */
 body.dash-body select,
 body.cd-body select {
   color-scheme: dark;
@@ -3049,8 +3042,7 @@ body.dash-body .tp-category-tab.active .tp-tab-count {
   color: #fff;
 }
 
-/* Course rows — glass panel, teal selection ring. Reset the gradient
-   padding-box trick the light theme uses for hover/selected. */
+/* Glass-style course rows with a teal highlight when selected. */
 body.dash-body .tp-course-row {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);

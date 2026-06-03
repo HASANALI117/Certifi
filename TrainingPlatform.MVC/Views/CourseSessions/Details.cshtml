@@ -6,7 +6,7 @@
 
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Schedule</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-route-courseId="@Model.CourseId">Schedule</a></li>
         <li class="breadcrumb-item active" aria-current="page">Session Details</li>
     </ol>
 </nav>
@@ -17,7 +17,7 @@
         <p class="tp-page-subtitle">@(string.IsNullOrWhiteSpace(Model.CourseDescription) ? "—" : Model.CourseDescription)</p>
     </div>
     <div class="tp-page-actions">
-        <a asp-action="Index" class="tp-cta-ghost"><i class="bi bi-arrow-left"></i> Back to Schedule</a>
+        <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="tp-cta-ghost"><i class="bi bi-arrow-left"></i> Back</a>
     </div>
 </div>
 

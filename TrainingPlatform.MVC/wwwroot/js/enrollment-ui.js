@@ -1,6 +1,4 @@
-// Live enrollment counter updates for session cards.
-// Used by Views/Enrollments/AvailableSessions.cshtml (and any other view that
-// renders a [data-session-card="<id>"] or #enrollment-counter-<id> block).
+// Updates the live enrollment count on session cards.
 (function () {
     if (window.EnrollmentUI) return;
 

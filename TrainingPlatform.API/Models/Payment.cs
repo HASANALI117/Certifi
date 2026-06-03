@@ -15,8 +15,7 @@ namespace TrainingPlatform.API.Models
         public DateTime PaidAt { get; set; }
         public decimal OutstandingBalance { get; set; }
 
-        // Stripe Checkout Session id that produced this payment. Used by the webhook
-        // to stay idempotent across Stripe's at-least-once delivery retries.
+        // The Stripe session id for this payment, so the webhook doesn't save it twice if Stripe calls again.
         public string? StripeSessionId { get; set; }
     }
 }

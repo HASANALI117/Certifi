@@ -286,8 +286,7 @@ public class CoursesController : Controller
     {
         if (string.IsNullOrWhiteSpace(imageUrl)) return;
 
-        // Only remove files we manage in the upload folder; never touch external URLs
-        // or pre-seeded images that live elsewhere under /images.
+        // Only delete images we uploaded ourselves, not links or the built-in images.
         var prefix = $"/{UploadFolder}/";
         if (!imageUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return;
 
