@@ -19,7 +19,8 @@ public abstract class ReportControllerBase : Controller
         catch (ApiUnauthorizedException)
         {
             await HttpContext.SignOutAsync(SharedCookie.Scheme);
-            context.Result = RedirectToAction("Login", "Auth");
+            var navLinks = HttpContext.RequestServices.GetRequiredService<INavLinks>();
+            context.Result = Redirect(navLinks.Mvc("/Account/Login"));
         }
         catch (ApiUnavailableException)
         {

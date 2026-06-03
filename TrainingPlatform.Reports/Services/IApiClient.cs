@@ -4,8 +4,6 @@ namespace TrainingPlatform.Reports.Services;
 
 public interface IApiClient
 {
-    Task<LoginResponse?> LoginAsync(string email, string password, CancellationToken ct = default);
-
     Task<OverviewViewModel> GetOverviewAsync(CancellationToken ct = default);
     Task<List<EnrollmentReportRow>> GetEnrollmentsAsync(CancellationToken ct = default);
     Task<List<InstructorReportRow>> GetInstructorsAsync(CancellationToken ct = default);
