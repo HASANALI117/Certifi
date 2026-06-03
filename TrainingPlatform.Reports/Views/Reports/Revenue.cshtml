@@ -141,7 +141,10 @@
                             data: @Html.Raw(JsonSerializer.Serialize(counts)),
                             borderColor: '#4ea3ff',
                             backgroundColor: 'rgba(78,163,255,0.2)',
-                            tension: 0.3,
+                            tension: 0.4,
+                            cubicInterpolationMode: 'monotone',
+                            pointRadius: 3,
+                            borderWidth: 2,
                             yAxisID: 'y1'
                         }
                     ]
