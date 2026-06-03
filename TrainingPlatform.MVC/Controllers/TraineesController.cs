@@ -186,7 +186,7 @@ public class TraineesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // TraineePublicId format: {year}{random 5 digits}, e.g. 202603655. Retry on collision.
+    // Build the public ID as the year plus 5 random digits, and try again if that one's taken.
     private async Task<string> GenerateTraineePublicIdAsync()
     {
         var year = DateTime.UtcNow.Year;

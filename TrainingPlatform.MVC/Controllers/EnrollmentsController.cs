@@ -36,8 +36,7 @@ public class EnrollmentsController : Controller
         return PartialView("_EnrollmentForm", enrollment);
     }
 
-    // Index/Create/Edit/Delete/Details no longer have dedicated pages — everything
-    // is managed from the Manage page via the reusable popup component.
+    // These actions don't have their own pages. Everything happens on the Manage page in a popup.
     [Authorize(Roles = "TrainingCoordinator")]
     public IActionResult Index() => RedirectToAction(nameof(Manage));
 
@@ -297,11 +296,7 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        // Wrap read-check-insert in a serializable transaction so that two
-        // simultaneous enrollments racing for the last seat can't both succeed.
-        // Under serializable isolation, SQL Server takes range locks on the
-        // session's enrollment rows, so the second transaction blocks until the
-        // first commits and then re-evaluates against the updated count.
+        // Use a serializable transaction so two people can't grab the last seat at the same time.
         await using var tx = await _context.Database
             .BeginTransactionAsync(IsolationLevel.Serializable);
 
@@ -316,9 +311,7 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        // A session is a one-shot, time-bound instance: only an upcoming, Scheduled
-        // session is open for enrollment. The browse list already hides others; this
-        // closes the direct-POST hole.
+        // You can only enroll in a scheduled session that hasn't started yet.
         if (session.Status != SessionStatus.Scheduled || session.StartDateTime <= DateTime.UtcNow)
         {
             TempData["Error"] = "This session is no longer open for enrollment.";
@@ -331,8 +324,7 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        // (TraineeId, CourseSessionId) is unique. A dropped session is not re-joinable —
-        // the trainee must enroll in a different upcoming session of the course instead.
+        // A trainee can only be in a session once, and can't rejoin one they dropped.
         var existing = await _context.Enrollments
             .FirstOrDefaultAsync(e => e.TraineeId == trainee.Id && e.CourseSessionId == courseSessionId);
 
@@ -391,8 +383,7 @@ public class EnrollmentsController : Controller
         return RedirectToAction(nameof(Manage));
     }
 
-    // Trainees self-pay via Stripe Checkout (PaymentsController). This just renders the
-    // amount-entry modal; the actual charge is handled by Stripe + the webhook.
+    // This just shows the payment popup. Stripe handles the actual payment.
     [Authorize(Roles = "Trainee")]
     [HttpGet]
     public async Task<IActionResult> PaymentForm(int id)
@@ -414,10 +405,7 @@ public class EnrollmentsController : Controller
         return PartialView("_AssessmentForm", enrollment);
     }
 
-    // Manual/offline payment recording has been removed — all payments go through
-    // Stripe Checkout (see PaymentsController). The Stripe webhook is the single
-    // writer of Payment rows.
-
+    // There's no manual payment option anymore. All payments go through Stripe.
     [Authorize(Roles = "TrainingCoordinator,Instructor")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> RecordAssessment(int enrollmentId, AssessmentResult result, string? notes)
@@ -453,12 +441,7 @@ public class EnrollmentsController : Controller
 
         await SaveChangesAndNotifyAsync();
 
-        // Always re-run tracking. UpdateCertificationTrackingAsync now handles
-        // both promotion (Eligible when all required courses passed) and
-        // demotion (back to InProgress when a previous Pass is corrected to
-        // Fail). Already-Issued certifications are intentionally left alone —
-        // a real-world certificate that has been handed out cannot be silently
-        // revoked from the platform.
+        // Check certification progress after each assessment. It can move up or down, but won't undo a certificate that was already issued.
         await UpdateCertificationTrackingAsync(enrollment.TraineeId);
         await SaveChangesAndNotifyAsync();
 
@@ -622,9 +605,7 @@ public class EnrollmentsController : Controller
                 continue;
             }
 
-            // Demotion: a prior Eligible cert no longer qualifies (e.g., a Pass
-            // was corrected to Fail). Move it back to InProgress and notify so
-            // the coordinator knows not to issue.
+            // If they no longer qualify, move the certificate back to in progress and let them know.
             if (certification != null && certification.Status == CertificationStatus.Eligible)
             {
                 certification.Status = CertificationStatus.InProgress;
@@ -734,8 +715,7 @@ public class EnrollmentsController : Controller
     private static decimal OutstandingBalance(Enrollment enrollment) =>
         Math.Max(0m, (enrollment.CourseSession?.Course?.EnrollmentFee ?? 0m) - PaidTotal(enrollment));
 
-    // Overdue when the session has already started but the trainee still owes.
-    // Dropped enrollments never count as overdue.
+    // A payment is overdue once the session has started and they still owe money. Dropped ones don't count.
     private static bool IsOverdue(Enrollment enrollment)
     {
         if (enrollment.Status == EnrollmentStatus.Dropped) return false;
@@ -752,9 +732,7 @@ public class EnrollmentsController : Controller
         return PaidTotal(enrollment) > 0 ? "Partial" : "Unpaid";
     }
 
-    // Idempotently sends a one-time "payment overdue" notification per
-    // enrollment. Identifies prior notifications by an embedded marker in
-    // the message body so we don't need a schema migration.
+    // Sends one overdue reminder per enrollment. We tag the message so we don't send it twice, without changing the database.
     private async Task FlagOverduePaymentsAsync(IEnumerable<Enrollment> enrollments)
     {
         var overdue = enrollments.Where(IsOverdue).ToList();

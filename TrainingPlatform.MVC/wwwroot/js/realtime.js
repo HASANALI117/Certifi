@@ -212,8 +212,7 @@
         } catch (e) { /* ignore */ }
     }
 
-    // Debounced soft-refresh of the current dashboard fragment.
-    // Only fires when the current page opted in via [data-tp-live-page].
+    // Quietly refreshes the dashboard. Only runs on pages that opt in with [data-tp-live-page].
     var refreshTimer = null;
     function softRefresh(payload) {
         var marker = document.querySelector('[data-tp-live-page]');
@@ -279,8 +278,7 @@
         markRead: markRead
     };
 
-    // Public toast helper — used by _DashAlerts.cshtml for TempData flash messages
-    // so server-rendered errors look identical to SignalR notifications.
+    // Toast helper used by _DashAlerts so flash messages look the same as the live notifications.
     window.TpToast = {
         show: function (opts) {
             opts = opts || {};

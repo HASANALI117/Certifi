@@ -11,13 +11,9 @@ using TrainingPlatform.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// RFC 7807 ProblemDetails as the standard error shape. Backs the JWT 401 handler
-// below and any framework-generated error responses (400/404/500).
+// Use ProblemDetails as the standard error format for the API.
 builder.Services.AddProblemDetails();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 // Database
@@ -40,9 +36,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 builder.Services.AddScoped<TokenService>();
 
 // JWT Authentication
-// AddIdentity pins the default authenticate/challenge schemes to the Identity cookie,
-// which makes [Authorize] redirect (302) to /Account/Login instead of honoring the
-// bearer token. Explicitly override all three defaults to JWT for this API.
+// AddIdentity makes [Authorize] redirect to a login page, so switch the defaults to JWT for this API.
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -64,9 +58,7 @@ builder.Services.AddAuthentication(options =>
             )
         };
 
-        // Replace the default empty 401 body with an RFC 7807 ProblemDetails payload
-        // so missing/invalid-token responses are structured and consistent with the
-        // rest of the API's error shape.
+        // Return a proper ProblemDetails body on 401 instead of an empty response.
         options.Events = new JwtBearerEvents
         {
             OnChallenge = async context =>
@@ -89,7 +81,6 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

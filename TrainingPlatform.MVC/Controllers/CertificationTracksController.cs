@@ -8,8 +8,7 @@ using TrainingPlatform.MVC.Models.ViewModels;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-// Coordinator-only management of certification track templates
-// (CertificationTrack) and their required courses (CertificationTrackCourse).
+// Only the coordinator can manage certification tracks and the courses they require.
 [Authorize(Roles = "TrainingCoordinator")]
 public class CertificationTracksController : Controller
 {

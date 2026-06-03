@@ -38,9 +38,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Persistent brand in the top-left corner of every public/marketing page.
-   Links back to Home; sits above page content in normal flow so it never
-   overlaps. (Dashboard pages use a different layout and are unaffected.) */
+/* Logo in the top-left of every public page. Links to Home and stays in the layout so it never covers anything. */
 .cd-brand {
   display: inline-flex;
   align-items: center;
@@ -867,9 +865,7 @@ label {
 .tp-auth-card .form-control::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
-/* Submit uses the landing .button.special — just make it span the card.
-   text-align:center keeps anchor-based buttons (e.g. Access Denied "Go Home")
-   centered like the <button> submit on the login form. */
+/* The submit button uses .button.special and fills the card. Centering keeps link-style buttons lined up the same way. */
 .tp-auth-card .button {
   width: 100%;
   text-align: center;
@@ -966,8 +962,7 @@ label {
   color: #fff;
 }
 
-/* Course rows — glass panels, teal selection. Reset the light theme's
-   gradient padding-box trick used for the border. */
+/* Glass-style course rows with a teal highlight when selected. */
 .cd-body .tp-course-row {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);

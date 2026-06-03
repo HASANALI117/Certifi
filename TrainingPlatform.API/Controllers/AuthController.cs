@@ -40,9 +40,7 @@ namespace TrainingPlatform.API.Controllers
             });
         }
 
-        // Single 401 shape for both "no such user" and "wrong password" so the
-        // response never reveals whether an email is registered. Problem() emits
-        // an RFC 7807 application/problem+json body instead of a bare string.
+        // Use the same error for a wrong email and a wrong password, so we don't reveal which emails exist.
         private ObjectResult InvalidCredentials() => Problem(
             detail: "The email or password is incorrect.",
             statusCode: StatusCodes.Status401Unauthorized,

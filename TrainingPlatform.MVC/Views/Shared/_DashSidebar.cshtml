@@ -82,9 +82,12 @@
             <a class="dash-nav-item @NavActive("Courses")" asp-controller="Courses" asp-action="Index">
                 <i class="bi bi-collection"></i><span>Courses</span>
             </a>
-            <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
-                <i class="bi bi-calendar-event"></i><span>Sessions</span>
-            </a>
+            @if (!isTrainee)
+            {
+                <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
+                    <i class="bi bi-calendar-event"></i><span>Sessions</span>
+                </a>
+            }
             @if (isTrainee)
             {
                 <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="BillingAndAlerts">

@@ -24,12 +24,7 @@ public class DashboardController : Controller
         _navLinks = navLinks;
     }
 
-    // The MVC dashboard is for Instructors and Trainees only. Coordinators were
-    // moved to the Reports overview as their landing page and the link was
-    // removed from their sidebar — this guard blocks the remaining direct-URL
-    // access path (e.g. typing /Dashboard) and bounces them to that overview.
-    // Runs after [Authorize], so User is always an authenticated principal here,
-    // and covers every action on this controller (not just Index).
+    // This dashboard is just for instructors and trainees. Send coordinators to the Reports page instead.
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         if (User.IsInRole("TrainingCoordinator"))
@@ -72,8 +67,7 @@ public class DashboardController : Controller
             }
         }
 
-        // Snapshot the role-scoped (but un-faceted) course query so the category tab
-        // counts reflect the user's full eligible set, not the active filter.
+        // Save the query before filtering so the category counts show the totals, not just the filtered results.
         var scopedCoursesQuery = coursesQuery;
 
         var categoriesQuery = _db.CourseCategories
@@ -87,9 +81,7 @@ public class DashboardController : Controller
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            // EF.Functions.Like translates to SQL LIKE, which is case-insensitive
-            // under SQL Server's default *_CI_* collation. Wrap user input with %
-            // wildcards and escape LIKE metacharacters to avoid surprising matches.
+            // Search ignores case by default. Escape the special LIKE characters so they don't change the match.
             var pattern = $"%{EscapeLike(search)}%";
             coursesQuery = coursesQuery.Where(c =>
                 EF.Functions.Like(c.Title, pattern) ||
@@ -130,8 +122,7 @@ public class DashboardController : Controller
         var progress = await BuildLearningProgressAsync(user, role);
         var stats = await BuildStatsAsync(user, role);
 
-        // Trainees see their latest notifications on the dashboard (moved here
-        // from the enrollments page).
+        // Trainees see their latest notifications on the dashboard.
         var notifications = role == "Trainee"
             ? await _db.Notifications
                 .Where(n => n.UserId == user.Id)

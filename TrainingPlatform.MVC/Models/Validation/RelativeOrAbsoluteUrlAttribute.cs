@@ -2,12 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TrainingPlatform.MVC.Models.Validation;
 
-// Accepts:
-//   - null / empty / whitespace
-//   - absolute URLs (http://, https://, ftp://)
-//   - site-relative URLs starting with "/"  (e.g. "/images/foo.jpg")
-// The built-in [Url] rejects relative URLs, which breaks editing any course
-// whose image was uploaded locally or seeded from /wwwroot/images.
+// Allows full URLs and paths starting with "/". The built-in [Url] rejects those paths, which we need for uploaded images.
 public class RelativeOrAbsoluteUrlAttribute : ValidationAttribute
 {
     public override bool IsValid(object? value)

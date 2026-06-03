@@ -20,10 +20,7 @@ public class DbSeeder
         await BackfillCourseImagesAsync(context);
     }
 
-    // Maps the seeded course titles to images shipped in wwwroot/images.
-    // Runs every startup so it also fixes databases that were seeded before
-    // the ImageUrl column existed. Only writes when the column is empty so
-    // it never overrides an image set through the UI.
+    // Gives each seeded course an image. Runs every startup but only fills in missing ones, so it won't overwrite images set in the app.
     private static async Task BackfillCourseImagesAsync(AppDbContext context)
     {
         var defaults = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -237,8 +234,7 @@ public class DbSeeder
         );
         await context.SaveChangesAsync();
 
-        // sessions — mix of past (Completed), current (InProgress), future (Scheduled)
-        // unique constraints: (InstructorId, StartDateTime) and (ClassroomId, StartDateTime)
+        // sessions — a mix of past, current, and future ones
         var james = await context.Instructors
             .Include(i => i.User)
             .FirstAsync(i => i.User.Email == "instructor@platform.com");

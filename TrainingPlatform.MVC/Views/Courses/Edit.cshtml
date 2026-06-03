@@ -76,8 +76,7 @@
                     <div class="tp-course-image-preview mb-3">
                         <img src="@Model.ExistingImageUrl" alt="Current course image" />
                         <div class="tp-course-image-actions">
-                            @* formaction overrides the outer form's action so this button posts to DeleteImage
-                               directly. A nested <form> would be silently dropped by the browser. *@
+                            @* formaction sends this button to DeleteImage. A form inside another form doesn't work in the browser. *@
                             <button type="submit"
                                     formaction="@Url.Action("DeleteImage", new { id = Model.Id })"
                                     formmethod="post"

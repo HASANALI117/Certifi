@@ -9,8 +9,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpContextAccessor();
 
-// Scheme name MUST match the MVC app's Identity cookie scheme so that the
-// data-protection purpose strings line up and the shared cookie decrypts here.
+// This name has to match the MVC app's cookie scheme, or the shared cookie won't work here.
 builder.Services
     .AddAuthentication(SharedCookie.Scheme)
     .AddCookie(SharedCookie.Scheme, options =>
