@@ -6,9 +6,6 @@ assessment, and certification — across three cooperating applications, with a
 JWT-secured Web API, a JWT-consuming reporting client, real-time updates over
 SignalR, and a public certificate-verification page.
 
-> **Status:** Runs end-to-end in development against SQL Server LocalDB. Not yet
-> deployed to Azure — see [Deployment](#deployment).
-
 ---
 
 ## Table of contents
@@ -24,8 +21,6 @@ SignalR, and a public certificate-verification page.
 - [Real-time (SignalR)](#real-time-signalr)
 - [Reporting application](#reporting-application)
 - [Configuration & secrets](#configuration--secrets)
-- [Deployment](#deployment)
-
 ---
 
 ## Architecture
@@ -256,17 +251,5 @@ overrides and the standard ASP.NET Core configuration providers.
 | `Api:BaseUrl`                    | Reports          | API base address                   |
 | `Stripe:SecretKey` / `WebhookSecret` / `PublishableKey` | MVC | Stripe Checkout      |
 | `DataProtection:KeyRingPath`     | MVC, Reports     | Shared key ring for SSO            |
-
-> ⚠️ **Secrets must not be committed.** Use **User Secrets** for local
-> development and a secure store (e.g. Azure Key Vault / App Service
-> configuration) in hosted environments. Move the JWT signing key, the Stripe
-> keys, and connection strings out of `appsettings.json` before deploying, and
-> rotate any value that has previously been committed.
-
-To set a secret locally, for example:
-
-```bash
-dotnet user-secrets set "JWT:Key" "<a-strong-32+char-secret>" --project TrainingPlatform.API
-```
 
 ---
