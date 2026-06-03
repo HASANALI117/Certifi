@@ -1,96 +1,23 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TrainingPlatform.Reports.Auth;
-using TrainingPlatform.Reports.Models;
 using TrainingPlatform.Reports.Services;
 
 namespace TrainingPlatform.Reports.Controllers;
 
 [AllowAnonymous]
-public class AuthController(IApiClient api, ILogger<AuthController> logger) : Controller
+public class AuthController(INavLinks navLinks) : Controller
 {
-    private const string CoordinatorRole = "TrainingCoordinator";
-
-    private readonly IApiClient _api = api;
-    private readonly ILogger<AuthController> _logger = logger;
-
-    [HttpGet]
-    public IActionResult Login(string? returnUrl = null)
-    {
-        if (User.Identity?.IsAuthenticated == true)
-            return RedirectToAction("Index", "Dashboard");
-
-        return View(new LoginViewModel { ReturnUrl = returnUrl });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model)
-    {
-        if (!ModelState.IsValid)
-            return View(model);
-
-        LoginResponse? response;
-        try
-        {
-            response = await _api.LoginAsync(model.Email, model.Password);
-        }
-        catch (ApiUnavailableException ex)
-        {
-            _logger.LogWarning(ex, "API unavailable during login.");
-            ModelState.AddModelError(string.Empty,
-                "The reporting service is currently unavailable. Please try again shortly.");
-            return View(model);
-        }
-
-        if (response is null)
-        {
-            ModelState.AddModelError(string.Empty, "Invalid email or password.");
-            return View(model);
-        }
-
-        if (!string.Equals(response.Role, CoordinatorRole, StringComparison.Ordinal))
-        {
-            ModelState.AddModelError(string.Empty,
-                "Reporting is restricted to Training Coordinators.");
-            return View(model);
-        }
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, response.Email),
-            new(ClaimTypes.Name, response.FullName),
-            new(ClaimTypes.Email, response.Email),
-            new(ClaimTypes.Role, response.Role),
-            new(SharedCookie.TokenClaimType, response.Token)
-        };
-
-        var identity = new ClaimsIdentity(claims, SharedCookie.Scheme);
-        var principal = new ClaimsPrincipal(identity);
-
-        await HttpContext.SignInAsync(
-            SharedCookie.Scheme,
-            principal,
-            new AuthenticationProperties
-            {
-                IsPersistent = false,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
-            });
-
-        if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-            return Redirect(model.ReturnUrl);
-
-        return RedirectToAction("Index", "Dashboard");
-    }
+    private readonly INavLinks _navLinks = navLinks;
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        // Clears the shared cookie, signing the user out of both apps, then hands off to MVC login.
         await HttpContext.SignOutAsync(SharedCookie.Scheme);
-        return RedirectToAction(nameof(Login));
+        return Redirect(_navLinks.Mvc("/Account/Login"));
     }
 
     [HttpGet]

@@ -14,8 +14,6 @@ builder.Services
     .AddAuthentication(SharedCookie.Scheme)
     .AddCookie(SharedCookie.Scheme, options =>
     {
-        options.LoginPath = "/Auth/Login";
-        options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Auth/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
@@ -23,6 +21,13 @@ builder.Services
         options.Cookie.HttpOnly = true;
         options.Cookie.Path = "/";
         options.Cookie.SameSite = SameSiteMode.Lax;
+        // Login lives in the MVC app now — send unauthenticated visitors there.
+        options.Events.OnRedirectToLogin = context =>
+        {
+            var navLinks = context.HttpContext.RequestServices.GetRequiredService<INavLinks>();
+            context.Response.Redirect(navLinks.Mvc("/Account/Login"));
+            return Task.CompletedTask;
+        };
     });
 
 var keyRingPath = builder.Configuration["DataProtection:KeyRingPath"]

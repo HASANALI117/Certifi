@@ -31,35 +31,6 @@ public class ApiClient : IApiClient
         _logger = logger;
     }
 
-    public async Task<LoginResponse?> LoginAsync(string email, string password, CancellationToken ct = default)
-    {
-        try
-        {
-            using var response = await _http.PostAsJsonAsync(
-                "/api/auth/login",
-                new { email, password },
-                JsonOptions,
-                ct);
-
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-                return null;
-
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadFromJsonAsync<LoginResponse>(JsonOptions, ct);
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogWarning(ex, "Login request to API failed.");
-            throw new ApiUnavailableException("The reporting service could not reach the API.", ex);
-        }
-        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
-        {
-            _logger.LogWarning(ex, "Login request to API timed out.");
-            throw new ApiUnavailableException("The reporting service timed out contacting the API.", ex);
-        }
-    }
-
     public Task<OverviewViewModel> GetOverviewAsync(CancellationToken ct = default)
         => GetAsync<OverviewViewModel>("/api/reports/overview", ct)!;
 
