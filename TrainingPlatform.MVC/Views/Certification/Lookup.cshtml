@@ -8,6 +8,76 @@
     Layout = "_Layout";
 }
 
+@* Dark theming for the result popup so it matches the site (site.css surfaces are light by default). *@
+<style>
+    .cert-result-modal .modal-content {
+        background: #2b2c36;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .cert-modal-head {
+        border-bottom: 0;
+        color: #fff;
+    }
+    .cert-modal-head .modal-title {
+        font-size: 1.15rem;
+        margin: 0;
+        color: #fff;
+        display: flex;
+        align-items: center;
+    }
+    .cert-modal-head--ok { background: linear-gradient(135deg, #33ada9, #2a8c89); }
+    .cert-modal-head--warn { background: linear-gradient(135deg, #6e7fc1, #4a5894); }
+    .cert-result-modal .modal-body { padding: 1.5rem; }
+    /* Force badges readable on the dark surface (site.css softens them to near-white). */
+    .cert-result-modal .badge { color: #fff !important; }
+    .cert-result-modal .badge.bg-secondary { background-color: #5b6472 !important; }
+    .cert-result-modal .badge.bg-success { background-color: #1d9e6a !important; }
+    .cert-result-modal .badge.bg-danger { background-color: #c0392b !important; }
+    .cert-result-modal .tp-detail-list dt { color: rgba(255, 255, 255, 0.6); }
+    .cert-result-modal .tp-detail-list dd { color: #fff; }
+    .cert-result-modal .tp-detail-list .tp-row { border-bottom-color: rgba(255, 255, 255, 0.1); }
+    .cert-result-modal code {
+        color: #8ee9e4;
+        background: rgba(255, 255, 255, 0.07);
+        padding: .15em .45em;
+        border-radius: 4px;
+    }
+    .cert-modal-subhead { font-size: 1rem; margin-bottom: .85rem; color: #fff; }
+    .cert-result-modal .tp-divider { background: rgba(255, 255, 255, 0.12); }
+    .cert-result-modal .tp-table-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .cert-result-modal .table {
+        color: #fff;
+        --bs-table-bg: transparent;
+        --bs-table-color: #fff;
+        --bs-table-hover-bg: rgba(255, 255, 255, 0.07);
+        --bs-table-hover-color: #fff;
+        margin: 0;
+    }
+    .cert-result-modal .table > :not(caption) > * > * {
+        background: transparent;
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+    /* site.css sets a light --bg-color on the hovered <tr>; override on the row and cells. */
+    .cert-result-modal .table-hover > tbody > tr:hover {
+        background-color: rgba(255, 255, 255, 0.07) !important;
+    }
+    .cert-result-modal .table-hover > tbody > tr:hover > * {
+        background-color: transparent !important;
+        box-shadow: none !important;
+        color: #fff !important;
+    }
+    .cert-result-modal .tp-text-soft { color: rgba(255, 255, 255, 0.6); }
+</style>
+
 @* Public page for checking a certificate. Looks like the login page. *@
 <div class="tp-auth-shell tp-auth-shell--stack">
     <div class="tp-auth-card">
@@ -41,11 +111,26 @@
         </p>
     </div>
 
-    <div class="tp-auth-result">
-        <partial name="_LookupResult" model="Model" />
+</div>
+
+@* Result shows in a popup modal, matching the dark site theme, like other dialogs. *@
+<div class="modal fade cert-result-modal" id="certResultModal" tabindex="-1" aria-labelledby="certResultTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <partial name="_LookupResult" model="Model" />
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    @if (Model.Searched && (Model.Result != null || Model.ErrorMessage != null))
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var el = document.getElementById('certResultModal');
+                if (el && window.bootstrap) bootstrap.Modal.getOrCreateInstance(el).show();
+            });
+        </script>
+    }
 }

@@ -25,11 +25,13 @@ dotnet list package                           # list installed packages
 ```bash
 dotnet build                                  # build solution
 dotnet run                                    # run (from project folder)
+dotnet watch run --launch-profile https             # run using the HTTPS launch profile
 dotnet run --project TrainingPlatform.API     # run specific project (from solution root)
 dotnet watch run                              # run with hot reload
 ```
 
 ## EF Core Migrations
+
 > Run from the API project folder. Requires `dotnet-ef` tool and `Microsoft.EntityFrameworkCore.Design` package.
 
 ```bash
@@ -44,12 +46,15 @@ dotnet ef migrations script > database/schema.sql   # generate schema.sql for su
 ```
 
 ## User Secrets
+
 > Store JWT secrets and connection strings here — never commit to Git.
 
 ```bash
 dotnet user-secrets init                      # initialize (run from project folder)
 dotnet user-secrets set "Jwt:Secret" "your-secret"
 dotnet user-secrets set "ConnectionStrings:Default" "your-conn-string"
+dotnet user-secrets set "Stripe:SecretKey" "sk_test_..."   # Stripe secret key
+dotnet user-secrets set "Stripe:WebhookSecret" "whsec_..." # Stripe webhook signing secret
 dotnet user-secrets list                      # view all secrets
 ```
 
