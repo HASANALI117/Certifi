@@ -1,10 +1,4 @@
-// Reusable popup component for the dashboard.
-// Any element with [data-tp-modal] and an href (or [data-tp-modal-url]) opens a
-// shared Bootstrap modal, fetching server-rendered partial markup on demand.
-// Forms inside the modal post back with the X-Tp-Modal header; the server replies
-// with JSON ({ ok, message }) on success/business-failure, or re-rendered HTML on
-// validation errors. The modal lives directly under <body> so it is never trapped
-// by an overflow/backdrop-filter ancestor (the bug that froze the old per-row modals).
+// Reusable popup for the dashboard. Elements with [data-tp-modal] open a shared modal that loads its content from the server. It sits under <body> so nothing can clip it.
 (function () {
     if (window.TpModal) return;
 
@@ -84,8 +78,7 @@
             if (ct.indexOf('application/json') !== -1) {
                 var data = await resp.json();
                 if (data.ok) {
-                    // Redirect responses (e.g. Stripe Checkout) navigate away instead
-                    // of closing + reloading the dashboard in place.
+                    // If the server sends back a redirect, go there instead of just closing the popup.
                     if (data.redirect) {
                         window.location.assign(data.redirect);
                         return;

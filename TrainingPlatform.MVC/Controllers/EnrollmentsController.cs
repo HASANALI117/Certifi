@@ -36,12 +36,11 @@ public class EnrollmentsController : Controller
         return PartialView("_EnrollmentForm", enrollment);
     }
 
-    // Index/Create/Edit/Delete/Details no longer have dedicated pages — everything
-    // is managed from the Manage page via the reusable popup component.
+    // These actions don't have their own pages. Everything happens on the Manage page in a popup.
     [Authorize(Roles = "TrainingCoordinator")]
     public IActionResult Index() => RedirectToAction(nameof(Manage));
 
-    [Authorize(Roles = "TrainingCoordinator,Instructor")]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Manage()
     {
         var enrollments = await EnrollmentQuery()
@@ -50,10 +49,34 @@ public class EnrollmentsController : Controller
             .ToListAsync();
 
         await FlagOverduePaymentsAsync(enrollments);
-        ViewBag.PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus);
 
-        await LoadCertificationViewBagAsync();
-        return View(enrollments);
+        return View(new ManageEnrollmentsViewModel
+        {
+            Enrollments = enrollments,
+            PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus)
+        });
+    }
+
+    // Instructors get their own assessment roster, scoped to sessions they teach. No payment data.
+    [Authorize(Roles = "Instructor")]
+    public async Task<IActionResult> Roster()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var instructor = await _context.Instructors.FirstOrDefaultAsync(i => i.UserId == userId);
+        if (instructor == null)
+        {
+            TempData["Error"] = "Instructor profile not found.";
+            return View(new InstructorRosterViewModel());
+        }
+
+        var enrollments = await EnrollmentQuery()
+            .Where(e => e.CourseSession.InstructorId == instructor.Id)
+            .Where(e => e.Status == EnrollmentStatus.Confirmed || e.Status == EnrollmentStatus.Attending || e.Status == EnrollmentStatus.Completed)
+            .OrderBy(e => e.CourseSession.StartDateTime)
+            .ThenBy(e => e.Trainee.User.LastName)
+            .ToListAsync();
+
+        return View(new InstructorRosterViewModel { Enrollments = enrollments });
     }
 
     [Authorize(Roles = "Trainee")]
@@ -67,11 +90,7 @@ public class EnrollmentsController : Controller
         if (trainee == null)
         {
             TempData["Error"] = "Trainee profile not found.";
-            ViewBag.PaymentStatuses = new Dictionary<int, string>();
-            ViewBag.OutstandingBalances = new Dictionary<int, decimal>();
-            ViewBag.Notifications = Enumerable.Empty<Notification>();
-            ViewBag.Certifications = Enumerable.Empty<TraineeCertification>();
-            return View(Enumerable.Empty<Enrollment>());
+            return View(new TraineeBillingViewModel());
         }
 
         var enrollments = await EnrollmentQuery()
@@ -81,20 +100,22 @@ public class EnrollmentsController : Controller
 
         await FlagOverduePaymentsAsync(enrollments);
 
-        ViewBag.PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus);
-        ViewBag.OutstandingBalances = enrollments.ToDictionary(e => e.Id, OutstandingBalance);
-        ViewBag.Notifications = await _context.Notifications
-            .Where(n => n.UserId == userId)
-            .OrderByDescending(n => n.CreatedAt)
-            .Take(10)
-            .ToListAsync();
-        ViewBag.Certifications = await _context.TraineeCertifications
-            .Include(c => c.CertificationTrack)
-            .Where(c => c.TraineeId == trainee.Id)
-            .OrderBy(c => c.CertificationTrack.Name)
-            .ToListAsync();
-
-        return View(enrollments);
+        return View(new TraineeBillingViewModel
+        {
+            Enrollments = enrollments,
+            PaymentStatuses = enrollments.ToDictionary(e => e.Id, PaymentStatus),
+            OutstandingBalances = enrollments.ToDictionary(e => e.Id, OutstandingBalance),
+            Notifications = await _context.Notifications
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(10)
+                .ToListAsync(),
+            Certifications = await _context.TraineeCertifications
+                .Include(c => c.CertificationTrack)
+                .Where(c => c.TraineeId == trainee.Id)
+                .OrderBy(c => c.CertificationTrack.Name)
+                .ToListAsync()
+        });
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
@@ -297,11 +318,7 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        // Wrap read-check-insert in a serializable transaction so that two
-        // simultaneous enrollments racing for the last seat can't both succeed.
-        // Under serializable isolation, SQL Server takes range locks on the
-        // session's enrollment rows, so the second transaction blocks until the
-        // first commits and then re-evaluates against the updated count.
+        // Use a serializable transaction so two people can't grab the last seat at the same time.
         await using var tx = await _context.Database
             .BeginTransactionAsync(IsolationLevel.Serializable);
 
@@ -316,9 +333,7 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        // A session is a one-shot, time-bound instance: only an upcoming, Scheduled
-        // session is open for enrollment. The browse list already hides others; this
-        // closes the direct-POST hole.
+        // You can only enroll in a scheduled session that hasn't started yet.
         if (session.Status != SessionStatus.Scheduled || session.StartDateTime <= DateTime.UtcNow)
         {
             TempData["Error"] = "This session is no longer open for enrollment.";
@@ -331,8 +346,7 @@ public class EnrollmentsController : Controller
             return RedirectToAction("Index", "CourseSessions");
         }
 
-        // (TraineeId, CourseSessionId) is unique. A dropped session is not re-joinable —
-        // the trainee must enroll in a different upcoming session of the course instead.
+        // A trainee can only be in a session once, and can't rejoin one they dropped.
         var existing = await _context.Enrollments
             .FirstOrDefaultAsync(e => e.TraineeId == trainee.Id && e.CourseSessionId == courseSessionId);
 
@@ -391,8 +405,7 @@ public class EnrollmentsController : Controller
         return RedirectToAction(nameof(Manage));
     }
 
-    // Trainees self-pay via Stripe Checkout (PaymentsController). This just renders the
-    // amount-entry modal; the actual charge is handled by Stripe + the webhook.
+    // This just shows the payment popup. Stripe handles the actual payment.
     [Authorize(Roles = "Trainee")]
     [HttpGet]
     public async Task<IActionResult> PaymentForm(int id)
@@ -408,16 +421,13 @@ public class EnrollmentsController : Controller
     [HttpGet]
     public async Task<IActionResult> AssessmentForm(int id)
     {
-        if (!IsModal) return RedirectToAction(nameof(Manage));
+        if (!IsModal) return RedirectToEnrollmentList();
         var enrollment = await EnrollmentQuery().FirstOrDefaultAsync(e => e.Id == id);
         if (enrollment == null) return NotFound();
         return PartialView("_AssessmentForm", enrollment);
     }
 
-    // Manual/offline payment recording has been removed — all payments go through
-    // Stripe Checkout (see PaymentsController). The Stripe webhook is the single
-    // writer of Payment rows.
-
+    // There's no manual payment option anymore. All payments go through Stripe.
     [Authorize(Roles = "TrainingCoordinator,Instructor")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> RecordAssessment(int enrollmentId, AssessmentResult result, string? notes)
@@ -430,7 +440,7 @@ public class EnrollmentsController : Controller
         {
             if (IsModal) return JsonFail("No instructor profile was found for recording this assessment.");
             TempData["Error"] = "No instructor profile was found for recording this assessment.";
-            return RedirectToAction(nameof(Manage));
+            return RedirectToEnrollmentList();
         }
 
         var assessment = await _context.Assessments.FirstOrDefaultAsync(a => a.EnrollmentId == enrollmentId);
@@ -453,52 +463,13 @@ public class EnrollmentsController : Controller
 
         await SaveChangesAndNotifyAsync();
 
-        // Always re-run tracking. UpdateCertificationTrackingAsync now handles
-        // both promotion (Eligible when all required courses passed) and
-        // demotion (back to InProgress when a previous Pass is corrected to
-        // Fail). Already-Issued certifications are intentionally left alone —
-        // a real-world certificate that has been handed out cannot be silently
-        // revoked from the platform.
+        // Check certification progress after each assessment. It can move up or down, but won't undo a certificate that was already issued.
         await UpdateCertificationTrackingAsync(enrollment.TraineeId);
         await SaveChangesAndNotifyAsync();
 
         if (IsModal) return JsonOk("Assessment recorded.", "Assessment");
         TempData["Success"] = "Assessment recorded.";
-        return RedirectToAction(nameof(Manage));
-    }
-
-    [Authorize(Roles = "TrainingCoordinator")]
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> IssueCertification(int certificationId)
-    {
-        var certification = await _context.TraineeCertifications
-            .Include(c => c.Trainee)
-            .Include(c => c.CertificationTrack)
-            .FirstOrDefaultAsync(c => c.Id == certificationId);
-
-        if (certification == null) return NotFound();
-
-        certification.Status = CertificationStatus.Issued;
-        certification.IssuedAt = DateTime.UtcNow;
-
-        // Persist the issued state first so the reference embeds a saved row's
-        // Id (collision-free across coordinators issuing concurrently). On the
-        // happy path the row already had an Id from StartCertificationTrackingAsync,
-        // but using SaveChangesAsync as the anchor keeps the invariant intact
-        // even if the upstream creation flow changes.
-        var generateRef = string.IsNullOrWhiteSpace(certification.CertRefNumber);
-        if (generateRef) await _context.SaveChangesAsync();
-        if (generateRef) certification.CertRefNumber = BuildCertificateReference(certification);
-
-        await AddNotificationForTraineeAsync(
-            certification.TraineeId,
-            $"Certification issued: {certification.CertificationTrack.Name}. Reference: {certification.CertRefNumber}.",
-            "Certification");
-
-        await SaveChangesAndNotifyAsync();
-
-        TempData["Success"] = "Certification issued.";
-        return RedirectToAction(nameof(Manage));
+        return RedirectToEnrollmentList();
     }
 
     private IQueryable<Enrollment> EnrollmentQuery() =>
@@ -534,16 +505,6 @@ public class EnrollmentsController : Controller
             "Id",
             "Name",
             courseSessionId);
-    }
-
-    private async Task LoadCertificationViewBagAsync()
-    {
-        ViewBag.Certifications = await _context.TraineeCertifications
-            .Include(c => c.Trainee).ThenInclude(t => t.User)
-            .Include(c => c.CertificationTrack)
-            .OrderBy(c => c.Status)
-            .ThenBy(c => c.CertificationTrack.Name)
-            .ToListAsync();
     }
 
     private void ClearEnrollmentNavigationValidation()
@@ -666,9 +627,7 @@ public class EnrollmentsController : Controller
                 continue;
             }
 
-            // Demotion: a prior Eligible cert no longer qualifies (e.g., a Pass
-            // was corrected to Fail). Move it back to InProgress and notify so
-            // the coordinator knows not to issue.
+            // If they no longer qualify, move the certificate back to in progress and let them know.
             if (certification != null && certification.Status == CertificationStatus.Eligible)
             {
                 certification.Status = CertificationStatus.InProgress;
@@ -769,6 +728,12 @@ public class EnrollmentsController : Controller
             ? RedirectToAction(nameof(BillingAndAlerts))
             : RedirectToAction(nameof(Manage));
 
+    // Instructors land on their roster; coordinators on the full manage page.
+    private IActionResult RedirectToEnrollmentList() =>
+        User.IsInRole("Instructor")
+            ? RedirectToAction(nameof(Roster))
+            : RedirectToAction(nameof(Manage));
+
     private static int ActiveEnrollmentCount(CourseSession session) =>
         session.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped);
 
@@ -778,8 +743,7 @@ public class EnrollmentsController : Controller
     private static decimal OutstandingBalance(Enrollment enrollment) =>
         Math.Max(0m, (enrollment.CourseSession?.Course?.EnrollmentFee ?? 0m) - PaidTotal(enrollment));
 
-    // Overdue when the session has already started but the trainee still owes.
-    // Dropped enrollments never count as overdue.
+    // A payment is overdue once the session has started and they still owe money. Dropped ones don't count.
     private static bool IsOverdue(Enrollment enrollment)
     {
         if (enrollment.Status == EnrollmentStatus.Dropped) return false;
@@ -796,9 +760,7 @@ public class EnrollmentsController : Controller
         return PaidTotal(enrollment) > 0 ? "Partial" : "Unpaid";
     }
 
-    // Idempotently sends a one-time "payment overdue" notification per
-    // enrollment. Identifies prior notifications by an embedded marker in
-    // the message body so we don't need a schema migration.
+    // Sends one overdue reminder per enrollment. We tag the message so we don't send it twice, without changing the database.
     private async Task FlagOverduePaymentsAsync(IEnumerable<Enrollment> enrollments)
     {
         var overdue = enrollments.Where(IsOverdue).ToList();
@@ -845,13 +807,4 @@ public class EnrollmentsController : Controller
 
     private static string FullName(AppUser user) =>
         $"{user.FirstName} {user.LastName}".Trim();
-
-    private static string BuildCertificateReference(TraineeCertification certification)
-    {
-        var prefix = string.IsNullOrWhiteSpace(certification.CertificationTrack.CertRefPrefix)
-            ? "CERT"
-            : certification.CertificationTrack.CertRefPrefix.Trim();
-
-        return $"{prefix}-{DateTime.UtcNow:yyyy}-{certification.Id:D5}";
-    }
 }

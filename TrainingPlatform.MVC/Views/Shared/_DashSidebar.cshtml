@@ -52,8 +52,11 @@
             <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
                 <i class="bi bi-calendar-event"></i><span>Sessions</span>
             </a>
-            <a class="dash-nav-item @NavActive("Certification")" asp-controller="Certification" asp-action="Lookup">
-                <i class="bi bi-patch-check"></i><span>Certifications</span>
+            <a class="dash-nav-item @NavActive("TraineeCertifications")" asp-controller="TraineeCertifications" asp-action="Index">
+                <i class="bi bi-patch-check"></i><span>Certificates</span>
+            </a>
+            <a class="dash-nav-item @NavActive("CertificationTracks")" asp-controller="CertificationTracks" asp-action="Index">
+                <i class="bi bi-award"></i><span>Cert. Tracks</span>
             </a>
             <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="Manage">
                 <i class="bi bi-people-fill"></i><span>Enrollments</span>
@@ -79,9 +82,12 @@
             <a class="dash-nav-item @NavActive("Courses")" asp-controller="Courses" asp-action="Index">
                 <i class="bi bi-collection"></i><span>Courses</span>
             </a>
-            <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
-                <i class="bi bi-calendar-event"></i><span>Sessions</span>
-            </a>
+            @if (!isTrainee)
+            {
+                <a class="dash-nav-item @NavActive("CourseSessions")" asp-controller="CourseSessions" asp-action="Index">
+                    <i class="bi bi-calendar-event"></i><span>Sessions</span>
+                </a>
+            }
             @if (isTrainee)
             {
                 <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="BillingAndAlerts">
@@ -90,13 +96,16 @@
             }
             @if (isInstructor)
             {
-                <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="Manage">
+                <a class="dash-nav-item @NavActive("Enrollments")" asp-controller="Enrollments" asp-action="Roster">
                     <i class="bi bi-clipboard-check"></i><span>Assessments</span>
                 </a>
             }
-            <a class="dash-nav-item @NavActive("Certification")" asp-controller="Certification" asp-action="Lookup">
-                <i class="bi bi-patch-check"></i><span>Certifications</span>
-            </a>
+            @if (isTrainee)
+            {
+                <a class="dash-nav-item @NavActive("Certification")" asp-controller="Certification" asp-action="MyCertificate">
+                    <i class="bi bi-patch-check"></i><span>My Certificate</span>
+                </a>
+            }
         }
     </nav>
 

@@ -31,10 +31,10 @@
     </dl>
 </div>
 <div class="modal-footer">
-    <button type="button" class="dash-btn" data-bs-dismiss="modal">Close</button>
+    <button type="button" class="tp-cta-ghost" data-bs-dismiss="modal">Close</button>
     @if (User.IsInRole("TrainingCoordinator"))
     {
-        <button type="button" class="dash-btn dash-btn-primary" data-tp-modal data-tp-modal-url="@Url.Action("Edit", "Enrollments", new { id = Model.Id })">
+        <button type="button" class="tp-cta" data-tp-modal data-tp-modal-url="@Url.Action("Edit", "Enrollments", new { id = Model.Id })">
             <i class="bi bi-pencil-square"></i><span>Edit</span>
         </button>
     }

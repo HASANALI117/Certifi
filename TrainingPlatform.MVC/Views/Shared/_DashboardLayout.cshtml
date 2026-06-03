@@ -122,9 +122,7 @@
                         return;
                     }
                     var html = await resp.text();
-                    // Safety net: if the server returned a full HTML document
-                    // (e.g., a stale cached response or a page that isn't AJAX-aware),
-                    // don't inject it as a fragment — do a real navigation instead.
+                    // If the server sent back a whole page instead of a fragment, just navigate to it normally.
                     if (/<!DOCTYPE/i.test(html) || /<html[\s>]/i.test(html)) {
                         window.location.href = finalUrl;
                         return;

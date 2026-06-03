@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TrainingPlatform.API.DTOs;
@@ -21,10 +22,10 @@ namespace TrainingPlatform.API.Controllers
         public async Task<IActionResult> Login(LoginRequestDto request)
         {
             var user = await userManager.FindByEmailAsync(request.Email);
-            if (user is null) return Unauthorized("Invalid credentials");
+            if (user is null) return InvalidCredentials();
 
             var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
-            if (!result.Succeeded) return Unauthorized("Invalid credentials");
+            if (!result.Succeeded) return InvalidCredentials();
 
             var roles = await userManager.GetRolesAsync(user);
             var role = roles.FirstOrDefault() ?? string.Empty;
@@ -38,5 +39,11 @@ namespace TrainingPlatform.API.Controllers
                 Role = role,
             });
         }
+
+        // Use the same error for a wrong email and a wrong password, so we don't reveal which emails exist.
+        private ObjectResult InvalidCredentials() => Problem(
+            detail: "The email or password is incorrect.",
+            statusCode: StatusCodes.Status401Unauthorized,
+            title: "Invalid credentials");
     }
 }

@@ -1,0 +1,139 @@
+@using TrainingPlatform.API.Models
+
+@model InstructorRosterViewModel
+
+@{
+    ViewData["Title"] = "Assessments";
+
+    string Initials(AppUser? user)
+    {
+        if (user == null) return "?";
+        var f = !string.IsNullOrWhiteSpace(user.FirstName) ? user.FirstName[0] : '?';
+        var l = !string.IsNullOrWhiteSpace(user.LastName) ? user.LastName[0] : ' ';
+        return $"{f}{l}".Trim().ToUpperInvariant();
+    }
+
+    string StatusPill(EnrollmentStatus s) => s switch
+    {
+        EnrollmentStatus.Completed => "dash-pill-success",
+        EnrollmentStatus.Attending => "dash-pill-info",
+        EnrollmentStatus.Confirmed => "dash-pill-primary",
+        EnrollmentStatus.Dropped   => "dash-pill-danger",
+        _                          => "dash-pill-muted"
+    };
+
+    var enrollments = Model.Enrollments;
+    var activeCount = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Status != EnrollmentStatus.Completed);
+    // "Awaiting assessment" = every non-dropped row still showing "Not recorded" below.
+    var awaitingAssessment = enrollments.Count(e => e.Status != EnrollmentStatus.Dropped && e.Assessment == null);
+}
+
+<div data-tp-live-page="roster"></div>
+@* The layout already shows _DashAlerts, so we leave it out here. *@
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">Assessments</h1>
+            <p class="dash-page-lede">Track lifecycle and record assessments for trainees in the sessions you teach.</p>
+        </div>
+    </div>
+</header>
+
+<section class="dash-chip-row" aria-label="At a glance">
+    <div class="dash-summary">
+        <span class="dash-summary-icon"><i class="bi bi-people-fill"></i></span>
+        <div>
+            <div class="dash-summary-val">@activeCount</div>
+            <div class="dash-summary-lbl">Active enrollments</div>
+        </div>
+    </div>
+    <div class="dash-summary">
+        <span class="dash-summary-icon is-info"><i class="bi bi-clipboard-check"></i></span>
+        <div>
+            <div class="dash-summary-val">@awaitingAssessment</div>
+            <div class="dash-summary-lbl">Awaiting assessment</div>
+        </div>
+    </div>
+</section>
+
+<section class="dash-panel" aria-labelledby="roster-panel-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="roster-panel-title">Enrollment lifecycle</h2>
+            <div class="dash-panel-sub">@enrollments.Count total record@(enrollments.Count == 1 ? "" : "s")</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Trainee</th>
+                    <th scope="col">Course</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Assessment</th>
+                    <th scope="col" class="dash-td-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (enrollments.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="dash-td-empty">
+                            <i class="bi bi-inbox" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No enrollments in your sessions yet.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var e in enrollments)
+                    {
+                        var traineeName = e.Trainee?.User != null ? $"{e.Trainee.User.FirstName} {e.Trainee.User.LastName}" : "Unknown Trainee";
+                        var courseTitle = e.CourseSession?.Course?.Title ?? "N/A";
+
+                        <tr>
+                            <td data-label="Trainee">
+                                <div class="dash-cell-person">
+                                    <span class="dash-avatar-sm" aria-hidden="true">@Initials(e.Trainee?.User)</span>
+                                    <div>
+                                        <div class="dash-cell-line1">@traineeName</div>
+                                        <div class="dash-cell-line2">@(e.Trainee?.TraineePublicId ?? "—")</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Course">
+                                <div class="dash-cell-line1">@courseTitle</div>
+                                <div class="dash-cell-line2">@e.CourseSession?.StartDateTime.ToString("dd MMM yyyy, HH:mm")</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @StatusPill(e.Status)">@e.Status</span>
+                            </td>
+                            <td data-label="Assessment">
+                                @if (e.Assessment == null)
+                                {
+                                    <span class="dash-pill dash-pill-muted">Not recorded</span>
+                                }
+                                else
+                                {
+                                    <span class="dash-pill @(e.Assessment.Result == AssessmentResult.Pass ? "dash-pill-success" : "dash-pill-danger")">@e.Assessment.Result</span>
+                                    <div class="dash-cell-line2">@e.Assessment.RecordedAt.ToLocalTime().ToString("dd MMM HH:mm")</div>
+                                }
+                            </td>
+                            <td data-label="Actions" class="dash-td-actions">
+                                <div class="dash-action-group">
+                                    <button type="button" class="dash-btn dash-btn-sm"
+                                            data-tp-modal data-tp-modal-url="@Url.Action("AssessmentForm", new { id = e.Id })"
+                                            aria-label="Record assessment for @traineeName">
+                                        <i class="bi bi-clipboard-check"></i><span>Assess</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,13 +1,20 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TrainingPlatform.API.Data;
+using TrainingPlatform.API.Models;
 using TrainingPlatform.MVC.Models.ViewModels;
 using TrainingPlatform.MVC.Services;
 
 namespace TrainingPlatform.MVC.Controllers;
 
-public class CertificationController(ICertificationLookupService lookupService) : Controller
+public class CertificationController(ICertificationLookupService lookupService, AppDbContext db) : Controller
 {
     private readonly ICertificationLookupService _lookupService = lookupService;
+    private readonly AppDbContext _db = db;
 
+    // Public page for checking a certificate. Only linked from the home page and open to everyone.
     [HttpGet]
     public IActionResult Lookup() => View(new CertificationLookupViewModel());
 
@@ -32,5 +39,22 @@ public class CertificationController(ICertificationLookupService lookupService) 
         }
 
         return View(model);
+    }
+
+    // Shows the logged-in trainee their own certificates right away, no search needed.
+    [Authorize(Roles = "Trainee")]
+    [HttpGet]
+    public async Task<IActionResult> MyCertificate()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var certifications = await _db.TraineeCertifications
+            .Include(c => c.CertificationTrack)
+            .Where(c => c.Trainee.UserId == userId)
+            .OrderByDescending(c => c.Status == CertificationStatus.Issued)
+            .ThenBy(c => c.CertificationTrack.Name)
+            .ToListAsync();
+
+        return View(certifications);
     }
 }

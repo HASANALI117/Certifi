@@ -22,22 +22,29 @@ public class CourseSessionsController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int? courseId)
     {
-        var scopedQuery = await ScopeQueryForCurrentUserAsync(_db.CourseSessions
+        // Trainees now reach sessions through a specific course on the Courses page.
+        if (User.IsInRole("Trainee") && courseId is null)
+            return RedirectToAction("Index", "Courses");
+
+        var query = _db.CourseSessions
             .Include(s => s.Course)
             .Include(s => s.Instructor).ThenInclude(i => i.User)
             .Include(s => s.Classroom)
             .Include(s => s.Enrollments)
-            .AsQueryable());
+            .AsQueryable();
+
+        if (courseId is not null)
+            query = query.Where(s => s.CourseId == courseId.Value);
+
+        var scopedQuery = await ScopeQueryForCurrentUserAsync(query);
 
         if (scopedQuery is null) return Challenge();
 
         var sessions = await scopedQuery.OrderBy(s => s.StartDateTime).ToListAsync();
 
-        // Sessions the current trainee is actively enrolled in (drives Enroll vs Enrolled state),
-        // and sessions they were dropped from (a dropped session is not re-joinable — they must
-        // pick a different upcoming session of the course).
+        // Track which sessions the trainee is in and which they dropped, since you can't rejoin a dropped one.
         var enrolledSessionIds = new HashSet<int>();
         var droppedSessionIds = new HashSet<int>();
         if (User.IsInRole("Trainee"))
@@ -75,6 +82,15 @@ public class CourseSessionsController : Controller
             };
         }).ToList();
 
+        if (courseId is not null)
+        {
+            ViewBag.FilterCourseId = courseId.Value;
+            ViewBag.FilterCourseTitle = await _db.Courses
+                .Where(c => c.Id == courseId.Value)
+                .Select(c => c.Title)
+                .FirstOrDefaultAsync();
+        }
+
         return View(viewModels);
     }
 
@@ -98,6 +114,7 @@ public class CourseSessionsController : Controller
         return View(new CourseSessionDetailsViewModel
         {
             Id = session.Id,
+            CourseId = session.CourseId,
             CourseTitle = session.Course.Title,
             CourseDescription = session.Course.Description,
             InstructorName = $"{session.Instructor.User.FirstName} {session.Instructor.User.LastName}",
@@ -275,8 +292,7 @@ public class CourseSessionsController : Controller
         var session = await _db.CourseSessions.Include(s => s.Enrollments).FirstOrDefaultAsync(s => s.Id == id);
         if (session == null) return NotFound();
 
-        // Dropped enrollments are historical and shouldn't keep a session
-        // around. Only active (non-dropped) enrollments should block deletion.
+        // Only active enrollments stop a session from being deleted.
         if (session.Enrollments.Any(e => e.Status != EnrollmentStatus.Dropped))
         {
             TempData["Error"] = "Cannot delete a session that has active enrollments.";
@@ -289,11 +305,7 @@ public class CourseSessionsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // Filters the session query so each role only sees their own sessions:
-    // - Coordinator: every session
-    // - Instructor: sessions they teach
-    // - Trainee: every upcoming scheduled session (browse + enroll surface)
-    // Returns null when the signed-in user record can't be resolved.
+    // Limits the sessions to what each role should see. Returns null if we can't find the user.
     private async Task<IQueryable<CourseSession>?> ScopeQueryForCurrentUserAsync(IQueryable<CourseSession> query)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -313,8 +325,7 @@ public class CourseSessionsController : Controller
 
         if (User.IsInRole("Trainee"))
         {
-            // Trainees browse all upcoming scheduled sessions. Compared in UTC
-            // because StartDateTime is now stored as UTC by Create/Edit.
+            // Compare in UTC because that's how the start time is saved.
             var nowUtc = DateTime.UtcNow;
             return query.Where(s => s.Status == SessionStatus.Scheduled && s.StartDateTime > nowUtc);
         }
@@ -322,10 +333,7 @@ public class CourseSessionsController : Controller
         return query.Where(_ => false);
     }
 
-    // Converts a Date + Time pair entered by the coordinator (interpreted as
-    // the server's local time zone, since the form has no TZ picker) into a
-    // UTC pair. All comparisons elsewhere use DateTime.UtcNow, so storing UTC
-    // keeps the pipeline consistent.
+    // Turn the date and time from the form into UTC, since everything else compares in UTC.
     private static (DateTime StartUtc, DateTime EndUtc) ResolveSessionWindow(
         CourseSessionFormViewModel model, Course course)
     {
@@ -337,9 +345,7 @@ public class CourseSessionsController : Controller
         return (startUtc, endUtc);
     }
 
-    // Treat any DateTime read from EF (Kind = Unspecified) as UTC for display.
-    // The seeder and the Create/Edit pipeline both store UTC, so this is safe;
-    // legacy rows written before this fix may be off by the server's TZ offset.
+    // Treat times from the database as UTC when showing them. Older rows might be off by the time zone.
     private static DateTime AsLocal(DateTime utc)
     {
         var asUtc = utc.Kind == DateTimeKind.Utc
@@ -348,8 +354,7 @@ public class CourseSessionsController : Controller
         return asUtc.ToLocalTime();
     }
 
-    // Returns false when the instructor has declared availability windows that don't
-    // cover the requested session slot. Instructors with no records are unrestricted.
+    // Returns false if the instructor set availability that doesn't cover this slot. No availability set means they're always free.
     private async Task<bool> InstructorIsAvailableAsync(int instructorId, DateTime startUtc, DateTime endUtc)
     {
         var slots = await _db.InstructorAvailability
@@ -370,9 +375,7 @@ public class CourseSessionsController : Controller
             a.EndTime   >= endTime);
     }
 
-    // Two sessions overlap when neither one finishes before the other starts.
-    // Excludes the row being edited (so reschedules don't conflict with themselves).
-    // Excludes Cancelled sessions — they no longer occupy the slot.
+    // Two sessions clash if they run at the same time. Ignores the one being edited and cancelled ones.
     private async Task<bool> HasInstructorOverlapAsync(int instructorId, DateTime startUtc, DateTime endUtc, int? excludingSessionId)
     {
         return await _db.CourseSessions.AnyAsync(s =>

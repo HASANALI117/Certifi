@@ -81,3 +81,12 @@ public class CategoryWidgetViewModel
     public string Name { get; set; } = string.Empty;
     public int CourseCount { get; set; }
 }
+
+// Holds everything the course catalog page needs: the courses, the search term, and the categories.
+public class CourseCatalogViewModel
+{
+    public IReadOnlyList<CourseListItemViewModel> Courses { get; set; } = [];
+    public IReadOnlyList<CategoryWidgetViewModel> CategoryStats { get; set; } = [];
+    public string? Search { get; set; }
+    public int? SelectedCategoryId { get; set; }
+}

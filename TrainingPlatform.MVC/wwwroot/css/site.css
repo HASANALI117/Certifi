@@ -885,9 +885,7 @@ textarea.form-control {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-1);
-  /* Scroll wide tables horizontally inside the card instead of clipping or
-     crushing columns on narrow screens. The nowrap thead keeps each column a
-     readable min width, so the card scrolls cleanly on phones/tablets. */
+  /* Scroll wide tables sideways instead of squashing the columns. */
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -1727,6 +1725,16 @@ thead.table-dark,
   color: var(--warning-color-fg);
 }
 
+/* Trainee "Find Sessions" CTA at the bottom of the selected-course panel. */
+.tp-find-sessions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
 .tp-sidebar-list {
   list-style: none;
   margin: 0;
@@ -1989,8 +1997,7 @@ thead.table-dark,
   padding: 2rem 0;
 }
 
-/* Stack variant — card with content (e.g. lookup results) below it, still
-   centered. A single card behaves identically to the plain centered shell. */
+/* A version with content stacked below the card, still centered. */
 .tp-auth-shell--stack {
   flex-direction: column;
 }
@@ -2279,9 +2286,7 @@ code {
   transform: translateY(1px);
 }
 
-/* Ghost variant for secondary / cancel actions — mirrors the landing "Log In"
-   button (.button): transparent with a 2px inset outline, white uppercase
-   label, subtle fill on hover. Same size as .tp-cta so they pair on a row. */
+/* Outline style for secondary or cancel buttons. Same size as .tp-cta so they line up next to each other. */
 .tp-cta-ghost {
   display: inline-flex;
   align-items: center;
@@ -2311,6 +2316,39 @@ code {
   color: #fff;
 }
 .tp-cta-ghost:active {
+  transform: translateY(1px);
+}
+
+/* Red version of .tp-cta for delete and other destructive buttons. */
+.tp-cta-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.75rem 1.6rem;
+  border: 0;
+  border-radius: 6px;
+  background-color: #dc3545;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+.tp-cta-danger:hover,
+.tp-cta-danger:focus-visible {
+  background-color: #bb2d3b;
+  color: #fff;
+}
+.tp-cta-danger:active {
   transform: translateY(1px);
 }
 
@@ -2351,20 +2389,13 @@ code {
 :root {
   color-scheme: light;
 }
-/* Every dashboard (dash-body) and marketing/auth (cd-body) page is a dark
-   surface, so the document itself must use a dark color-scheme. Native
-   <select> option popups follow the ROOT element's color-scheme (not the
-   control's), so without this they render as a white panel on the dark UI. */
+/* Dashboard and marketing pages are dark, so set the page itself to dark. Otherwise the dropdown popups show up white. */
 html:has(body.dash-body),
 html:has(body.cd-body) {
   color-scheme: dark;
 }
 
-/* Unified dark <select> dropdown look across the whole site — content areas,
-   modals, the marketing/landing pages and the reports app. Scoped to the dark
-   body classes so the only genuinely light page (the reports login) is left
-   alone. color-scheme darkens the popup chrome; the option rules color the
-   list itself for browsers that don't fully theme it from color-scheme. */
+/* Make all the dropdowns dark across the site, except the light reports login page. */
 body.dash-body select,
 body.cd-body select {
   color-scheme: dark;
@@ -3206,8 +3237,7 @@ body.dash-body .tp-category-tab.active .tp-tab-count {
   color: #fff;
 }
 
-/* Course rows — glass panel, teal selection ring. Reset the gradient
-   padding-box trick the light theme uses for hover/selected. */
+/* Glass-style course rows with a teal highlight when selected. */
 body.dash-body .tp-course-row {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);

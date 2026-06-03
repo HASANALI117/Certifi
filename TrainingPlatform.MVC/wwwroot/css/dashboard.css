@@ -1,9 +1,6 @@
-/* Theme tokens — scoped so they only override globals on dashboard pages.
-   Without scoping they would repaint marketing/login. */
+/* Theme colors, only on dashboard pages so they don't affect the marketing or login pages. */
 body.dash-body {
-  /* The dashboard is permanently dark, so tell the browser to render native
-     controls (select popups, date/time picker indicators, spinners,
-     scrollbars) in their dark variants instead of the default light ones. */
+  /* The dashboard is always dark, so tell the browser to draw the built-in controls dark too. */
   color-scheme: dark;
   --bg-color: #24252d;
   --panel-bg: rgba(36, 37, 45, 0.6);
@@ -21,9 +18,7 @@ body.dash-body {
   --border-radius-sm: 10px;
 }
 
-/* Reset body so the dashboard owns the viewport.
-   We re-create the home page's layered background (hex overlay + diagonal
-   gradient + twinkle SVG) here so loading carrd-theme.css isn't required. */
+/* Reset the body for the dashboard and rebuild the home page background here, so we don't need the other stylesheet. */
 body.dash-body {
   margin: 0;
   padding: 0;
@@ -86,8 +81,7 @@ body.dash-body::after {
   position: sticky;
   top: 0;
   height: 100vh;
-  /* Lift the sidebar's stacking context so its dropup user menu floats above
-     main-content panels (backdrop-filter above traps child z-index otherwise). */
+  /* Raise the sidebar so its menu shows above the content. */
   z-index: 1031;
 }
 
@@ -230,9 +224,7 @@ body.dash-body::after {
 }
 
 /* Topbar -------------------------------------------------- */
-/* The header/subheader is a full-width band ABOVE the two-column .dash-content
-   grid, so the right rail aligns with the content (stats) rather than the
-   header. It is no longer inside the flex column, so it owns its own spacing. */
+/* Full-width header above the two columns so the right side lines up with the stats. */
 .dash-topbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 360px) auto;
@@ -375,6 +367,112 @@ body.dash-body::after {
   flex-direction: column;
   gap: 1rem;
 }
+
+/* Instructor next-class spotlight ---------------------------- */
+.dash-spotlight {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+.dash-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-color-soft), transparent 60%);
+  pointer-events: none;
+}
+.dash-spotlight.is-live {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-soft);
+}
+.dash-spotlight-date {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-hover));
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+.dash-spotlight-day {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.dash-spotlight-mon {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.dash-spotlight-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.dash-spotlight-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-color-muted);
+  margin-bottom: 0.3rem;
+}
+.dash-spotlight-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--accent-color);
+  font-weight: 700;
+}
+.dash-spotlight-title {
+  margin: 0 0 0.45rem;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.dash-spotlight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-color-muted);
+}
+.dash-spotlight-meta i {
+  margin-right: 0.3rem;
+  color: var(--accent-color);
+}
+.dash-spotlight-actions {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 640px) {
+  .dash-spotlight {
+    flex-wrap: wrap;
+  }
+  .dash-spotlight-actions {
+    width: 100%;
+  }
+}
+
 .dash-section-head {
   display: flex;
   align-items: baseline;
@@ -944,8 +1042,7 @@ body.dash-body::after {
   border-radius: var(--border-radius);
 }
 
-/* Table card wraps its table edge-to-edge, exactly like .dash-panel.
-   Scroll horizontally rather than clip so wide tables stay usable on mobile. */
+/* The table fills the card and scrolls sideways so wide tables still work on mobile. */
 .dash-content-area .tp-table-card {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -968,8 +1065,7 @@ body.dash-body::after {
   color: var(--text-color);
 }
 
-/* Tables — match .dash-data-table: transparent head, uppercase labels,
-   row borders, subtle hover tint (no Bootstrap striping). */
+/* Make these tables look like .dash-data-table instead of the default Bootstrap style. */
 .dash-content-area .table {
   color: var(--text-color);
   margin: 0;
@@ -1033,54 +1129,44 @@ body.dash-body::after {
 .dash-input {
   color-scheme: dark;
 }
-/* Explicit option row colors so the popup list is dark-on-light-text even on
-   browsers that don't fully theme the popup from color-scheme alone. */
+/* Set the dropdown option colors for browsers that don't style them on their own. */
 .dash-content-area .form-select option,
 .dash-content-area .form-control option,
 .dash-input option {
   background-color: var(--panel-bg-solid);
   color: var(--text-color);
 }
-/* File input "Choose file" button — Bootstrap defaults it to a light surface,
-   which reads as a white block on the dark form. Recolor to a glass panel. */
+/* Restyle the file picker button so it isn't a white block on the dark form. */
 .dash-content-area .form-control::file-selector-button {
   background: var(--panel-bg-soft);
   color: var(--text-color);
   border-color: var(--border-color);
 }
-/* Match Bootstrap's :hover:not(...)::file-selector-button specificity (and beat
-   it with the extra .dash-content-area class) so hover keeps dark bg + light
-   text instead of reverting to Bootstrap's light surface. */
+/* Override Bootstrap's hover style so the button stays dark when you hover it. */
 .dash-content-area .form-control:hover:not(:disabled):not([readonly])::file-selector-button {
   background: var(--panel-bg);
   color: var(--text-color);
 }
-/* Helper text — Bootstrap's .form-text is a dark grey unreadable on the
-   dark form. Lift to the dashboard's muted-light token. */
+/* Lighten the helper text so it's readable on the dark background. */
 .dash-content-area .form-text {
   color: var(--text-color-muted);
 }
-/* Bootstrap .text-muted resolves to a dark grey (light-theme secondary
-   color) — unreadable on dark surfaces (e.g. the "(1/20)" spots counter). */
+/* Bootstrap's muted text is too dark to read on the dark background. */
 .dash-content-area .text-muted {
   color: var(--text-color-muted) !important;
 }
-/* Inline code chips (e.g. trainee public IDs) — the base rule paints them
-   dark indigo on the dark background. Use a legible light-indigo chip. */
+/* Make inline code text light so it's readable on the dark background. */
 .dash-content-area code {
   background: rgba(255, 255, 255, 0.06);
   color: #c7d2fe;
   border-color: var(--border-color);
 }
-/* Course image preview — its border picked up the light-theme value and
-   read as a harsh white edge. Pin it to a subtle dark-theme border. */
+/* Use a subtle dark border on the image preview instead of a harsh white one. */
 .dash-content-area .tp-course-image-preview {
   background: var(--panel-bg-soft);
   border-color: var(--border-color);
 }
-/* The actions footer (Delete image) defaulted to --surface-color (#fff),
-   which isn't overridden on dark surfaces — that's the white band under the
-   image. Repaint it as a dark footer with a subtle top divider. */
+/* Make the footer under the image dark instead of white. */
 .dash-content-area .tp-course-image-actions {
   background: var(--panel-bg-soft);
   border-top-color: var(--border-color);
@@ -1181,9 +1267,7 @@ body.dash-body::after {
   color: var(--accent-color-hover);
 }
 
-/* The .tp-cta call-to-action look is defined in site.css (shared so it also
-   works on the public Verify page). Here we only need to out-rank
-   ".dash-content-area a { color }" so the anchor CTAs keep their white label. */
+/* .tp-cta is styled in site.css. This just makes sure the link buttons keep their white text here. */
 .dash-content-area a.tp-cta,
 .dash-content-area a.tp-cta:hover,
 .dash-content-area a.tp-cta:focus-visible,
@@ -1358,8 +1442,7 @@ body.dash-body.dash-drawer-open {
   }
 }
 
-/* On phones, let dashboard page subtitles/ledes wrap instead of truncating to
-   a single ellipsised line — the extra context matters more than tidiness. */
+/* On phones, let the subtitles wrap instead of cutting them off. */
 @media (max-width: 768px) {
   .dash-content-area .tp-page-subtitle,
   .dash-page-lede {
@@ -1481,8 +1564,7 @@ body.dash-body.dash-drawer-open {
   border-radius: 14px;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border-color-strong);
-  /* Translucent carrd glass — !important beats Bootstrap's --bs-dropdown-bg.
-     Blur keeps text readable over page content; high z-index floats it above panels. */
+  /* Frosted-glass dropdown. The blur keeps text readable and it sits above the panels. */
   background-color: rgba(36, 37, 45, 0.9) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -2102,6 +2184,10 @@ body.dash-body.dash-drawer-open {
   font-weight: 500;
   margin-bottom: 0.35rem;
 }
+/* Same muted-text fix for modals, since they sit outside the dashboard area. */
+.modal .text-muted {
+  color: var(--text-color-soft) !important;
+}
 .modal .form-control,
 .modal .form-select,
 .modal textarea.form-control {
@@ -2153,8 +2239,7 @@ body.dash-body.dash-drawer-open {
   }
 }
 
-/* Reports (read-only) sidebar group — visually distinct from Manage so
-   coordinators see at a glance they are about to leave the editable app. */
+/* Style the Reports links differently so coordinators notice they're leaving the editable part. */
 .dash-nav-section--readonly {
   display: flex;
   align-items: center;
@@ -2176,8 +2261,7 @@ body.dash-body.dash-drawer-open {
 }
 /* dash-nav-item--external: no extra styling */
 
-/* Reports app body marker — applied when the layout knows it's the reporting
-   client so subtle accents (eg an accent strip on the brand) can flag it. */
+/* The layout adds this marker so we can add small touches that show it's the Reports app. */
 .dash-body--reports .dash-brand-text::after {
   content: "Reporting";
   display: block;

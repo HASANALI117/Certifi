@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -10,10 +11,9 @@ using TrainingPlatform.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Use ProblemDetails as the standard error format for the API.
+builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 // Database
@@ -36,9 +36,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 builder.Services.AddScoped<TokenService>();
 
 // JWT Authentication
-// AddIdentity pins the default authenticate/challenge schemes to the Identity cookie,
-// which makes [Authorize] redirect (302) to /Account/Login instead of honoring the
-// bearer token. Explicitly override all three defaults to JWT for this API.
+// AddIdentity makes [Authorize] redirect to a login page, so switch the defaults to JWT for this API.
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -59,11 +57,30 @@ builder.Services.AddAuthentication(options =>
                 Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]!)
             )
         };
+
+        // Return a proper ProblemDetails body on 401 instead of an empty response.
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                var problem = new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Unauthorized",
+                    Detail = "A valid bearer token is required to access this resource.",
+                    Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+                };
+                await context.Response.WriteAsJsonAsync(
+                    problem, options: (System.Text.Json.JsonSerializerOptions?)null,
+                    contentType: "application/problem+json");
+            }
+        };
     });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

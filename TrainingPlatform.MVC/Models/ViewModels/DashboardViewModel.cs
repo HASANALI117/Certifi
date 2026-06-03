@@ -14,8 +14,10 @@ public class DashboardViewModel
     public string? Search { get; set; }
 
     public IReadOnlyList<DashboardCourseCard> Courses { get; set; } = [];
+    public DashboardNextSession? NextSession { get; set; }
     public IReadOnlyList<DashboardSession> UpcomingSessions { get; set; } = [];
     public IReadOnlyList<DashboardProgressItem> LearningProgress { get; set; } = [];
+    public IReadOnlyList<Notification> Notifications { get; set; } = [];
 
     public DashboardStats Stats { get; set; } = new();
 }
@@ -54,6 +56,21 @@ public class DashboardSession
     public SessionStatus Status { get; set; }
 }
 
+// The instructor's next (or in-progress) class, highlighted at the top of their dashboard.
+public class DashboardNextSession
+{
+    public int Id { get; set; }
+    public int CourseId { get; set; }
+    public string CourseTitle { get; set; } = string.Empty;
+    public string CategoryName { get; set; } = string.Empty;
+    public string RoomName { get; set; } = string.Empty;
+    public DateTime StartDateTime { get; set; }
+    public DateTime EndDateTime { get; set; }
+    public int EnrolledCount { get; set; }
+    public int Capacity { get; set; }
+    public SessionStatus Status { get; set; }
+}
+
 public class DashboardProgressItem
 {
     public string Label { get; set; } = string.Empty;
@@ -68,4 +85,5 @@ public class DashboardStats
     public int UpcomingSessionCount { get; set; }
     public int ActiveEnrollmentCount { get; set; }
     public int CertificationCount { get; set; }
+    public int AwaitingAssessmentCount { get; set; }
 }

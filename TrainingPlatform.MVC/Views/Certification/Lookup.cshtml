@@ -1,89 +1,50 @@
 @model TrainingPlatform.MVC.Models.ViewModels.CertificationLookupViewModel
 @{
     ViewData["Title"] = "Verify Certificate";
-    var authed = User.Identity?.IsAuthenticated == true;
+    // Verify is a public, home-page feature styled as a landing auth card. Force
+    // the landing layout (which loads landing.css) so it renders correctly even
+    // if an authenticated user reaches the URL — _ViewStart would otherwise pick
+    // _DashboardLayout for them and leave the tp-auth-* card unstyled.
+    Layout = "_Layout";
 }
 
-@if (authed)
-{
-    @* Authenticated users see this inside the dashboard shell — keep the
-       existing dashboard form styling so it matches the rest of the app. *@
-    <div class="tp-page-header">
-        <div>
-            <h1 class="tp-page-title">Verify a Certificate</h1>
-            <p class="tp-page-subtitle">No login required. Enter a Trainee ID and a Certificate Reference Number to check status.</p>
-        </div>
-    </div>
+@* Public page for checking a certificate. Looks like the login page. *@
+<div class="tp-auth-shell tp-auth-shell--stack">
+    <div class="tp-auth-card">
+        <a asp-controller="Home" asp-action="Index" class="tp-auth-logo-link" aria-label="Certifi — back to home">
+            <img src="~/images/logo-3.png" alt="Certifi" class="tp-auth-logo" />
+        </a>
+        <h1 class="tp-auth-title">Verify a Certificate</h1>
+        <p class="tp-auth-sub">No login required. Enter a Trainee ID and a Certificate Reference Number to check status.</p>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="tp-form-card">
-                <form asp-action="Lookup" method="post" novalidate>
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
-                        <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="TraineeId" class="form-label fw-semibold"></label>
-                        <input asp-for="TraineeId" class="form-control" placeholder="e.g. user-guid-here" />
-                        <span asp-validation-for="TraineeId" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="CertRef" class="form-label fw-semibold"></label>
-                        <input asp-for="CertRef" class="form-control tp-mono" placeholder="e.g. CERT-2025-00142" />
-                        <span asp-validation-for="CertRef" class="text-danger"></span>
-                    </div>
-
-                    <button type="submit" class="tp-cta w-100">
-                        <i class="bi bi-shield-check"></i> Verify Certificate
-                    </button>
-                </form>
+        <form asp-action="Lookup" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
             </div>
 
-            <partial name="_LookupResult" model="Model" />
-        </div>
+            <div class="mb-3">
+                <label asp-for="TraineeId" class="form-label"></label>
+                <input asp-for="TraineeId" class="form-control" placeholder="e.g. user-guid-here" />
+                <span asp-validation-for="TraineeId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CertRef" class="form-label"></label>
+                <input asp-for="CertRef" class="form-control tp-mono" placeholder="e.g. CERT-2025-00142" />
+                <span asp-validation-for="CertRef" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="button special">Verify Certificate</button>
+        </form>
+
+        <p class="tp-auth-footer">
+            Have an account? <a asp-controller="Account" asp-action="Login">Sign in</a>
+        </p>
     </div>
-}
-else
-{
-    @* Public (home) view — styled exactly like the Login page. *@
-    <div class="tp-auth-shell tp-auth-shell--stack">
-        <div class="tp-auth-card">
-            <a asp-controller="Home" asp-action="Index" class="tp-auth-logo-link" aria-label="Certifi — back to home">
-                <img src="~/images/logo-3.png" alt="Certifi" class="tp-auth-logo" />
-            </a>
-            <h1 class="tp-auth-title">Verify a Certificate</h1>
-            <p class="tp-auth-sub">No login required. Enter a Trainee ID and a Certificate Reference Number to check status.</p>
 
-            <form asp-action="Lookup" method="post" novalidate>
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-circle"></i><div class="flex-grow-1"></div>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="TraineeId" class="form-label"></label>
-                    <input asp-for="TraineeId" class="form-control" placeholder="e.g. user-guid-here" />
-                    <span asp-validation-for="TraineeId" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="CertRef" class="form-label"></label>
-                    <input asp-for="CertRef" class="form-control tp-mono" placeholder="e.g. CERT-2025-00142" />
-                    <span asp-validation-for="CertRef" class="text-danger"></span>
-                </div>
-
-                <button type="submit" class="button special">Verify Certificate</button>
-            </form>
-
-            <p class="tp-auth-footer">
-                Have an account? <a asp-controller="Account" asp-action="Login">Sign in</a>
-            </p>
-        </div>
-
-        <div class="tp-auth-result">
-            <partial name="_LookupResult" model="Model" />
-        </div>
+    <div class="tp-auth-result">
+        <partial name="_LookupResult" model="Model" />
     </div>
-}
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

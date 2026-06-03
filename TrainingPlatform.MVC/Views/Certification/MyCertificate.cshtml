@@ -1,0 +1,74 @@
+@using TrainingPlatform.API.Models
+@model IReadOnlyList<TraineeCertification>
+@{
+    ViewData["Title"] = "My Certificate";
+
+    string CertPill(CertificationStatus s) => s switch
+    {
+        CertificationStatus.Issued   => "dash-pill-success",
+        CertificationStatus.Eligible => "dash-pill-warning",
+        _                            => "dash-pill-muted"
+    };
+}
+
+<header class="dash-page-head">
+    <div class="dash-page-head-row">
+        <div>
+            <h1 class="dash-page-h">My Certificate</h1>
+            <p class="dash-page-lede">Your certification progress and issued certificates.</p>
+        </div>
+    </div>
+</header>
+
+<section class="dash-panel" aria-labelledby="my-cert-title">
+    <div class="dash-panel-head">
+        <div>
+            <h2 class="dash-panel-title" id="my-cert-title">Certification progress</h2>
+            <div class="dash-panel-sub">@Model.Count record@(Model.Count == 1 ? "" : "s")</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="dash-data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Certification</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Reference</th>
+                    <th scope="col">Issued</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="dash-td-empty">
+                            <i class="bi bi-patch-question" style="font-size:1.8rem; opacity:.5; display:block; margin-bottom:.5rem;"></i>
+                            No certification progress yet.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var cert in Model)
+                    {
+                        <tr>
+                            <td data-label="Certification">
+                                <div class="dash-cell-line1">@cert.CertificationTrack?.Name</div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="dash-pill @CertPill(cert.Status)">@cert.Status</span>
+                            </td>
+                            <td data-label="Reference">
+                                <span class="dash-pill-plain">@(string.IsNullOrWhiteSpace(cert.CertRefNumber) ? "—" : cert.CertRefNumber)</span>
+                            </td>
+                            <td data-label="Issued">
+                                <span class="dash-pill-plain">@(cert.IssuedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

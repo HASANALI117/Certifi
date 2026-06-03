@@ -50,8 +50,7 @@ namespace TrainingPlatform.API.Data
                 .IsUnique();
 
             // ── Course self-referencing prerequisite ─────────────────────────────
-            // NoAction prevents EF from trying to cascade-delete a prerequisite course
-            // while child courses still reference it
+            // Use NoAction so deleting a course doesn't try to delete one that others still need as a prerequisite.
             builder.Entity<Course>()
                 .HasOne(c => c.PrerequisiteCourse)
                 .WithMany()
@@ -78,9 +77,7 @@ namespace TrainingPlatform.API.Data
                 .HasForeignKey(ctc => ctc.CourseId);
 
             // ── Assessment → Instructor (recorder) ──────────────────────────────
-            // NoAction because this FK goes Instructor → Assessment but Instructor
-            // also has a cascade from AppUser. SQL Server won't allow two cascade
-            // paths to the same table.
+            // Use NoAction here because SQL Server won't allow two delete paths to the same table.
             builder.Entity<Assessment>()
                 .HasOne(a => a.RecordedBy)
                 .WithMany()
@@ -119,8 +116,7 @@ namespace TrainingPlatform.API.Data
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // NoAction — SQL Server blocks multiple cascade paths to Enrollments
-            // (AppUser→Trainee→Enrollment and AppUser→Instructor→CourseSession→Enrollment)
+            // SQL Server won't allow more than one delete path to Enrollments.
             builder.Entity<Enrollment>()
                 .HasOne(e => e.Trainee)
                 .WithMany(t => t.Enrollments)

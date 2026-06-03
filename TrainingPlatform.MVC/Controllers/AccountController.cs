@@ -14,8 +14,7 @@ namespace TrainingPlatform.MVC.Controllers;
 
 public class AccountController : Controller
 {
-    // Claim key the Reports app reads to call the API as the signed-in user.
-    // Must match TrainingPlatform.Reports.Auth.SharedCookie.TokenClaimType.
+    // The Reports app reads this claim to call the API as the user. Must match SharedCookie.TokenClaimType.
     private const string ApiAccessTokenClaim = "ApiAccessToken";
 
     private readonly UserManager<AppUser> _userManager;
@@ -50,8 +49,7 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        // Self-registration is Trainee-only. Instructors/coordinators are provisioned
-        // by the coordinator.
+        // Anyone who signs up is a Trainee. The coordinator sets up the other roles.
         var user = new AppUser
         {
             FirstName = model.FirstName,
@@ -84,7 +82,7 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Dashboard");
     }
 
-    // TraineePublicId format: {year}{random 5 digits}, e.g. 202603655. Retry on collision.
+    // Build the public ID as the year plus 5 random digits, and try again if that one's taken.
     private async Task<string> GenerateTraineePublicIdAsync()
     {
         var year = DateTime.UtcNow.Year;
@@ -127,7 +125,7 @@ public class AccountController : Controller
 
         await IssueCookieWithApiTokenAsync(user, model.Email, model.Password, model.RememberMe);
 
-        // A local return URL (e.g. a deep-link that bounced through login) wins.
+        // If there's a local return URL, send them back there.
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return LocalRedirect(returnUrl);
 
@@ -138,9 +136,7 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Dashboard");
     }
 
-    // One sign-in flow: build the Identity principal, attach the API JWT as a
-    // claim, then issue the shared auth cookie. The Reports app reads that
-    // claim to call the API on behalf of the same user without a second login.
+    // Sign the user in and save their API token in the cookie, so the Reports app can use it too.
     private async Task IssueCookieWithApiTokenAsync(AppUser user, string email, string password, bool isPersistent)
     {
         var jwt = await _authApi.LoginAsync(email, password);
@@ -154,8 +150,7 @@ public class AccountController : Controller
         }
         else
         {
-            // Cookie still issued so MVC features keep working; Reports app will
-            // bounce the user to its own login if they try to open it.
+            // Still sign them in here; if there's no API token, the Reports app will just ask them to log in again.
             TempData["DashWarning"] = "Reporting features are temporarily unavailable.";
         }
 

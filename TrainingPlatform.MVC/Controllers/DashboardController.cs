@@ -24,12 +24,7 @@ public class DashboardController : Controller
         _navLinks = navLinks;
     }
 
-    // The MVC dashboard is for Instructors and Trainees only. Coordinators were
-    // moved to the Reports overview as their landing page and the link was
-    // removed from their sidebar — this guard blocks the remaining direct-URL
-    // access path (e.g. typing /Dashboard) and bounces them to that overview.
-    // Runs after [Authorize], so User is always an authenticated principal here,
-    // and covers every action on this controller (not just Index).
+    // This dashboard is just for instructors and trainees. Send coordinators to the Reports page instead.
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         if (User.IsInRole("TrainingCoordinator"))
@@ -71,9 +66,21 @@ public class DashboardController : Controller
                     s.Enrollments.Any(e => e.TraineeId == trainee.Id && e.Status != EnrollmentStatus.Dropped)));
             }
         }
+        // Instructor dashboard only shows courses they're assigned to teach.
+        else if (role == "Instructor")
+        {
+            var instructor = await _db.Instructors.FirstOrDefaultAsync(i => i.UserId == user.Id);
+            if (instructor is null)
+            {
+                coursesQuery = coursesQuery.Where(_ => false);
+            }
+            else
+            {
+                coursesQuery = coursesQuery.Where(c => c.Sessions.Any(s => s.InstructorId == instructor.Id));
+            }
+        }
 
-        // Snapshot the role-scoped (but un-faceted) course query so the category tab
-        // counts reflect the user's full eligible set, not the active filter.
+        // Save the query before filtering so the category counts show the totals, not just the filtered results.
         var scopedCoursesQuery = coursesQuery;
 
         var categoriesQuery = _db.CourseCategories
@@ -87,9 +94,7 @@ public class DashboardController : Controller
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            // EF.Functions.Like translates to SQL LIKE, which is case-insensitive
-            // under SQL Server's default *_CI_* collation. Wrap user input with %
-            // wildcards and escape LIKE metacharacters to avoid surprising matches.
+            // Search ignores case by default. Escape the special LIKE characters so they don't change the match.
             var pattern = $"%{EscapeLike(search)}%";
             coursesQuery = coursesQuery.Where(c =>
                 EF.Functions.Like(c.Title, pattern) ||
@@ -127,8 +132,18 @@ public class DashboardController : Controller
             .ToListAsync();
 
         var sessions = await BuildUpcomingSessionsAsync(user, role);
+        var nextSession = await BuildNextSessionAsync(user, role);
         var progress = await BuildLearningProgressAsync(user, role);
         var stats = await BuildStatsAsync(user, role);
+
+        // Trainees see their latest notifications on the dashboard.
+        var notifications = role == "Trainee"
+            ? await _db.Notifications
+                .Where(n => n.UserId == user.Id)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(10)
+                .ToListAsync()
+            : [];
 
         var model = new DashboardViewModel
         {
@@ -140,8 +155,10 @@ public class DashboardController : Controller
             SelectedCategoryId = categoryId,
             Search = search,
             Courses = courses,
+            NextSession = nextSession,
             UpcomingSessions = sessions,
             LearningProgress = progress,
+            Notifications = notifications,
             Stats = stats
         };
 
@@ -184,6 +201,37 @@ public class DashboardController : Controller
                 Status = s.Status
             })
             .ToListAsync();
+    }
+
+    // Spotlight the instructor's next class (or one currently in progress).
+    private async Task<DashboardNextSession?> BuildNextSessionAsync(AppUser user, string role)
+    {
+        if (role != "Instructor") return null;
+
+        var instructor = await _db.Instructors.FirstOrDefaultAsync(i => i.UserId == user.Id);
+        if (instructor is null) return null;
+
+        var now = DateTime.UtcNow;
+
+        return await _db.CourseSessions
+            .Where(s => s.InstructorId == instructor.Id
+                        && s.Status != SessionStatus.Cancelled
+                        && s.EndDateTime >= now)
+            .OrderBy(s => s.StartDateTime)
+            .Select(s => new DashboardNextSession
+            {
+                Id = s.Id,
+                CourseId = s.CourseId,
+                CourseTitle = s.Course.Title,
+                CategoryName = s.Course.Category.Name,
+                RoomName = s.Classroom.Name,
+                StartDateTime = s.StartDateTime,
+                EndDateTime = s.EndDateTime,
+                EnrolledCount = s.Enrollments.Count(e => e.Status != EnrollmentStatus.Dropped),
+                Capacity = s.Capacity,
+                Status = s.Status
+            })
+            .FirstOrDefaultAsync();
     }
 
     private async Task<IReadOnlyList<DashboardProgressItem>> BuildLearningProgressAsync(AppUser user, string role)
@@ -308,14 +356,24 @@ public class DashboardController : Controller
 
             return new DashboardStats
             {
-                CourseCount = courseCount,
+                CourseCount = await _db.CourseSessions
+                    .Where(s => s.InstructorId == instructor.Id)
+                    .Select(s => s.CourseId)
+                    .Distinct()
+                    .CountAsync(),
                 UpcomingSessionCount = await _db.CourseSessions.CountAsync(s =>
                     s.InstructorId == instructor.Id && s.StartDateTime >= DateTime.UtcNow),
                 ActiveEnrollmentCount = await _db.CourseSessions
                     .Where(s => s.InstructorId == instructor.Id)
                     .SelectMany(s => s.Enrollments)
                     .CountAsync(),
-                CertificationCount = 0
+                CertificationCount = 0,
+                // Same rule as the assessment roster: confirmed/attending enrollments with no assessment yet.
+                AwaitingAssessmentCount = await _db.CourseSessions
+                    .Where(s => s.InstructorId == instructor.Id)
+                    .SelectMany(s => s.Enrollments)
+                    .CountAsync(e => (e.Status == EnrollmentStatus.Confirmed || e.Status == EnrollmentStatus.Attending)
+                                     && e.Assessment == null)
             };
         }
 

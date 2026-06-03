@@ -1,0 +1,98 @@
+@using TrainingPlatform.API.Models
+@model IEnumerable<TraineeCertification>
+@{
+    ViewData["Title"] = "Certificates";
+
+    string CertPill(CertificationStatus s) => s switch
+    {
+        CertificationStatus.Issued   => "dash-pill-success",
+        CertificationStatus.Eligible => "dash-pill-warning",
+        _                            => "dash-pill-muted"
+    };
+    string CertLabel(CertificationStatus s) => s switch
+    {
+        CertificationStatus.Issued   => "Issued",
+        CertificationStatus.Eligible => "Eligible",
+        _                            => "In progress"
+    };
+    string TraineeName(TraineeCertification c) =>
+        c.Trainee?.User != null ? $"{c.Trainee.User.FirstName} {c.Trainee.User.LastName}" : "Unknown Trainee";
+}
+
+<div class="tp-page-header">
+    <div>
+        <h1 class="tp-page-title">Certificates</h1>
+        <p class="tp-page-subtitle">Issue and manage trainee certificate records.</p>
+    </div>
+    <div class="tp-page-actions">
+        <a asp-action="Create" class="tp-cta"><i class="bi bi-plus-lg"></i> New Certificate</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="tp-empty">
+        <i class="bi bi-patch-check"></i>
+        <h4>No certificate records yet</h4>
+        <p>Create a record to assign a certification track to a trainee.</p>
+        <a asp-action="Create" class="tp-cta"><i class="bi bi-plus-lg"></i> New Certificate</a>
+    </div>
+}
+else
+{
+    <div class="tp-table-card">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Trainee</th>
+                    <th>Track</th>
+                    <th style="width: 130px;">Status</th>
+                    <th>Reference</th>
+                    <th style="width: 140px;">Issued</th>
+                    <th class="text-end" style="width: 230px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td><span class="fw-semibold">@TraineeName(c)</span></td>
+                        <td>@c.CertificationTrack?.Name</td>
+                        <td><span class="dash-pill @CertPill(c.Status)">@CertLabel(c.Status)</span></td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(c.CertRefNumber))
+                            {
+                                <span class="tp-text-soft">—</span>
+                            }
+                            else
+                            {
+                                <code>@c.CertRefNumber</code>
+                            }
+                        </td>
+                        <td class="tp-text-soft">@(c.IssuedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                        <td class="text-end">
+                            @if (c.Status != CertificationStatus.Issued)
+                            {
+                                <form asp-action="Issue" asp-route-id="@c.Id" method="post" class="d-inline m-0"
+                                      onsubmit="return confirm('Issue this certificate now?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-patch-check"></i> Issue
+                                    </button>
+                                </form>
+                            }
+                            <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline m-0"
+                                  onsubmit="return confirm('Delete this certificate record?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
